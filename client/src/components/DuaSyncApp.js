@@ -318,7 +318,7 @@ const DuaSyncApp = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </span>
-            Dua Sync
+            IqraTogether
           </h1>
           <div className="flex items-center space-x-1 md:space-x-2"> {/* Reduced spacing slightly */}
             {/* Session controls */}

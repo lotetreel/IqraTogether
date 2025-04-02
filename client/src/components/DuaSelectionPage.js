@@ -4,6 +4,7 @@ import { duaCollection } from '../data/duaCollection';
 import { useSocket } from '../contexts/SocketContext'; // Import useSocket
 import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
 import BackButton from './ui/BackButton';
+import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
 
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,15 +75,9 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
 
   return (
     <div className="animate-fade-in">
-      {/* Back Button */}
-      {onBack && (
-        <div className="mb-6">
-          <BackButton onClick={onBack} />
-        </div>
-      )}
       
       <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 dark:text-dark-text-primary mb-4">
-        {activeTab === 'duas' ? 'Select a Dua to Share' : 'Select a Surah to Share'}
+        {activeTab === 'duas' ? 'Select a Dua to IqraTogether' : 'Select a Surah to IqraTogether'}
       </h1>
       
       <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-8 max-w-lg mx-auto">
@@ -193,7 +188,7 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {activeTab === 'duas' ? (
           // --- Dua Rendering (remains mostly the same) ---
-          filteredDuas.map(dua => (
+          filteredDuas.map(dua => ( // Removed onError from Dua image below
             <div 
               key={dua.id}
               // Pass the full dua object or necessary info to onSelectDua
@@ -203,10 +198,10 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
               {/* Dua card content... (keep existing structure) */}
               <div className="h-40 w-full overflow-hidden relative">
                  <img 
-                   src={dua.image || 'https://i.imgur.com/8yQX3eS.jpg'} // Use default image if none provided
+                   src={dua.image || `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(dua.title)}`} // Use placeholder if no image
                    alt={dua.title} 
                    className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   onError={(e) => { e.target.onerror = null; e.target.src = 'https://i.imgur.com/8yQX3eS.jpg'; }}
+                   // Removed onError handler
                  />
                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                    <div className="flex justify-between items-end">
@@ -256,7 +251,8 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
              </div>
         ) : (
           // --- Quran Rendering (using quranSurahList) ---
-          filteredQuran.map(surah => (
+          filteredQuran.map(surah => { // Removed console.log
+            return (
             <div 
               key={surah.id}
               // Pass necessary info to onSelectQuran
@@ -265,12 +261,12 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
             >
               {/* Adapt card content based on quranMetadata structure */}
               <div className="h-40 w-full overflow-hidden relative">
-                 {/* Use a generic Quran image or fetch specific ones if available */}
+                 {/* Use specific image for Al-Fatiha (id: 1 or "1"), otherwise placeholder */}
                  <img 
-                   src={'https://i.imgur.com/vJR4sin.jpg'} // Generic Quran image
+                   src={surah.id === 1 || surah.id === '1' ? AlFatihaImage : `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`} 
                    alt={surah.title} 
                    className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   onError={(e) => { e.target.onerror = null; e.target.src = 'https://i.imgur.com/vJR4sin.jpg'; }}
+                   // Removed onError handler
                  />
                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                    <div className="flex justify-between items-end">
@@ -309,7 +305,7 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
                  </div>
                </div>
             </div>
-          ))
+          )})
         )}
       </div>
       
