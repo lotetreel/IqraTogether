@@ -1,0 +1,127 @@
+/* Remove Google Font import */
+/* @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700&display=swap'); */
+
+/* @font-face rule moved to public/index.html */
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom base styles for improved UI */
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary min-h-screen;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight;
+  }
+}
+
+/* Custom component classes */
+@layer components {
+  /* Button styles */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-opacity-50;
+  }
+  
+  .btn-primary {
+    @apply btn bg-gradient-primary text-white shadow-md hover:shadow-lg focus:ring-primary-300 dark:focus:ring-dark-accent;
+  }
+  
+  .btn-accent {
+    @apply btn bg-gradient-accent text-white shadow-md hover:shadow-lg focus:ring-accent-300;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-primary border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark-bg-secondary focus:ring-gray-200 dark:focus:ring-dark-bg-tertiary;
+  }
+  
+  .btn-success {
+    @apply btn bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-300;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 hover:bg-red-700 text-white focus:ring-red-300;
+  }
+  
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary text-gray-600 dark:text-dark-text-secondary transition-colors duration-200;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white dark:bg-dark-bg-tertiary rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden;
+  }
+  
+  .card-gradient {
+    @apply bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-tertiary dark:to-dark-bg-secondary rounded-xl shadow-md hover:shadow-lg transition-all duration-300;
+  }
+  
+  /* Input styles */
+  .input {
+    @apply px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-accent focus:border-primary-500 dark:focus:border-dark-accent transition-colors duration-200 bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary;
+  }
+  
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-800 dark:bg-dark-bg-tertiary dark:text-dark-accent;
+  }
+  
+  .badge-accent {
+    @apply badge bg-accent-100 text-accent-800 dark:bg-dark-primary dark:text-accent-100;
+  }
+  
+  /* Header and section styles */
+  .page-header {
+    @apply bg-gradient-primary dark:bg-gradient-to-r dark:from-dark-primary dark:to-dark-secondary text-white shadow-md py-4 px-6;
+  }
+  
+  .content-section {
+    @apply px-4 py-6 md:px-6 md:py-8;
+  }
+  
+  /* Progress bar styling */
+  .progress-container {
+    @apply h-2 bg-gray-200 dark:bg-dark-bg-secondary rounded-full overflow-hidden;
+  }
+  
+  .progress-bar {
+    @apply h-full bg-gradient-primary dark:bg-dark-accent transition-all duration-300 ease-out;
+  }
+  
+  /* Shimmer animation for loading states */
+  .shimmer {
+    @apply bg-gradient-shimmer bg-[length:200%_100%] animate-shimmer;
+  }
+}
+
+/* Responsive utilities */
+@layer utilities {
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4;
+  }
+  
+  .container-wide {
+    @apply max-w-6xl mx-auto px-4;
+  }
+}
