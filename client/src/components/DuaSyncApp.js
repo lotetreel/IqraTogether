@@ -345,17 +345,16 @@ const DuaSyncApp = () => {
 
   // Determine current phrase data based on content type
   const currentPhraseData = useMemo(() => {
+    // Return default empty strings if content isn't fully loaded yet
     if (!currentFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
       return { arabic: '', transliteration: '', translation: '' };
     }
 
     if (currentContentInfo?.type === 'quran') {
       // Quran structure: currentFullContent.verses is array [{ayah, arabic, transliteration, translation}, ...]
-      // Reverted: Server now sends full arabic text including symbol
       const verse = currentFullContent.verses[currentIndex];
       return {
         arabic: verse?.arabic || '',
-        // arabicAyahEnd: verse?.arabicAyahEnd || '', // Removed
         transliteration: verse?.transliteration || '',
         translation: verse?.translation || '',
       };
@@ -371,6 +370,147 @@ const DuaSyncApp = () => {
     return { arabic: '', transliteration: '', translation: '' };
   }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
   // --- End Memoized values ---
+
+  // --- Content Rendering Logic ---
+  const renderContent = () => {
+    // Prioritize showing content viewer frame if content *should* be displayed
+    if (currentContentInfo) {
+      return (
+        <div className="space-y-6 animate-fade-in">
+          {/* Back button and Content navigation status */}
+          <div className="flex items-center justify-between">
+             <BackButton onClick={handleBack} />
+             {/* Show total phrases only if content is loaded */}
+             {currentFullContent && totalPhrases > 0 && (
+               <div className="text-sm text-gray-500 dark:text-dark-text-muted">
+                 {currentIndex + 1} of {totalPhrases}
+               </div>
+             )}
+           </div>
+
+          {/* Content title */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
+            {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
+          </div>
+
+          {/* Main content display card */}
+          <div className="card p-6 md:p-8 min-h-[200px]">
+            {isLoadingContent ? (
+              // Loading state within the card
+              <div className="flex items-center justify-center h-full">
+                <Loader size={32} className="animate-spin text-primary-500 dark:text-primary-400" />
+                <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading...</span>
+              </div>
+            ) : !currentFullContent ? (
+               // Content not available (e.g., offline Quran)
+               <div className="flex flex-col items-center justify-center h-full text-center">
+                 <WifiOff size={32} className="text-gray-400 dark:text-gray-500 mb-3" />
+                 <p className="text-gray-600 dark:text-dark-text-secondary">
+                   {currentContentInfo?.type === 'quran' ? "Quran content requires an active connection." : "Content unavailable."}
+                 </p>
+                 {!isConnected && <p className="text-sm text-gray-500 dark:text-dark-text-muted mt-1">You appear to be offline.</p>}
+               </div>
+            ) : (
+              // Actual content rendering
+              <>
+                {/* Arabic text */}
+                <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
+                  <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
+                    {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                  </p>
+                </div>
+                {/* Transliteration */}
+                {showTransliteration && currentPhraseData.transliteration && (
+                  <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                    <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
+                  </div>
+                )}
+                {/* Translation */}
+                {showTranslation && currentPhraseData.translation && (
+                  <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                    <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Navigation controls (only enable if content is loaded) */}
+          {currentFullContent && totalPhrases > 0 && (
+            <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
+              {/* Previous/Next Buttons */}
+              <div className="flex space-x-4">
+                <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn flex items-center ${currentIndex === 0 ? 'btn-disabled' : 'btn-primary'}`}>
+                  <ChevronLeft size={20} className="mr-1" /> Previous
+                </button>
+                <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn flex items-center ${currentIndex >= totalPhrases - 1 ? 'btn-disabled' : 'btn-primary'}`}>
+                  Next <ChevronRight size={20} className="ml-1" />
+                </button>
+              </div>
+              {/* Action Buttons */}
+              <div className="flex space-x-4 mt-4 md:mt-0">
+                {isHost ? (
+                  <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''} ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isConnected}>
+                    {autoAdvance ? (<span className="flex items-center">Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span></span>) : 'Auto'}
+                  </button>
+                ) : (
+                  <>
+                    {!isSyncedToHost && (
+                      <button onClick={syncToHost} className={`btn-accent flex items-center ${!isConnected ? 'btn-disabled' : ''}`} disabled={!isConnected}>
+                        <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
+                      </button>
+                    )}
+                    <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center"> Browse </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sync status indicator */}
+          {!isHost && !isSyncedToHost && isConnected && (
+            <div className="text-center mt-6">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
+                <RefreshCw size={16} className="mr-1.5" /> Viewing independently. Click Sync to follow host.
+              </div>
+            </div>
+          )}
+
+          {/* Footer message */}
+          <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
+            {isHost ? (isConnected ? "Your navigation controls the session." : "You are offline. Navigation is local.") : (isConnected ? "Navigate freely or sync with the host." : "You are offline. Navigation is local.")}
+          </div>
+        </div>
+      );
+    } else if (isHost) {
+      // Host, no content selected yet
+      return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
+    } else {
+      // Participant, waiting for host or browsing selection
+      if (isBrowsingLocally) {
+        // Participant browsing, show selection page
+        return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
+      } else {
+        // Participant waiting for host
+        return (
+          <div className="flex flex-col items-center justify-center h-full py-20">
+            <div className="text-center max-w-md">
+              <div className="relative mx-auto w-20 h-20 mb-6">
+                 <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
+                 <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
+               </div>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
+              <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
+               <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
+            </div>
+          </div>
+        );
+      }
+    }
+  };
+  // --- End Content Rendering Logic ---
+
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary transition-colors duration-300">
@@ -493,172 +633,11 @@ const DuaSyncApp = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="container-narrow py-6">
 
-          {/* --- MODIFIED: Show session view if sessionId exists, regardless of connection --- */}
-          {!!sessionId ? ( // --- In Session ---
-            isBrowsingLocally && !isHost ? (
-              // 1. Participant is browsing locally - Show Selection Page
-              <DuaSelectionPage
-                onSelectDua={handleContentSelection} // Use unified handler
-                onSelectQuran={handleContentSelection} // Use unified handler
-                onBack={handleBack} // Use unified back handler
-              />
-            ) : currentContentInfo && currentFullContent ? (
-              // 2. Content is selected and loaded - Show Content Viewer
-              <div className="space-y-6 animate-fade-in">
-                {/* Back button and Content navigation status */}
-                <div className="flex items-center justify-between">
-                   <BackButton onClick={handleBack} />
-                   <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-                     {currentIndex + 1} of {totalPhrases}
-                   </div>
-                 </div>
-
-                {/* Content title */}
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-                  {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
-                </div>
-
-                {/* Main content display */}
-                <div className="card p-6 md:p-8 min-h-[200px]"> {/* Added min-height */}
-                  {/* Arabic text */}
-                  <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
-                    {/* Apply font and add letter-spacing */}
-                    <p
-                      className="leading-loose font-uthmani"
-                      dir="rtl"
-                      style={{ fontSize: `${arabicFontSize}rem` }} // Removed letter-spacing
-                    >
-                      {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                    </p>
-                  </div>
-
-                  {/* Transliteration - Use dangerouslySetInnerHTML */}
-                  {showTransliteration && currentPhraseData.transliteration && (
-                    <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
-                      <p
-                        className="text-gray-700 dark:text-dark-text-secondary italic"
-                        style={{ fontSize: `${transliterationFontSize}rem` }}
-                        dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Translation - Use dangerouslySetInnerHTML */}
-                  {showTranslation && currentPhraseData.translation && (
-                    <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
-                      <p
-                        className="text-gray-800 dark:text-dark-text-primary"
-                        style={{ fontSize: `${translationFontSize}rem` }}
-                        dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Navigation controls */}
-                <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
-                  {/* Previous/Next Buttons (Always enabled for local nav) */}
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={prevPhrase}
-                      disabled={currentIndex === 0}
-                      className={`btn flex items-center ${currentIndex === 0 ? 'btn-disabled' : 'btn-primary'}`}
-                    >
-                      <ChevronLeft size={20} className="mr-1" /> Previous
-                    </button>
-                    <button
-                      onClick={nextPhrase}
-                      disabled={currentIndex >= totalPhrases - 1}
-                      className={`btn flex items-center ${currentIndex >= totalPhrases - 1 ? 'btn-disabled' : 'btn-primary'}`}
-                    >
-                      Next <ChevronRight size={20} className="ml-1" />
-                    </button>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-4 mt-4 md:mt-0">
-                    {isHost ? (
-                      // Host: Auto-advance button (disable if not connected?)
-                      <button
-                        onClick={() => setAutoAdvance(!autoAdvance)}
-                        className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''} ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={!isConnected}
-                      >
-                        {autoAdvance ? (
-                          <span className="flex items-center">
-                            Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span>
-                          </span>
-                        ) : 'Auto'}
-                      </button>
-                    ) : (
-                      // Participant: Sync/Browse buttons
-                      <>
-                        {!isSyncedToHost && (
-                          <button
-                            onClick={syncToHost}
-                            className={`btn-accent flex items-center ${!isConnected ? 'btn-disabled' : ''}`}
-                            disabled={!isConnected}
-                          >
-                            <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
-                          </button>
-                        )}
-                        <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
-                          Browse
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Sync status indicator for participants */}
-                {!isHost && !isSyncedToHost && isConnected && ( // Show only if connected and unsynced
-                  <div className="text-center mt-6">
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
-                      <RefreshCw size={16} className="mr-1.5" />
-                      Viewing independently. Click Sync to follow host.
-                    </div>
-                  </div>
-                )}
-
-                {/* Footer message */}
-                <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
-                  {isHost ? (isConnected ? "Your navigation controls the session." : "You are offline. Navigation is local.") : (isConnected ? "Navigate freely or sync with the host." : "You are offline. Navigation is local.")}
-                </div>
-              </div>
-            ) : isLoadingContent ? (
-               // 3. Content selected, but still loading - Show Loading Indicator
-               <div className="flex flex-col items-center justify-center h-full py-20">
-                 <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
-                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
-                 <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
-               </div>
-            ) : isHost ? (
-              // 4. Host, no content selected yet - Show Selection Page
-              <DuaSelectionPage
-                onSelectDua={handleContentSelection} // Use unified handler
-                onSelectQuran={handleContentSelection} // Use unified handler
-                onBack={handleBack} // Host goes back -> leaves session
-              />
-            ) : (
-              // 5. Participant, no content selected by host, not browsing - Show Waiting Screen
-              <div className="flex flex-col items-center justify-center h-full py-20">
-                <div className="text-center max-w-md">
-                  {/* Waiting Spinner */}
-                  <div className="relative mx-auto w-20 h-20 mb-6">
-                     <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
-                     <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
-                   </div>
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
-                  <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
-                   {/* Browse Button */}
-                   <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto">
-                      Browse Independently
-                    </button>
-                </div>
-              </div>
-            )
-          ) : ( // --- Not in Session ---
+          {/* --- RENDER LOGIC BASED ON SESSION ID --- */}
+          {!!sessionId ? (
+            renderContent() // Render based on the function above
+          ) : (
+            // --- Not in Session ---
             <div className="card-gradient max-w-md mx-auto p-6 md:p-8 mt-8 animate-fade-in">
               <div className="text-center">
                  <div className="flex justify-center mb-6">
