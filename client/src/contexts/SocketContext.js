@@ -10,42 +10,96 @@ export const useSocket = () => useContext(SocketContext);
 
 // --- External Helper Function for Fetching ---
 const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingContent, setCurrentFullContent, setError) => {
-  if (type === 'quran' && (!socket || connectionStatus !== 'connected')) {
-    console.error("Cannot fetch Quran content: Socket not connected.");
-    setError("Not connected to server to fetch Quran content.");
-    setIsLoadingContent(false); setCurrentFullContent(null); return;
-  }
   if (!type || !id) {
     setCurrentFullContent(null); setIsLoadingContent(false); return;
   }
+
   console.log(`Fetching full content via helper for type: ${type}, id: ${id}`);
   setIsLoadingContent(true); setError(null);
+
   try {
     if (type === 'dua') {
+      // Dua content is loaded locally, no changes needed here
       const duaData = localContentMap[id];
       if (duaData) {
         await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
         setCurrentFullContent({ ...duaData, verses: { arabic: duaData.arabic || [], transliteration: duaData.transliteration || [], translation: duaData.translation || [] }, totalAyahs: duaData.arabic?.length || 0 });
       } else { throw new Error(`Dua with ID ${id} not found locally.`); }
+      setIsLoadingContent(false); // Set loading false for Dua
     } else if (type === 'quran') {
-      socket.emit('get_quran_content', { surahId: id }, (response) => {
-        if (response.error) {
-          console.error('Error fetching Quran content:', response.error);
-          setError(`Error fetching Surah ${id}: ${response.error}`); setCurrentFullContent(null);
-        } else if (response.data) {
-          console.log(`Received Quran content for Surah ${id}`);
-          setCurrentFullContent({ id: response.data.id, title: response.data.title, arabicTitle: response.data.arabicTitle, totalAyahs: response.data.totalAyahs, verses: response.data.verses });
+      const cacheKey = `quran_surah_${id}`;
+
+      // 1. Check connection status
+      if (connectionStatus !== 'connected') {
+        console.log(`Offline: Attempting to load Surah ${id} from cache.`);
+        try {
+          const cachedData = localStorage.getItem(cacheKey);
+          if (cachedData) {
+            console.log(`Surah ${id} found in cache.`);
+            setCurrentFullContent(JSON.parse(cachedData));
+            setIsLoadingContent(false);
+            return; // Loaded from cache, exit
+          } else {
+            console.log(`Surah ${id} not found in cache.`);
+            setError("Offline: This Surah hasn't been viewed online yet.");
+            setCurrentFullContent(null);
+            setIsLoadingContent(false);
+            return; // Not in cache and offline, exit
+          }
+        } catch (cacheError) {
+          console.error("Error reading from localStorage:", cacheError);
+          setError("Error accessing cached data.");
+          setCurrentFullContent(null);
+          setIsLoadingContent(false);
+          return; // Error accessing cache, exit
         }
-        setIsLoadingContent(false); // Set loading false inside callback
-      });
-      return; // Exit early as fetch is async via socket callback
-    } else { throw new Error(`Unknown content type: ${type}`); }
+      }
+
+      // 2. If connected, fetch from server and cache
+      if (socket) {
+        console.log(`Online: Fetching Surah ${id} from server.`);
+        socket.emit('get_quran_content', { surahId: id }, (response) => {
+          if (response.error) {
+            console.error('Error fetching Quran content:', response.error);
+            setError(`Error fetching Surah ${id}: ${response.error}`);
+            setCurrentFullContent(null);
+          } else if (response.data) {
+            console.log(`Received Quran content for Surah ${id}. Caching...`);
+            try {
+              // Cache the received data
+              localStorage.setItem(cacheKey, JSON.stringify(response.data));
+              console.log(`Surah ${id} cached successfully.`);
+            } catch (cacheError) {
+              console.error("Error writing to localStorage:", cacheError);
+              // Non-critical error, proceed with setting content
+              setError("Could not cache Surah data (storage might be full).");
+            }
+            // Set the content regardless of caching success/failure
+            setCurrentFullContent({ id: response.data.id, title: response.data.title, arabicTitle: response.data.arabicTitle, totalAyahs: response.data.totalAyahs, verses: response.data.verses });
+          }
+          setIsLoadingContent(false); // Set loading false inside callback
+        });
+        // Note: setIsLoadingContent(false) is handled inside the async callback for socket fetch
+      } else {
+        // Should not happen if connectionStatus === 'connected', but as a fallback
+        console.error("Cannot fetch Quran content: Socket is null despite being 'connected'.");
+        setError("Internal error: Connection issue.");
+        setCurrentFullContent(null);
+        setIsLoadingContent(false);
+      }
+    } else {
+      throw new Error(`Unknown content type: ${type}`);
+    }
   } catch (err) {
     console.error('Error fetching full content:', err);
-    setError(`Failed to load content: ${err.message}`); setCurrentFullContent(null);
-  } finally {
-    if (type !== 'quran') { setIsLoadingContent(false); }
+    setError(`Failed to load content: ${err.message}`);
+    setCurrentFullContent(null);
+    // Ensure loading is set to false in case of general errors (except for async quran fetch)
+    if (type !== 'quran' || connectionStatus !== 'connected') {
+      setIsLoadingContent(false);
+    }
   }
+  // Removed the finally block as loading state is handled within each branch now
 };
 // --- End External Helper Function ---
 
@@ -60,7 +114,8 @@ export const SocketProvider = ({ children }) => {
   const [hostSelectedContentInfo, setHostSelectedContentInfo] = useState(null);
   const [currentContentInfo, setCurrentContentInfo] = useState(null); // Info for locally viewed content
   const [currentFullContent, setCurrentFullContent] = useState(null); // Holds the *full* fetched data (verses, etc.)
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0); // User's current index (local or synced)
+  const [latestHostIndex, setLatestHostIndex] = useState(0); // Store the most recent index received from host
   const [isSyncedToHost, setIsSyncedToHost] = useState(true);
   const [participants, setParticipants] = useState([]);
   const [quranSurahList, setQuranSurahList] = useState([]);
@@ -102,25 +157,9 @@ export const SocketProvider = ({ children }) => {
         setSocket(newSocket);
         setConnectionStatus('connected');
         setError(null); // Clear connection errors on successful connect
-        // If we were in a session before disconnecting, try to rejoin/resync
-        if (sessionId && username) {
-          console.log('Reconnected, attempting to rejoin session:', sessionId);
-          // Use a specific rejoin event or the standard join event
-          // This depends on server implementation. Assuming 'join-session' works for rejoin.
-          newSocket.emit('join-session', { sessionId, username }, (response) => {
-            if (response?.error) {
-              console.error("Failed to rejoin session after reconnect:", response.error);
-              // Handle failed rejoin (e.g., session expired, clear session state)
-              setError(`Failed to rejoin session: ${response.error}. Please start a new session.`);
-              setSessionId(null); setUsername(null); setIsHost(false);
-              setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null);
-              setCurrentIndex(0); setIsSyncedToHost(true); setFetchTrigger(null);
-            } else {
-              console.log("Successfully rejoined session.");
-              // Server should send updated state via 'session-joined' or similar event
-            }
-          });
-        }
+        // --- REMOVE AUTOMATIC REJOIN ATTEMPT AGAIN ---
+        // Rely solely on manual rejoin via button after connection.
+        console.log('Socket connected. User must explicitly rejoin if needed via button.');
       });
       newSocket.on('disconnect', (reason) => {
         console.log(`Socket disconnected: ${reason}`);
@@ -173,30 +212,52 @@ export const SocketProvider = ({ children }) => {
     const handleSessionJoined = ({ sessionId: joinedSessionId, username: joinedUsername, hostSelectedContent: currentHostContentInfo, currentIndex: hostCurrentIndex, isHost: userIsHost, contentSelected, participants: initialParticipants }) => {
       console.log(`${joinedUsername} joined session ${joinedSessionId}. Host Content: ${currentHostContentInfo?.id}, Index: ${hostCurrentIndex}, Is Host: ${userIsHost}`);
       setSessionId(joinedSessionId); setUsername(joinedUsername); setIsHost(userIsHost);
-      setHostSelectedContentInfo(currentHostContentInfo); setIsSyncedToHost(true);
-      setCurrentContentInfo(currentHostContentInfo); setCurrentIndex(hostCurrentIndex ?? 0); setError(null);
-      setParticipants(initialParticipants || []); // Set initial participants list
-      if (contentSelected && currentHostContentInfo) {
-        setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
+       setHostSelectedContentInfo(currentHostContentInfo);
+       setLatestHostIndex(hostCurrentIndex ?? 0); // Initialize latestHostIndex on join
+       setIsSyncedToHost(true);
+       setCurrentContentInfo(currentHostContentInfo);
+       setCurrentIndex(hostCurrentIndex ?? 0); // Set current index as well
+       setError(null);
+       setParticipants(initialParticipants || []); // Set initial participants list
+       if (contentSelected && currentHostContentInfo) {
+         setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
       } else {
         setCurrentFullContent(null); setFetchTrigger(null);
       }
-    };
-     const handleSessionNotFound = ({ sessionId: triedSessionId }) => {
-       console.error(`Session ${triedSessionId} not found.`); setError(`Session "${triedSessionId}" not found.`);
-       setSessionId(null); setUsername(null); setIsHost(false); setParticipants([]);
-       setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null); setCurrentIndex(0);
-       setFetchTrigger(null);
      };
+     const handleSessionNotFound = ({ sessionId: triedSessionId }) => {
+       // Don't clear the client's sessionId/username here.
+       // The user might still be trying to rejoin this specific session.
+       console.error(`Server reported session ${triedSessionId} not found.`);
+       // If this client IS the host, maybe their automatic rejoin/recreate is still processing
+       // or failed silently. Don't show error immediately, maybe just log.
+       // The manual rejoin button is still available.
+       if (isHost) {
+         console.warn(`Received session-not-found as host for ${triedSessionId}. Automatic recreate might have failed or is pending. Manual rejoin might be needed.`);
+         // Optionally set a less alarming error? Or none for now? Let's clear any previous error.
+         setError(null);
+       } else {
+         // If this client is NOT the host, show the informative error.
+         setError(`Session "${triedSessionId}" not found. If the session just started or the host disconnected, please wait for the host to rejoin/recreate the session, then try rejoining again using the button in the header.`);
+       }
+       // Clear only state that definitely becomes invalid if session isn't found/joined
+       setParticipants([]); // Clear participant list as it's definitely wrong now
+       // Keep hostSelectedContentInfo, currentContentInfo, currentIndex etc. as they represent the last known state the user was viewing
+       // setFetchTrigger(null); // Don't trigger fetches if session not found
+     };
+     // Define other handlers...
      const handleUsernameTaken = ({ username: triedUsername }) => {
        console.error(`Username ${triedUsername} is already taken.`); setError(`Username "${triedUsername}" is already taken. Please choose another.`);
        setUsername(null); // Clear username to re-prompt
      };
     const handleHostContentUpdated = ({ selectedContent: newHostContentInfo, currentIndex: newHostIndex }) => {
-      console.log('Host content updated:', newHostContentInfo);
-      setHostSelectedContentInfo(newHostContentInfo); setCurrentIndex(newHostIndex ?? 0); setError(null);
+      console.log('Host content updated:', newHostContentInfo, 'Index:', newHostIndex);
+      setHostSelectedContentInfo(newHostContentInfo);
+      setLatestHostIndex(newHostIndex ?? 0); // Update latest host index on content change too
+      setError(null);
       if (isSyncedToHost) {
         setCurrentContentInfo(newHostContentInfo);
+        setCurrentIndex(newHostIndex ?? 0); // Update local index if synced
         if (newHostContentInfo) {
           setFetchTrigger({ type: newHostContentInfo.type, id: newHostContentInfo.id });
         } else {
@@ -206,7 +267,10 @@ export const SocketProvider = ({ children }) => {
     };
     const handleHostIndexUpdated = ({ currentIndex: newHostIndex }) => {
       console.log('Host index updated:', newHostIndex);
-      if (isSyncedToHost) { setCurrentIndex(newHostIndex); }
+      setLatestHostIndex(newHostIndex); // Always update the latest known host index
+      if (isSyncedToHost) {
+        setCurrentIndex(newHostIndex); // Also update local index if currently synced
+      }
     };
     const handleUpdateParticipants = ({ participants: updatedParticipants }) => {
       console.log('Participants updated:', updatedParticipants); setParticipants(updatedParticipants || []);
@@ -233,7 +297,23 @@ export const SocketProvider = ({ children }) => {
     // Attach listeners
     socket.on('session-created', handleSessionCreated);
     socket.on('session-joined', handleSessionJoined);
-    socket.on('session-not-found', handleSessionNotFound);
+    // Define handleSessionNotFound INSIDE useEffect to access isHost state
+    const handleSessionNotFoundListener = ({ sessionId: triedSessionId }) => {
+       console.error(`Server reported session ${triedSessionId} not found.`);
+       if (isHost) {
+         // Host tried to rejoin manually and failed - server state is lost.
+         console.warn(`Received session-not-found as host for ${triedSessionId}. Server state likely lost. Recreating session.`);
+         // Maybe automatically trigger createSession again? Or just show error?
+         // For now, show error indicating manual recreation needed via "Start New Session" or rejoin button again.
+         setError(`Session "${triedSessionId}" not found on server. Please try Rejoin Session again or start a new session.`);
+       } else {
+         // Joiner tried to rejoin manually and failed.
+         setError(`Session "${triedSessionId}" not found. Please wait for the host to start/rejoin the session, then try rejoining again using the button in the header.`);
+       }
+       setParticipants([]);
+     };
+
+    socket.on('session-not-found', handleSessionNotFoundListener); // Use the listener defined inside
     socket.on('username-taken', handleUsernameTaken);
     socket.on('host_content_updated', handleHostContentUpdated);
     socket.on('host_index_updated', handleHostIndexUpdated);
@@ -246,7 +326,7 @@ export const SocketProvider = ({ children }) => {
       console.log("Cleaning up application-specific socket listeners...");
       socket.off('session-created', handleSessionCreated);
       socket.off('session-joined', handleSessionJoined);
-      socket.off('session-not-found', handleSessionNotFound);
+      socket.off('session-not-found', handleSessionNotFoundListener); // Use the listener defined inside
       socket.off('username-taken', handleUsernameTaken);
       socket.off('host_content_updated', handleHostContentUpdated);
       socket.off('host_index_updated', handleHostIndexUpdated);
@@ -284,12 +364,14 @@ export const SocketProvider = ({ children }) => {
     } else { console.warn('Cannot create session: Socket not connected or user missing.'); }
   }, [socket, connectionStatus]);
 
-  const joinSession = useCallback((id, user) => {
+  // Update joinSession to accept and pass the isHost flag
+  const joinSession = useCallback((id, user, isJoiningAsHost = false) => { // Add isJoiningAsHost parameter
     if (socket && connectionStatus === 'connected' && id && user) {
-      console.log(`Attempting to join session ${id} as ${user}`); setError(null);
-      socket.emit('join-session', { sessionId: id, username: user });
+      console.log(`Attempting to join session ${id} as ${user}. Is Host: ${isJoiningAsHost}`); setError(null);
+      // Pass the flag to the server
+      socket.emit('join-session', { sessionId: id, username: user, isHostAttemptingRejoin: isJoiningAsHost });
     } else { console.warn('Cannot join session: Socket not connected or details missing.'); }
-  }, [socket, connectionStatus]);
+  }, [socket, connectionStatus]); // Dependencies remain the same
 
   const selectContentAsHost = useCallback((contentInfo) => {
     if (socket && connectionStatus === 'connected' && isHost && sessionId) {
@@ -317,37 +399,60 @@ export const SocketProvider = ({ children }) => {
   }, [connectionStatus, isHost]);
 
   const syncToHost = useCallback(() => {
-    if (connectionStatus === 'connected' && !isHost) {
-      console.log('Syncing to host content.'); setError(null); setIsSyncedToHost(true);
-      setCurrentContentInfo(hostSelectedContentInfo);
-      const hostIndex = hostSelectedContentInfo?.currentIndex ?? 0;
-      setCurrentIndex(hostIndex);
-      if (hostSelectedContentInfo) {
-        setFetchTrigger({ type: hostSelectedContentInfo.type, id: hostSelectedContentInfo.id }); // Set trigger
-      } else {
-        setCurrentFullContent(null); setFetchTrigger(null);
-      }
-    } else { console.warn("Cannot sync to host: Not connected or already host."); }
-  }, [connectionStatus, isHost, hostSelectedContentInfo]);
+    // Syncing should be possible even if temporarily disconnected, as long as we know the host's state
+    if (!isHost && hostSelectedContentInfo) { // Check if host has selected content
+      console.log('Syncing to host content. Host index:', latestHostIndex);
+      setError(null);
+      setIsSyncedToHost(true);
+      setCurrentContentInfo(hostSelectedContentInfo); // Set content info
+      setCurrentIndex(latestHostIndex); // Use the LATEST known host index
+      // Trigger fetch only if content info actually exists
+      setFetchTrigger({ type: hostSelectedContentInfo.type, id: hostSelectedContentInfo.id });
+    } else if (!isHost && !hostSelectedContentInfo) {
+      // Host hasn't selected anything, sync means going to waiting screen
+      console.log('Syncing to host (no content selected).');
+      setError(null);
+      setIsSyncedToHost(true);
+      setCurrentContentInfo(null);
+      setCurrentFullContent(null);
+      setFetchTrigger(null);
+    } else {
+      console.warn("Cannot sync to host: Conditions not met (is host or host info missing).");
+    }
+  }, [isHost, hostSelectedContentInfo, latestHostIndex]); // Depend on latestHostIndex now
 
   const updateHostIndex = useCallback((newIndex) => {
-    if (socket && connectionStatus === 'connected' && isHost && sessionId && typeof newIndex === 'number') {
-      console.log(`Host emitting index update: ${newIndex}`);
-      socket.emit('host_update_index', { sessionId, newIndex });
-    } else { console.warn("Cannot update host index: Not connected or not host."); }
-  }, [socket, connectionStatus, isHost, sessionId]);
+    // Always update local state if the index is valid
+    if (isHost && typeof newIndex === 'number') {
+       const maxIndex = currentFullContent?.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent?.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
+       if (newIndex >= 0 && newIndex <= maxIndex) {
+         console.log(`Host updating local index to: ${newIndex}.`);
+         setCurrentIndex(newIndex); // Update local state immediately
+
+         // Only emit if connected
+         if (socket && connectionStatus === 'connected' && sessionId) {
+           console.log(`Host emitting index update: ${newIndex}`);
+           socket.emit('host_update_index', { sessionId, newIndex });
+         } else {
+           console.log("Host is offline, only updated local index.");
+         }
+       }
+    } else { console.warn("Cannot update host index: Conditions not met (not host or invalid index)."); }
+  }, [socket, connectionStatus, isHost, sessionId, currentFullContent]); // Added currentFullContent dependency
 
   const updateLocalIndex = useCallback((newIndex) => {
-    if (typeof newIndex === 'number') {
+    // Participant updates their local index
+    if (!isHost && typeof newIndex === 'number') {
       const maxIndex = currentFullContent?.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent?.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
       if (newIndex >= 0 && newIndex <= maxIndex) {
-        console.log(`Updating local index: ${newIndex}.`); setCurrentIndex(newIndex);
-        if (connectionStatus === 'connected' && !isHost) {
-          console.log("Unsyncing from host due to local navigation."); setIsSyncedToHost(false);
-        }
+        console.log(`Participant updating local index: ${newIndex}.`);
+        setCurrentIndex(newIndex); // Update local state
+        // Unsync if navigating locally (regardless of connection status, as sync only matters when connected)
+        console.log("Unsyncing from host due to local navigation.");
+        setIsSyncedToHost(false);
       }
-    }
-  }, [connectionStatus, isHost, currentFullContent]);
+    } else { console.warn("Cannot update local index: Conditions not met (is host or invalid index)."); }
+  }, [isHost, currentFullContent]); // Removed connectionStatus dependency as it's not needed for local update/unsync logic
 
   const getQuranMetadata = useCallback(() => {
     if (socket && connectionStatus === 'connected' && quranSurahList.length === 0) {
@@ -367,7 +472,8 @@ export const SocketProvider = ({ children }) => {
     socket, connectionStatus, connected: connectionStatus === 'connected',
     hasAttemptedConnection, // Expose the flag
     sessionId, username, isHost, hostSelectedContentInfo, currentContentInfo,
-    currentFullContent, currentIndex, isSyncedToHost, participants, quranSurahList,
+    currentFullContent, currentIndex, latestHostIndex, // Expose latestHostIndex if needed by UI, maybe not
+    isSyncedToHost, participants, quranSurahList,
     isLoadingContent, error,
     // Actions
     connectToServer, createSession, joinSession, selectContentAsHost,

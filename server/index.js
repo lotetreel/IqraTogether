@@ -409,42 +409,239 @@ io.on('connection', (socket) => {
     console.log(`Host transferred to ${newHostId} in session ${sessionId}`);
   });
 
-  // Handle disconnection (Keep as is, but ensure new host gets correct state)
+  // Store cleanup timers
+  const disconnectTimers = new Map(); // Map<socket.id, NodeJS.Timeout>
+
+  // Handle disconnection with grace period
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    const gracePeriodMs = 30000; // 30 seconds
 
+    let sessionFound = null;
+    let participantFound = null;
+    let participantIndexFound = -1;
+
+    // Find the session and participant
     for (const [sessionId, session] of sessions.entries()) {
-      const participantIndex = session.participants.findIndex(p => p.id === socket.id);
-
-      if (participantIndex !== -1) {
-        const wasHost = socket.id === session.hostId;
-        session.participants.splice(participantIndex, 1);
-
-        if (wasHost && session.participants.length > 0) {
-          const newHost = session.participants[0];
-          session.hostId = newHost.id;
-          newHost.isHost = true;
-
-          io.to(sessionId).emit('host_transferred', {
-            newHostId: newHost.id,
-            participants: session.participants
-          });
-           console.log(`Host disconnected, new host ${newHost.id} assigned in session ${sessionId}`);
-        }
-
-        io.to(sessionId).emit('update_participants', {
-          participants: session.participants
-        });
-
-        if (session.participants.length === 0) {
-          sessions.delete(sessionId);
-          console.log(`Session ${sessionId} removed - no participants remaining`);
-        }
-
+      const index = session.participants.findIndex(p => p.id === socket.id);
+      if (index !== -1) {
+        sessionFound = session;
+        participantFound = session.participants[index];
+        participantIndexFound = index;
         break;
       }
     }
+
+    if (participantFound && sessionFound) {
+      const sessionId = sessionFound.id;
+      // Mark participant as disconnected and record time
+      participantFound.disconnectedAt = Date.now();
+      participantFound.status = 'disconnected'; // Add a status flag
+
+      // Clear any existing timer for this user (shouldn't happen often, but safety)
+      if (disconnectTimers.has(socket.id)) {
+        clearTimeout(disconnectTimers.get(socket.id));
+      }
+
+      console.log(`User ${participantFound.name} (${socket.id}) marked as disconnected in session ${sessionId}. Starting cleanup timer.`);
+
+      // Set a timer to perform actual cleanup
+      const timerId = setTimeout(() => {
+        // --- Cleanup Logic ---
+        // Double-check if the session and participant still exist and are still disconnected
+        const currentSession = sessions.get(sessionId);
+        if (!currentSession) {
+          console.log(`Cleanup timer: Session ${sessionId} no longer exists.`);
+          disconnectTimers.delete(socket.id);
+          return;
+        }
+
+        const currentParticipantIndex = currentSession.participants.findIndex(p => p.id === socket.id);
+        const currentParticipant = currentParticipantIndex !== -1 ? currentSession.participants[currentParticipantIndex] : null;
+
+        // Only proceed if the participant is still in the list and marked as disconnected
+        if (currentParticipant && currentParticipant.status === 'disconnected') {
+          console.log(`Cleanup timer: Removing disconnected user ${currentParticipant.name} (${socket.id}) from session ${sessionId}.`);
+
+          const wasHost = socket.id === currentSession.hostId;
+          // Actually remove the participant
+          currentSession.participants.splice(currentParticipantIndex, 1);
+
+          // Handle host transfer if the disconnected user was the host
+          if (wasHost && currentSession.participants.length > 0) {
+            const newHost = currentSession.participants[0];
+            currentSession.hostId = newHost.id;
+            newHost.isHost = true;
+            io.to(sessionId).emit('host_transferred', {
+              newHostId: newHost.id,
+              participants: currentSession.participants.map(p => ({ ...p, status: p.status || 'connected' })) // Ensure status is sent
+            });
+            console.log(`Cleanup timer: Host disconnected, new host ${newHost.id} assigned in session ${sessionId}`);
+          }
+
+          // Notify remaining participants
+          io.to(sessionId).emit('update_participants', {
+            participants: currentSession.participants.map(p => ({ ...p, status: p.status || 'connected' })) // Ensure status is sent
+          });
+
+          // Delete session if empty
+          if (currentSession.participants.length === 0) {
+            sessions.delete(sessionId);
+            console.log(`Cleanup timer: Session ${sessionId} removed - no participants remaining`);
+          }
+        } else {
+           console.log(`Cleanup timer: User ${socket.id} already reconnected or removed from session ${sessionId}.`);
+        }
+        // --- End Cleanup Logic ---
+        disconnectTimers.delete(socket.id); // Remove timer reference
+      }, gracePeriodMs);
+
+      // Store the timer ID
+      disconnectTimers.set(socket.id, timerId);
+
+      // Notify clients immediately that the user is disconnected (optional, good UX)
+      io.to(sessionId).emit('update_participants', {
+        participants: sessionFound.participants.map(p => ({ ...p, status: p.status || 'connected' })) // Send updated status
+      });
+
+    } else {
+      console.log(`Disconnected user ${socket.id} not found in any active session.`);
+    }
   });
+
+  // Modify join-session to handle reconnection AND host recreation after server restart
+  socket.on('join-session', ({ sessionId, username, isHostAttemptingRejoin = false }) => { // Destructure new flag
+    let session = sessions.get(sessionId);
+
+    // --- Handle Session Not Found ---
+    if (!session) {
+      // Scenario 1: Host is trying to rejoin after server restart
+      if (isHostAttemptingRejoin) {
+        console.log(`Session ${sessionId} not found, but host ${username} (${socket.id}) is attempting to recreate.`);
+        // Recreate the session using the old ID
+        session = {
+          id: sessionId,
+          hostId: socket.id,
+          participants: [{
+            id: socket.id,
+            name: username,
+            isHost: true,
+            status: 'connected' // Mark as connected immediately
+          }],
+          selectedContent: null, // Start fresh, host needs to reselect
+          currentIndex: 0,
+        };
+        sessions.set(sessionId, session); // Add the recreated session to the map
+
+        socket.join(sessionId);
+
+        // Emit 'session-created' so client updates state correctly
+        socket.emit('session-created', {
+          sessionId,
+          username: username,
+          isHost: true,
+          userId: socket.id
+        });
+
+        // No need to update participants here as only host exists initially
+
+        console.log(`Session ${sessionId} recreated by host ${username}`);
+        return; // Session recreated, handler finished
+      }
+      // Scenario 2: Joiner trying to join a non-existent session
+      else {
+        socket.emit('session-not-found', { sessionId });
+        console.log(`Join attempt failed: Session ${sessionId} not found and joiner was not host.`);
+        return;
+      }
+    }
+    // --- End Handle Session Not Found ---
+
+    // --- Check for Existing Participant (by username) ---
+    const existingParticipantIndex = session.participants.findIndex(p => p.name === username);
+    let existingParticipant = existingParticipantIndex !== -1 ? session.participants[existingParticipantIndex] : null;
+
+    if (existingParticipant) {
+      // User with this name exists.
+      if (existingParticipant.status === 'disconnected') {
+        // --- Handle Reconnection ---
+        console.log(`User ${username} (${socket.id}) is rejoining session ${sessionId} (was disconnected).`);
+        const oldSocketId = existingParticipant.id;
+        if (disconnectTimers.has(oldSocketId)) {
+          clearTimeout(disconnectTimers.get(oldSocketId));
+          disconnectTimers.delete(oldSocketId);
+          console.log(`Cleared cleanup timer for ${oldSocketId}.`);
+        }
+        // Update participant record
+        session.participants[existingParticipantIndex] = {
+          ...existingParticipant,
+          id: socket.id, // New socket ID
+          status: 'connected',
+          disconnectedAt: undefined // Remove timestamp
+        };
+
+      } else {
+        // --- Handle Username Conflict / Rapid Reconnect ---
+        // User is already marked 'connected'. Assume this is the same user reconnecting quickly
+        // or a state mismatch. Update the socket ID associated with this user.
+        console.warn(`Username ${username} already marked as connected in session ${sessionId}. Updating socket ID from ${existingParticipant.id} to ${socket.id}.`);
+        // Update the existing participant record with the new socket ID
+         session.participants[existingParticipantIndex] = {
+          ...existingParticipant,
+          id: socket.id, // Update to the new socket ID
+          status: 'connected', // Ensure status is connected
+          disconnectedAt: undefined // Ensure no disconnect timestamp
+        };
+        // Note: We are NOT explicitly disconnecting the old socket here.
+      }
+
+      // --- Common actions after handling existing user (reconnect or conflict resolution) ---
+      const updatedParticipant = session.participants[existingParticipantIndex]; // Get the updated record
+      socket.join(sessionId);
+      socket.emit('session-joined', { // Send confirmation to the joining/rejoining socket
+        sessionId,
+        username: updatedParticipant.name,
+        isHost: updatedParticipant.isHost,
+        hostSelectedContent: session.selectedContent,
+        userId: socket.id,
+        currentIndex: session.currentIndex,
+        contentSelected: !!session.selectedContent,
+        participants: session.participants.map(p => ({ ...p, status: p.status || 'connected' }))
+      });
+      io.to(sessionId).emit('update_participants', { // Update everyone
+        participants: session.participants.map(p => ({ ...p, status: p.status || 'connected' }))
+      });
+      return; // Join/Rejoin handled
+
+    } else {
+      // --- Handle New Participant ---
+      console.log(`Adding ${username} (${socket.id}) as a new participant to session ${sessionId}.`);
+      const newParticipant = {
+        id: socket.id,
+        name: username,
+        isHost: false, // New joiners are never host initially
+        status: 'connected'
+      };
+      session.participants.push(newParticipant);
+      // --- Common actions for new participant ---
+      socket.join(sessionId);
+      socket.emit('session-joined', { // Send confirmation to the new joiner
+        sessionId,
+        username: newParticipant.name,
+        isHost: newParticipant.isHost,
+        hostSelectedContent: session.selectedContent,
+        userId: socket.id,
+        currentIndex: session.currentIndex,
+        contentSelected: !!session.selectedContent,
+        participants: session.participants.map(p => ({ ...p, status: p.status || 'connected' }))
+      });
+      io.to(sessionId).emit('update_participants', { // Update everyone
+        participants: session.participants.map(p => ({ ...p, status: p.status || 'connected' }))
+      });
+      console.log(`User ${username} joined session ${sessionId} as a new participant.`);
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 5000;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'; // Added useMemo
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader } from 'lucide-react'; // Added Loader
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn } from 'lucide-react'; // Added Loader, LogIn
 import { useSocket } from '../contexts/SocketContext';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
@@ -7,6 +7,7 @@ import { useSocket } from '../contexts/SocketContext';
 import ShareDialog from './ShareDialog';
 import NameInputDialog from './NameInputDialog';
 import ParticipantsDialog from './ParticipantsDialog';
+import RejoinDialog from './RejoinDialog'; // Import the new dialog
 import ProgressIndicator from './ProgressIndicator';
 import DuaSelectionPage from './DuaSelectionPage';
 import BackButton from './ui/BackButton';
@@ -65,6 +66,8 @@ const DuaSyncApp = () => {
   const [joinSessionId, setJoinSessionId] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // 'create' or 'join' - action to take after connection
+  // const [pendingRejoinDetails, setPendingRejoinDetails] = useState(null); // Removed - rejoin now automatic in context
+  const [showRejoinDialog, setShowRejoinDialog] = useState(false); // State for the rejoin dialog
   // const [contentSelected, setContentSelected] = useState(false); // Determined by !!currentContentInfo
   const [isBrowsingLocally, setIsBrowsingLocally] = useState(false); // Keep for participant browsing UI flow
 
@@ -138,6 +141,8 @@ const DuaSyncApp = () => {
       setPendingAction(null);
     }
   }, [connectionStatus, pendingAction]);
+
+  // Removed useEffect for pendingRejoinDetails
 
   // Auto-advance effect (for host only) - Updated
   useEffect(() => {
@@ -217,7 +222,7 @@ const DuaSyncApp = () => {
     // If 'connecting', do nothing (button should be disabled)
   };
 
-  // Handle name submission - Updated (Context actions already check connection)
+  // Handle name submission for initial join/create
   const handleNameSubmit = (name) => {
     setShowNameInputDialog(false);
     setLocalError(null); // Clear local error
@@ -433,8 +438,18 @@ const DuaSyncApp = () => {
                 </span>
               )}
             </div>
-            <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-              Session: <span className="font-medium">{sessionId}</span> | {participants.length} participant{participants.length !== 1 ? 's' : ''}
+            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted">
+              <span>Session: <span className="font-medium">{sessionId}</span> | {participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
+              {/* Add persistent Rejoin button here */}
+              <button
+                onClick={() => setShowRejoinDialog(true)}
+                className="btn-icon-sm tooltip-wrapper group"
+                aria-label="Rejoin Session"
+                disabled={connectionStatus === 'connecting'} // Disable if connecting
+              >
+                <LogIn size={16} />
+                 <span className="tooltip">Rejoin Session</span>
+              </button>
             </div>
           </div>
         </div>
@@ -458,9 +473,11 @@ const DuaSyncApp = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="container-narrow py-6">
 
-          {connectionStatus === 'connected' && !!sessionId ? ( // --- In Session (and connected) ---
+          {/* --- MODIFIED CONDITION: Show session view if sessionId exists, handle connection status internally --- */}
+          {!!sessionId ? ( // --- In Session (regardless of connection status for content view) ---
             isBrowsingLocally && !isHost ? (
               // 1. Participant is browsing locally - Show Selection Page
+              // (Browsing might need connection check for selecting *new* Quran content)
               <DuaSelectionPage
                 onSelectDua={handleContentSelection} // Use unified handler
                 onSelectQuran={handleContentSelection} // Use unified handler
@@ -555,34 +572,53 @@ const DuaSyncApp = () => {
                         ) : 'Auto'}
                       </button>
                     ) : (
-                      // Participant: Sync/Browse buttons
+                      // Participant: Sync/Browse buttons (Reconnect button moved to header)
                       <>
-                        {!isSyncedToHost && (
-                          <button onClick={syncToHost} className="btn-accent flex items-center">
-                            <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
-                          </button>
+                        {/* Only show Sync/Browse if connected */}
+                        {connectionStatus === 'connected' && (
+                          <>
+                            {!isSyncedToHost && (
+                              <button onClick={syncToHost} className="btn-accent flex items-center">
+                                <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
+                              </button>
+                            )}
+                            <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
+                              Browse
+                            </button>
+                          </>
                         )}
-                        <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
-                          Browse
-                        </button>
+                        {/* No button needed here when disconnected, Rejoin is in header */}
                       </>
                     )}
                   </div>
                 </div>
 
-                {/* Sync status indicator for participants */}
-                {!isHost && !isSyncedToHost && (
-                  <div className="text-center mt-6">
+                {/* Combined Status Indicators */}
+                <div className="text-center mt-6">
+                  {/* Show sync status only if connected AND unsynced */}
+                  {connectionStatus === 'connected' && !isHost && !isSyncedToHost && (
                     <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
                       <RefreshCw size={16} className="mr-1.5" />
                       Viewing independently. Click Sync to follow host.
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Footer message */}
+                  {/* Show disconnected message if applicable (and in a session) - Updated text */}
+                  {connectionStatus !== 'connected' && !!sessionId && (
+                     <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 text-sm">
+                       <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div>
+                       Connection lost. Use the Rejoin button <LogIn size={14} className="inline mx-1"/> in the header if needed.
+                     </div>
+                  )}
+                </div>
+                ) {/* <-- Correctly closing the parenthesis for the status indicator block */}
+
+                {/* Footer message - Adjusted for connection status */}
                 <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
-                  {isHost ? "Your navigation controls the session." : "Navigate freely or sync with the host."}
+                  {isHost
+                    ? (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.")
+                    : (connectionStatus === 'connected' ? "Navigate freely or sync with the host." : "Connection lost. Navigate locally or use Rejoin in header.")
+                  }
                 </div>
               </div>
             ) : isLoadingContent ? (
@@ -806,6 +842,29 @@ const DuaSyncApp = () => {
       {showShareDialog && <ShareDialog sessionId={sessionId} sessionUrl={sessionUrl} onClose={() => setShowShareDialog(false)} />}
       {showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
       {showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setJoinSessionId(''); setPendingAction(null); }} />}
+      {/* Render the Rejoin Dialog */}
+      <RejoinDialog
+        isOpen={showRejoinDialog}
+        onClose={() => setShowRejoinDialog(false)}
+        onSubmit={({ sessionId: rejoinSessionId, username: rejoinUsername }) => {
+          setShowRejoinDialog(false);
+          setLocalError(null); // Clear previous errors
+          console.log(`Attempting explicit rejoin for session ${rejoinSessionId} as ${rejoinUsername}`);
+          // Explicit rejoin always tries to connect if needed, then joins.
+          // The automatic rejoin logic is now in SocketContext's 'connect' handler.
+          if (connectionStatus !== 'connected') {
+             console.log("Not connected, attempting connection first...");
+             connectToServer(); // Initiate connection if needed
+             // We rely on the automatic rejoin in SocketContext now,
+             // but calling joinSession here acts as a manual trigger if already connected.
+          }
+           // Call joinSession directly. It checks internally if connected.
+           // It also now gets the isHost flag correctly.
+          joinSession(rejoinSessionId, rejoinUsername, isHost);
+        }}
+        initialSessionId={sessionId} // Pre-fill with current session ID
+        initialUsername={username} // Pre-fill with current username
+      />
     </div>
   );
 };
