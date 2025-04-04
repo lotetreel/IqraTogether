@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// Remove direct import of quranCollection
-import { duaCollection } from '../data/duaCollection'; 
-import { useSocket } from '../contexts/SocketContext'; // Import useSocket
+import { duaCollection } from '../data/duaCollection';
+import { quranMetadata } from '../data/quranCollection'; // Import Quran metadata directly
+// import { useSocket } from '../contexts/SocketContext'; // No longer needed for metadata
 import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
 import BackButton from './ui/BackButton';
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
@@ -9,30 +9,13 @@ import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import pat
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('duas'); 
-  const [filter, setFilter] = useState('all'); 
-  
-  // Get Quran list and fetch action from context
-  const { quranSurahList, getQuranMetadata, error: socketError } = useSocket(); 
-  const [isLoadingQuranList, setIsLoadingQuranList] = useState(false);
+  const [filter, setFilter] = useState('all');
+  // const { error: socketError } = useSocket(); // Keep if needed for displaying general socket errors
 
-  // Fetch Quran metadata when component mounts or tab changes to Quran
-  useEffect(() => {
-    if (activeTab === 'quran' && quranSurahList.length === 0) {
-      setIsLoadingQuranList(true);
-      getQuranMetadata(); // Call the action from context
-      // Loading state will be handled by checking quranSurahList length or a dedicated loading state if added to context
-      // For now, just check length after a delay
-      const timer = setTimeout(() => setIsLoadingQuranList(false), 2000); // Simple timeout fallback
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab, getQuranMetadata, quranSurahList.length]);
-
-  // Update loading state when list populates or error occurs
-  useEffect(() => {
-    if (quranSurahList.length > 0 || socketError) {
-      setIsLoadingQuranList(false);
-    }
-  }, [quranSurahList, socketError]);
+  // No need for loading state or effects, metadata is imported directly
+  // const [isLoadingQuranList, setIsLoadingQuranList] = useState(false);
+  // useEffect(() => { ... });
+  // useEffect(() => { ... });
 
   // --- Filtering Logic ---
   const filterContent = (items, type) => {
@@ -70,7 +53,7 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   };
 
   const filteredDuas = filterContent(duaCollection, 'dua');
-  const filteredQuran = filterContent(quranSurahList, 'quran'); // Use quranSurahList from context
+  const filteredQuran = filterContent(quranMetadata, 'quran'); // Use imported quranMetadata
   // --- End Filtering Logic ---
 
   return (
@@ -242,15 +225,8 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
               <Loader size={32} className="animate-spin text-primary-500 dark:text-primary-400" />
               <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading Quran list...</span>
             </div>
-        ) : socketError && quranSurahList.length === 0 ? (
-             // --- Error State for Quran ---
-             <div className="col-span-full text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-xl">
-               <Search size={48} className="mx-auto text-red-300 dark:text-red-600 mb-4" />
-               <p className="text-red-600 dark:text-red-300 mb-2 font-medium">Failed to load Quran list</p>
-               <p className="text-sm text-red-500 dark:text-red-400">{socketError}</p>
-             </div>
-        ) : (
-          // --- Quran Rendering (using quranSurahList) ---
+        ) : /* Removed socketError check as metadata is local */ (
+          // --- Quran Rendering (using imported quranMetadata) ---
           filteredQuran.map(surah => { // Removed console.log
             return (
             <div 
@@ -310,9 +286,9 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
       </div>
       
       {/* No results */}
-      {/* Adjust condition to check loading/error state for Quran */}
-      {(activeTab === 'duas' && filteredDuas.length === 0) || 
-       (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0) ? (
+      {/* Adjust condition for Quran no results */}
+      {(activeTab === 'duas' && filteredDuas.length === 0) ||
+       (activeTab === 'quran' && filteredQuran.length === 0) ? ( // Simplified check
         <div className="text-center py-12 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl mt-6">
           <Search size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <p className="text-gray-500 dark:text-dark-text-muted mb-2">No results found</p>

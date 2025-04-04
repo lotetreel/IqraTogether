@@ -1,50 +1,60 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
-// Import duaCollection temporarily to fetch Dua content locally
-// TODO: Consider moving Dua data loading to server as well for consistency
-import { duaCollection, contentMap as localContentMap } from '../data/duaCollection';
+// Import local data collections
+import { duaCollection, contentMap as duaContentMap } from '../data/duaCollection';
+import { quranMetadata, quranContentMap } from '../data/quranCollection'; // Import Quran data
 
 const SocketContext = createContext(null);
 
 export const useSocket = () => useContext(SocketContext);
 
 // --- External Helper Function for Fetching ---
-const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingContent, setCurrentFullContent, setError) => {
-  if (type === 'quran' && (!socket || connectionStatus !== 'connected')) {
-    console.error("Cannot fetch Quran content: Socket not connected.");
-    setError("Not connected to server to fetch Quran content.");
-    setIsLoadingContent(false); setCurrentFullContent(null); return;
-  }
+// Updated to fetch Quran data locally
+const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullContent, setError) => {
+  // No longer needs socket or connectionStatus for fetching
+
   if (!type || !id) {
     setCurrentFullContent(null); setIsLoadingContent(false); return;
   }
-  console.log(`Fetching full content via helper for type: ${type}, id: ${id}`);
+  console.log(`Fetching local content via helper for type: ${type}, id: ${id}`);
   setIsLoadingContent(true); setError(null);
   try {
+    let contentData = null;
     if (type === 'dua') {
-      const duaData = localContentMap[id];
-      if (duaData) {
-        await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
-        setCurrentFullContent({ ...duaData, verses: { arabic: duaData.arabic || [], transliteration: duaData.transliteration || [], translation: duaData.translation || [] }, totalAyahs: duaData.arabic?.length || 0 });
-      } else { throw new Error(`Dua with ID ${id} not found locally.`); }
+      contentData = duaContentMap[id];
+      if (!contentData) throw new Error(`Dua with ID ${id} not found locally.`);
+      // Simulate async fetch slightly for consistency
+      await new Promise(resolve => setTimeout(resolve, 50));
+      // Ensure Dua data has the expected structure (adjust if needed)
+       setCurrentFullContent({
+         id: contentData.id || id, // Use ID from map or passed ID
+         title: contentData.title || 'Dua',
+         arabicTitle: contentData.arabic || '', // Assuming arabic title is top-level
+         totalAyahs: contentData.arabic?.length || 0, // Assuming arabic array exists for length
+         verses: { // Ensure consistent verses structure
+           arabic: contentData.arabic || [],
+           transliteration: contentData.transliteration || [],
+           translation: contentData.translation || [],
+         },
+         type: 'dua'
+       });
+
     } else if (type === 'quran') {
-      socket.emit('get_quran_content', { surahId: id }, (response) => {
-        if (response.error) {
-          console.error('Error fetching Quran content:', response.error);
-          setError(`Error fetching Surah ${id}: ${response.error}`); setCurrentFullContent(null);
-        } else if (response.data) {
-          console.log(`Received Quran content for Surah ${id}`);
-          setCurrentFullContent({ id: response.data.id, title: response.data.title, arabicTitle: response.data.arabicTitle, totalAyahs: response.data.totalAyahs, verses: response.data.verses });
-        }
-        setIsLoadingContent(false); // Set loading false inside callback
-      });
-      return; // Exit early as fetch is async via socket callback
-    } else { throw new Error(`Unknown content type: ${type}`); }
+      contentData = quranContentMap[id];
+      if (!contentData) throw new Error(`Surah with ID ${id} not found locally.`);
+       // Simulate async fetch slightly for consistency
+       await new Promise(resolve => setTimeout(resolve, 50));
+       // quranContentMap already has the desired structure
+       setCurrentFullContent(contentData);
+    } else {
+      throw new Error(`Unknown content type: ${type}`);
+    }
+
   } catch (err) {
-    console.error('Error fetching full content:', err);
+    console.error('Error fetching local content:', err);
     setError(`Failed to load content: ${err.message}`); setCurrentFullContent(null);
   } finally {
-    if (type !== 'quran') { setIsLoadingContent(false); }
+    setIsLoadingContent(false);
   }
 };
 // --- End External Helper Function ---
@@ -53,7 +63,7 @@ const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingCon
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected', 'error'
-  const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false); // NEW: Track if connection was tried
+  const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false); // Track if connection was tried
   const [sessionId, setSessionId] = useState(null);
   const [username, setUsername] = useState(null);
   const [isHost, setIsHost] = useState(false);
@@ -63,11 +73,11 @@ export const SocketProvider = ({ children }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSyncedToHost, setIsSyncedToHost] = useState(true);
   const [participants, setParticipants] = useState([]);
-  const [quranSurahList, setQuranSurahList] = useState([]);
+  // const [quranSurahList, setQuranSurahList] = useState([]); // REMOVED - Metadata now imported directly
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState(null);
 
-  // NEW: State to trigger fetching content
+  // State to trigger fetching content
   const [fetchTrigger, setFetchTrigger] = useState(null); // { type, id } | null
 
   // Function to initiate connection
@@ -105,12 +115,9 @@ export const SocketProvider = ({ children }) => {
         // If we were in a session before disconnecting, try to rejoin/resync
         if (sessionId && username) {
           console.log('Reconnected, attempting to rejoin session:', sessionId);
-          // Use a specific rejoin event or the standard join event
-          // This depends on server implementation. Assuming 'join-session' works for rejoin.
           newSocket.emit('join-session', { sessionId, username }, (response) => {
             if (response?.error) {
               console.error("Failed to rejoin session after reconnect:", response.error);
-              // Handle failed rejoin (e.g., session expired, clear session state)
               setError(`Failed to rejoin session: ${response.error}. Please start a new session.`);
               setSessionId(null); setUsername(null); setIsHost(false);
               setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null);
@@ -124,29 +131,22 @@ export const SocketProvider = ({ children }) => {
       });
       newSocket.on('disconnect', (reason) => {
         console.log(`Socket disconnected: ${reason}`);
-        // Don't clear the socket instance immediately, allow reconnection attempts
         setConnectionStatus('disconnected');
-        // *** MODIFICATION START ***
-        // Reset only state that is invalid without connection
-        setParticipants([]);
-        // Keep session state (sessionId, username, isHost, content info, index)
-        // Set error to inform user
-        if (reason !== 'io client disconnect') { // Don't show error if user intentionally disconnected (e.g., closing tab)
+        setParticipants([]); // Reset only participants
+        if (reason !== 'io client disconnect') {
              setError("Connection lost. Attempting to reconnect...");
         }
-        // *** MODIFICATION END ***
       });
       newSocket.on('connect_error', (err) => {
         console.error('Socket connection error:', err);
-        // Don't clear socket instance here either, let disconnect handle it if needed
-        setConnectionStatus('error'); // Or keep 'disconnected' and rely on error state? Let's use 'error' state.
+        setConnectionStatus('error');
         setError(`Failed to connect: ${err.message}. Retrying...`);
       });
     } catch (err) {
       console.error("Error initializing socket connection:", err);
       setConnectionStatus('error'); setError(`Error setting up connection: ${err.message}`);
     }
-  }, [socket, connectionStatus, sessionId, username]); // Added sessionId and username dependencies for rejoin logic
+  }, [socket, connectionStatus, sessionId, username]);
 
   // Effect to clean up socket connection when the component unmounts
   useEffect(() => {
@@ -175,7 +175,7 @@ export const SocketProvider = ({ children }) => {
       setSessionId(joinedSessionId); setUsername(joinedUsername); setIsHost(userIsHost);
       setHostSelectedContentInfo(currentHostContentInfo); setIsSyncedToHost(true);
       setCurrentContentInfo(currentHostContentInfo); setCurrentIndex(hostCurrentIndex ?? 0); setError(null);
-      setParticipants(initialParticipants || []); // Set initial participants list
+      setParticipants(initialParticipants || []);
       if (contentSelected && currentHostContentInfo) {
         setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
       } else {
@@ -190,7 +190,7 @@ export const SocketProvider = ({ children }) => {
      };
      const handleUsernameTaken = ({ username: triedUsername }) => {
        console.error(`Username ${triedUsername} is already taken.`); setError(`Username "${triedUsername}" is already taken. Please choose another.`);
-       setUsername(null); // Clear username to re-prompt
+       setUsername(null);
      };
     const handleHostContentUpdated = ({ selectedContent: newHostContentInfo, currentIndex: newHostIndex }) => {
       console.log('Host content updated:', newHostContentInfo);
@@ -254,7 +254,7 @@ export const SocketProvider = ({ children }) => {
       socket.off('host_transferred', handleHostTransferred);
       socket.off('error', handleServerError);
     };
-  }, [socket, connectionStatus, isSyncedToHost]); // Dependencies are correct
+  }, [socket, connectionStatus, isSyncedToHost]);
 
   // Effect: Trigger fetch when fetchTrigger state changes
   useEffect(() => {
@@ -265,8 +265,8 @@ export const SocketProvider = ({ children }) => {
       _performFetch(
         fetchTrigger.type,
         fetchTrigger.id,
-        socket,
-        connectionStatus,
+        socket, // Still needed for potential Quran fetch inside helper (though currently local)
+        connectionStatus, // Still needed for potential Quran fetch inside helper
         setIsLoadingContent,
         setCurrentFullContent,
         setError
@@ -339,40 +339,30 @@ export const SocketProvider = ({ children }) => {
 
   const updateLocalIndex = useCallback((newIndex) => {
     if (typeof newIndex === 'number') {
-      const maxIndex = currentFullContent?.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent?.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
-      if (newIndex >= 0 && newIndex <= maxIndex) {
+      // Use totalAyahs from currentContentInfo for bounds check if available
+      const knownTotal = currentContentInfo?.totalAyahs ?? currentFullContent?.totalAyahs ?? 0;
+      if (newIndex >= 0 && newIndex < knownTotal) {
         console.log(`Updating local index: ${newIndex}.`); setCurrentIndex(newIndex);
         if (connectionStatus === 'connected' && !isHost) {
           console.log("Unsyncing from host due to local navigation."); setIsSyncedToHost(false);
         }
       }
     }
-  }, [connectionStatus, isHost, currentFullContent]);
+  }, [connectionStatus, isHost, currentFullContent, currentContentInfo]); // Added currentContentInfo
 
-  const getQuranMetadata = useCallback(() => {
-    if (socket && connectionStatus === 'connected' && quranSurahList.length === 0) {
-      console.log('Requesting Quran metadata from server...'); setError(null);
-      socket.emit('get_quran_metadata', (response) => {
-        if (response.error) {
-          console.error('Error fetching Quran metadata:', response.error);
-          setError(`Failed to load Quran list: ${response.error}`); setQuranSurahList([]);
-        } else if (response.data) {
-          console.log('Received Quran metadata.'); setQuranSurahList(response.data);
-        }
-      });
-    } else if (quranSurahList.length === 0) { console.warn("Cannot get Quran metadata: Socket not connected."); }
-  }, [socket, connectionStatus, quranSurahList]);
+  // REMOVED getQuranMetadata function
 
   const contextValue = {
     socket, connectionStatus, connected: connectionStatus === 'connected',
     hasAttemptedConnection, // Expose the flag
     sessionId, username, isHost, hostSelectedContentInfo, currentContentInfo,
-    currentFullContent, currentIndex, isSyncedToHost, participants, quranSurahList,
+    currentFullContent, currentIndex, isSyncedToHost, participants,
+    // quranSurahList, // REMOVED
     isLoadingContent, error,
     // Actions
     connectToServer, createSession, joinSession, selectContentAsHost,
     selectContentLocally, syncToHost, updateHostIndex, updateLocalIndex,
-    getQuranMetadata,
+    // getQuranMetadata, // REMOVED
     // fetchTrigger and _performFetch are internal
   };
 
