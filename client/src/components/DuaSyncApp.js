@@ -169,11 +169,13 @@ const DuaSyncApp = () => {
   // Local navigation should always work
   const navigate = (direction) => {
     const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
-    if (!currentFullContent || totalPhrases === 0) return;
+    // Allow navigation even if currentFullContent is null, as long as we know the total count from currentContentInfo
+    const knownTotal = currentContentInfo?.totalAyahs ?? totalPhrases;
+    if (!currentContentInfo || knownTotal === 0) return; // Need content info to know the bounds
 
     const newIndex = currentIndex + direction;
 
-    if (newIndex >= 0 && newIndex < totalPhrases) {
+    if (newIndex >= 0 && newIndex < knownTotal) { // Use knownTotal for bounds check
       if (isHost && isConnected) { // Host only updates globally if connected
         updateHostIndex(newIndex);
       } else {
@@ -341,7 +343,8 @@ const DuaSyncApp = () => {
   // --- Memoized values for rendering ---
   const contentTitle = currentContentInfo?.title || '';
   const contentSource = currentFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : ''); // Add source if available
-  const totalPhrases = currentFullContent?.totalAyahs ?? 0;
+  // Use totalAyahs from currentContentInfo if available (more resilient to disconnect)
+  const totalPhrases = currentContentInfo?.totalAyahs ?? currentFullContent?.totalAyahs ?? 0;
 
   // Determine current phrase data based on content type
   const currentPhraseData = useMemo(() => {
@@ -372,16 +375,21 @@ const DuaSyncApp = () => {
   // --- End Memoized values ---
 
   // --- Content Rendering Logic ---
-  const renderContent = () => {
-    // Prioritize showing content viewer frame if content *should* be displayed
+  const renderSessionContent = () => {
+    // Case 1: Participant is browsing locally
+    if (isBrowsingLocally && !isHost) {
+      return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
+    }
+
+    // Case 2: Content Info exists (we know what should be displayed)
     if (currentContentInfo) {
       return (
         <div className="space-y-6 animate-fade-in">
           {/* Back button and Content navigation status */}
           <div className="flex items-center justify-between">
              <BackButton onClick={handleBack} />
-             {/* Show total phrases only if content is loaded */}
-             {currentFullContent && totalPhrases > 0 && (
+             {/* Show total phrases using the resilient totalPhrases variable */}
+             {totalPhrases > 0 && (
                <div className="text-sm text-gray-500 dark:text-dark-text-muted">
                  {currentIndex + 1} of {totalPhrases}
                </div>
@@ -391,7 +399,8 @@ const DuaSyncApp = () => {
           {/* Content title */}
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-            {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
+            {/* Show source only if full content is loaded */}
+            {currentFullContent && contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
           </div>
 
           {/* Main content display card */}
@@ -403,13 +412,13 @@ const DuaSyncApp = () => {
                 <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading...</span>
               </div>
             ) : !currentFullContent ? (
-               // Content not available (e.g., offline Quran)
+               // Content not available (e.g., offline Quran or initial load failed)
                <div className="flex flex-col items-center justify-center h-full text-center">
                  <WifiOff size={32} className="text-gray-400 dark:text-gray-500 mb-3" />
                  <p className="text-gray-600 dark:text-dark-text-secondary">
-                   {currentContentInfo?.type === 'quran' ? "Quran content requires an active connection." : "Content unavailable."}
+                   {currentContentInfo?.type === 'quran' ? "Quran content requires an active connection." : "Content currently unavailable."}
                  </p>
-                 {!isConnected && <p className="text-sm text-gray-500 dark:text-dark-text-muted mt-1">You appear to be offline.</p>}
+                 {!isConnected && <p className="text-sm text-gray-500 dark:text-dark-text-muted mt-1">Attempting to reconnect...</p>}
                </div>
             ) : (
               // Actual content rendering
@@ -436,8 +445,8 @@ const DuaSyncApp = () => {
             )}
           </div>
 
-          {/* Navigation controls (only enable if content is loaded) */}
-          {currentFullContent && totalPhrases > 0 && (
+          {/* Navigation controls (enable based on known total phrases) */}
+          {totalPhrases > 0 && (
             <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
               {/* Previous/Next Buttons */}
               <div className="flex space-x-4">
@@ -483,30 +492,26 @@ const DuaSyncApp = () => {
           </div>
         </div>
       );
-    } else if (isHost) {
-      // Host, no content selected yet
+    }
+    // Case 3: Host, no content selected yet
+    else if (isHost) {
       return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
-    } else {
-      // Participant, waiting for host or browsing selection
-      if (isBrowsingLocally) {
-        // Participant browsing, show selection page
-        return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
-      } else {
-        // Participant waiting for host
-        return (
-          <div className="flex flex-col items-center justify-center h-full py-20">
-            <div className="text-center max-w-md">
-              <div className="relative mx-auto w-20 h-20 mb-6">
-                 <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
-                 <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
-               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
-              <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
-               <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
-            </div>
+    }
+    // Case 4: Participant, waiting for host (not browsing locally, no content info)
+    else {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-20">
+          <div className="text-center max-w-md">
+            <div className="relative mx-auto w-20 h-20 mb-6">
+               <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
+               <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
+             </div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
+            <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
+             <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
           </div>
-        );
-      }
+        </div>
+      );
     }
   };
   // --- End Content Rendering Logic ---
@@ -635,7 +640,7 @@ const DuaSyncApp = () => {
 
           {/* --- RENDER LOGIC BASED ON SESSION ID --- */}
           {!!sessionId ? (
-            renderContent() // Render based on the function above
+            renderSessionContent() // Render based on the function above
           ) : (
             // --- Not in Session ---
             <div className="card-gradient max-w-md mx-auto p-6 md:p-8 mt-8 animate-fade-in">
