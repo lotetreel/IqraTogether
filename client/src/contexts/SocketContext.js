@@ -21,7 +21,7 @@ const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullConten
   try {
     let contentData = null;
     if (type === 'dua') {
-      contentData = duaContentMap[id];
+      contentData = duaContentMap[id]; // Assumes dua IDs are strings like 'dua-kumayl'
       if (!contentData) throw new Error(`Dua with ID ${id} not found locally.`);
       // Simulate async fetch slightly for consistency
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -29,18 +29,18 @@ const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullConten
        setCurrentFullContent({
          id: contentData.id || id, // Use ID from map or passed ID
          title: contentData.title || 'Dua',
-         arabicTitle: contentData.arabic || '', // Assuming arabic title is top-level
-         totalAyahs: contentData.arabic?.length || 0, // Assuming arabic array exists for length
+         arabicTitle: contentData.arabicTitle || '', // Use arabicTitle if present
+         totalAyahs: contentData.verses?.arabic?.length || 0, // Calculate length from verses array
          verses: { // Ensure consistent verses structure
-           arabic: contentData.arabic || [],
-           transliteration: contentData.transliteration || [],
-           translation: contentData.translation || [],
+           arabic: contentData.verses?.arabic || [],
+           transliteration: contentData.verses?.transliteration || [],
+           translation: contentData.verses?.translation || [],
          },
          type: 'dua'
        });
 
     } else if (type === 'quran') {
-      contentData = quranContentMap[id];
+      contentData = quranContentMap[id]; // Assumes Quran IDs are numbers (1, 2, ...)
       if (!contentData) throw new Error(`Surah with ID ${id} not found locally.`);
        // Simulate async fetch slightly for consistency
        await new Promise(resolve => setTimeout(resolve, 50));
@@ -265,16 +265,15 @@ export const SocketProvider = ({ children }) => {
       _performFetch(
         fetchTrigger.type,
         fetchTrigger.id,
-        socket, // Still needed for potential Quran fetch inside helper (though currently local)
-        connectionStatus, // Still needed for potential Quran fetch inside helper
+        // socket, // No longer needed by helper
+        // connectionStatus, // No longer needed by helper
         setIsLoadingContent,
         setCurrentFullContent,
         setError
       );
     }
   // Dependencies: The effect runs when the trigger changes.
-  // It also needs access to socket and connectionStatus to pass to the helper.
-  }, [fetchTrigger, socket, connectionStatus]);
+  }, [fetchTrigger]); // Removed socket and connectionStatus
 
   // --- Context Actions ---
   const createSession = useCallback((user) => {
@@ -295,7 +294,13 @@ export const SocketProvider = ({ children }) => {
     if (socket && connectionStatus === 'connected' && isHost && sessionId) {
       if (contentInfo) {
         console.log(`Host selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id})`); setError(null);
-        socket.emit('select_content', { sessionId, contentInfo });
+        // Include totalAyahs when selecting Quran content
+        const contentToSend = { ...contentInfo };
+        if (contentInfo.type === 'quran') {
+            const meta = quranMetadata.find(s => s.id === contentInfo.id);
+            contentToSend.totalAyahs = meta ? meta.totalAyahs : 0;
+        }
+        socket.emit('select_content', { sessionId, contentInfo: contentToSend });
         // Listener 'host_content_updated' will set fetchTrigger
       } else {
         console.log(`Host deselecting content.`); setError(null);
@@ -303,18 +308,24 @@ export const SocketProvider = ({ children }) => {
         setCurrentContentInfo(null); setCurrentFullContent(null); setFetchTrigger(null);
       }
     } else { console.warn('Cannot select content as host: Socket not connected or not host.'); }
-  }, [socket, connectionStatus, isHost, sessionId]);
+  }, [socket, connectionStatus, isHost, sessionId]); // quranMetadata is stable, no need to add
 
   const selectContentLocally = useCallback((contentInfo) => {
     if (contentInfo) {
       console.log(`Locally selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id}).`); setError(null);
-      setCurrentContentInfo(contentInfo);
+      // Include totalAyahs when setting local Quran content info
+      const infoToSet = { ...contentInfo };
+       if (contentInfo.type === 'quran') {
+           const meta = quranMetadata.find(s => s.id === contentInfo.id);
+           infoToSet.totalAyahs = meta ? meta.totalAyahs : 0;
+       }
+      setCurrentContentInfo(infoToSet);
       if (connectionStatus === 'connected' && !isHost) {
         console.log("Unsyncing from host due to local selection."); setIsSyncedToHost(false);
       }
       setFetchTrigger({ type: contentInfo.type, id: contentInfo.id }); // Set trigger
     }
-  }, [connectionStatus, isHost]);
+  }, [connectionStatus, isHost]); // quranMetadata is stable
 
   const syncToHost = useCallback(() => {
     if (connectionStatus === 'connected' && !isHost) {

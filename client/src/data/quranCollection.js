@@ -1,64 +1,91 @@
-import ARABIC_QURAN from './arabic.json';
-import TRANSLITERATION_QURAN from './transliteration.json';
-import TRANSLATION_QURAN from './aliquliqarai.json'; // Assuming this is the English translation
+import ARABIC_QURAN_OBJ from './arabic.json';
+import TRANSLITERATION_QURAN_OBJ from './transliteration.json';
+import TRANSLATION_QURAN_OBJ from './aliquliqarai.json'; // Assuming this is the English translation
 
 // --- Process Quran Data ---
-
-// Assuming each JSON is an array of Surah objects
-// e.g., [{ id: 1, name: "Al-Fatiha", arabic: "...", verses: [...] }, ...]
-// And verses arrays align across files for the same Surah/Ayah index.
 
 const quranMetadata = [];
 const quranContentMap = {};
 
-// Check if data is loaded and has the expected array structure
-if (Array.isArray(ARABIC_QURAN) && Array.isArray(TRANSLITERATION_QURAN) && Array.isArray(TRANSLATION_QURAN)) {
-  // Assuming all arrays have the same length (114 Surahs) and are ordered correctly
-  for (let i = 0; i < ARABIC_QURAN.length; i++) {
-    const arabicSurah = ARABIC_QURAN[i];
-    const translitSurah = TRANSLITERATION_QURAN.find(s => s.id === arabicSurah.id); // Find matching ID
-    const translaSurah = TRANSLATION_QURAN.find(s => s.id === arabicSurah.id); // Find matching ID
+// Check if data is loaded and is an object
+if (ARABIC_QURAN_OBJ && typeof ARABIC_QURAN_OBJ === 'object' && Object.keys(ARABIC_QURAN_OBJ).length > 0 &&
+    TRANSLITERATION_QURAN_OBJ && typeof TRANSLITERATION_QURAN_OBJ === 'object' &&
+    TRANSLATION_QURAN_OBJ && typeof TRANSLATION_QURAN_OBJ === 'object') {
 
-    if (!arabicSurah || !translitSurah || !translaSurah) {
-      console.warn(`Data mismatch for Surah ID ${arabicSurah?.id || i + 1}. Skipping.`);
-      continue;
-    }
+  try {
+    // Iterate over the keys (Surah numbers as strings) of the Arabic object
+    Object.keys(ARABIC_QURAN_OBJ).forEach(surahId => { // surahId will be "1", "2", etc.
+      const arabicSurah = ARABIC_QURAN_OBJ[surahId];
+      const translitSurah = TRANSLITERATION_QURAN_OBJ[surahId];
+      const translaSurah = TRANSLATION_QURAN_OBJ[surahId];
 
-    // Basic metadata for selection list
-    const metadata = {
-      id: arabicSurah.id, // Use numeric ID
-      title: arabicSurah.name || `Surah ${arabicSurah.id}`, // English name
-      arabicTitle: arabicSurah.arabic || '', // Arabic name (if available in arabic.json)
-      totalAyahs: arabicSurah.verses?.length || 0, // Calculate total ayahs
-      type: 'quran' // Add type identifier
-    };
-    quranMetadata.push(metadata);
+      // Basic validation for existence and Ayahs object
+      if (!arabicSurah?.Ayahs || !translitSurah?.Ayahs || !translaSurah?.Ayahs) {
+        console.warn(`Missing or invalid Surah/Ayahs data for Surah ID ${surahId}. Skipping.`);
+        return; // Skip this surah
+      }
 
-    // Combine verses for the content map
-    const combinedVerses = [];
-    const numVerses = metadata.totalAyahs;
+      const arabicAyahsObj = arabicSurah.Ayahs;
+      const translitAyahsObj = translitSurah.Ayahs;
+      const translationAyahsObj = translaSurah.Ayahs;
 
-    for (let j = 0; j < numVerses; j++) {
-      combinedVerses.push({
-        ayah: j + 1, // Ayah number (1-based)
-        arabic: arabicSurah.verses?.[j]?.text || '', // Assuming structure { text: "..." }
-        transliteration: translitSurah.verses?.[j]?.text || '', // Assuming structure { text: "..." }
-        translation: translaSurah.verses?.[j]?.text || '', // Assuming structure { text: "..." }
-      });
-    }
+      // Calculate total ayahs by counting keys in the Ayahs object
+      const totalAyahs = Object.keys(arabicAyahsObj).length;
 
-    // Store full combined content in the map
-    quranContentMap[arabicSurah.id] = {
-      id: metadata.id,
-      title: metadata.title,
-      arabicTitle: metadata.arabicTitle,
-      totalAyahs: metadata.totalAyahs,
-      verses: combinedVerses,
-      type: 'quran'
-    };
+      // Basic metadata for selection list
+      const metadata = {
+        id: parseInt(surahId, 10), // Convert string ID to number for consistency? Or keep as string? Let's use number.
+        title: arabicSurah.SurahEnglishNames || arabicSurah.SurahTransliteratedName || `Surah ${surahId}`, // English name
+        arabicTitle: arabicSurah.SurahArabicName || '', // Arabic name
+        totalAyahs: totalAyahs,
+        type: 'quran' // Add type identifier
+      };
+      quranMetadata.push(metadata);
+
+      // Combine verses for the content map
+      const combinedVerses = [];
+      for (let i = 1; i <= totalAyahs; i++) {
+        const ayahKey = String(i); // Keys in Ayahs object are strings "1", "2", ...
+
+        const arabicText = arabicAyahsObj[ayahKey]?.Arabic ?? '';
+        const translitText = translitAyahsObj[ayahKey]?.Transliteration ?? '';
+        const translationAyahObj = translationAyahsObj[ayahKey];
+        // Use the correct key for the translation text
+        const translationText = translationAyahObj?.["Ali Quli Qara'i"] ?? '';
+
+        combinedVerses.push({
+          ayah: i, // Ayah number
+          arabic: arabicText,
+          transliteration: translitText,
+          translation: translationText,
+        });
+      }
+
+      // Store full combined content in the map, using numeric ID as key
+      quranContentMap[metadata.id] = {
+        id: metadata.id,
+        title: metadata.title,
+        arabicTitle: metadata.arabicTitle,
+        totalAyahs: metadata.totalAyahs,
+        verses: combinedVerses,
+        type: 'quran'
+      };
+    });
+
+    // Sort metadata by Surah number (ID)
+    quranMetadata.sort((a, b) => a.id - b.id);
+
+    console.log(`Successfully processed Quran metadata and content for ${quranMetadata.length} surahs.`);
+
+  } catch (error) {
+    console.error("Error processing Quran data:", error);
+    // Ensure arrays/maps are empty on error
+    quranMetadata.length = 0;
+    Object.keys(quranContentMap).forEach(key => delete quranContentMap[key]);
   }
+
 } else {
-  console.error("Failed to load or parse one or more Quran JSON files.");
+  console.error("Failed to load or parse one or more Quran JSON files OR root is not an object.");
 }
 
 export { quranMetadata, quranContentMap };
