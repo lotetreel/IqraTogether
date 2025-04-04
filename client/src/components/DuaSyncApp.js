@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'; // Added useMemo
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, WifiOff } from 'lucide-react'; // Added WifiOff, Loader
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader } from 'lucide-react'; // Added Loader
 import { useSocket } from '../contexts/SocketContext';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
@@ -70,7 +70,6 @@ const DuaSyncApp = () => {
 
   // Combine context error and local error for display
   const displayError = contextError || localError;
-  const isConnected = connectionStatus === 'connected'; // Convenience flag
 
   // Font Size State - Initialize safely from localStorage or defaults (Keep as is)
   const defaultArabicSize = 1.5;
@@ -146,8 +145,7 @@ const DuaSyncApp = () => {
     // Use currentFullContent to check length
     const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
 
-    // Only run if connected and host
-    if (isConnected && autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
+    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
       interval = setInterval(() => {
         if (currentIndex < totalPhrases - 1) {
           const newIndex = currentIndex + 1;
@@ -163,25 +161,20 @@ const DuaSyncApp = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isConnected, autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex]); // Added isConnected
+  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex]);
 
   // --- Navigation Actions ---
-  // Local navigation should always work
   const navigate = (direction) => {
     const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
-    // Allow navigation even if currentFullContent is null, as long as we know the total count from currentContentInfo
-    const knownTotal = currentContentInfo?.totalAyahs ?? totalPhrases;
-    if (!currentContentInfo || knownTotal === 0) return; // Need content info to know the bounds
+    if (!currentFullContent || totalPhrases === 0) return;
 
     const newIndex = currentIndex + direction;
 
-    if (newIndex >= 0 && newIndex < knownTotal) { // Use knownTotal for bounds check
-      if (isHost && isConnected) { // Host only updates globally if connected
-        updateHostIndex(newIndex);
+    if (newIndex >= 0 && newIndex < totalPhrases) {
+      if (isHost) {
+        updateHostIndex(newIndex); // Host updates globally
       } else {
-        // Participant always updates locally first
-        // Host updates locally if disconnected
-        updateLocalIndex(newIndex);
+        updateLocalIndex(newIndex); // Participant updates locally (if unsynced)
       }
     }
   };
@@ -193,7 +186,7 @@ const DuaSyncApp = () => {
   // Start hosting a session - Updated for on-demand connection
   const startHosting = () => {
     setLocalError(null); // Clear local error
-    if (isConnected) {
+    if (connectionStatus === 'connected') {
       // Already connected, show name input directly
       setShowNameInputDialog(true);
     } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
@@ -213,7 +206,7 @@ const DuaSyncApp = () => {
     setLocalError(null); // Clear local error
     setIsJoining(true); // Keep this flag
 
-    if (isConnected) {
+    if (connectionStatus === 'connected') {
       // Already connected, show name input directly
       setShowNameInputDialog(true);
     } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
@@ -246,8 +239,7 @@ const DuaSyncApp = () => {
 
   // Transfer host to another participant - Updated
   const transferHost = (newHostId) => {
-    // Action requires connection
-    if (!isConnected || !isHost || !socket || !sessionId) return;
+    if (!isHost || !socket || !sessionId || connectionStatus !== 'connected') return; // Check connection
     setLocalError(null);
     socket.emit('transfer_host', { sessionId, newHostId });
     setShowParticipantsDialog(false);
@@ -270,13 +262,16 @@ const DuaSyncApp = () => {
     if (!contentInfo) return;
     setLocalError(null);
 
-    if (isHost && isConnected) { // Host action requires connection
+    if (isHost && connectionStatus === 'connected') { // Ensure host is connected
       selectContentAsHost(contentInfo); // Host selects for everyone
       setShowShareDialog(true); // Show share dialog for host
-    } else {
-      // Participant selects locally regardless of connection status
+    } else if (isBrowsingLocally) {
+      selectContentLocally(contentInfo); // Participant selects only for themselves
+      setIsBrowsingLocally(false); // Exit browsing mode
+    } else if (!isHost && !isBrowsingLocally) {
+      // If participant clicks content while synced, treat as local selection
       selectContentLocally(contentInfo);
-      setIsBrowsingLocally(false); // Exit browsing mode if they were browsing
+      setIsBrowsingLocally(false); // Should already be false, but ensure
     }
     // The UI will transition out of the selection page automatically
     // when currentContentInfo/currentFullContent updates in the context.
@@ -287,52 +282,29 @@ const DuaSyncApp = () => {
     setLocalError(null);
     // Scenario 1: In session, viewing content -> Go back to selection/options
     if (sessionId && currentContentInfo) {
-      if (isHost) {
+      if (isHost && connectionStatus === 'connected') { // Check connection
         // Host goes back from content view -> Show selection page again
-        // This action requires connection to notify others
-        if (isConnected) {
-            selectContentAsHost(null); // Deselect content
-        } else {
-            // If host is disconnected, just clear local view? Or prevent back?
-            // Let's clear local view for now.
-            setCurrentContentInfo(null);
-            // Optionally show an error/warning?
-            setLocalError("Cannot change shared content while offline.");
-        }
+        selectContentAsHost(null); // Deselect content
       } else if (isBrowsingLocally) {
          // Participant was browsing locally and viewing content -> Stop browsing
          setIsBrowsingLocally(false);
-         if (isConnected) { // Only sync if connected
+         if (connectionStatus === 'connected') { // Only sync if connected
            syncToHost(); // Re-sync to host when stopping browsing
-         } else {
-            // If disconnected, just revert to showing host's last known info (if any)
-            setCurrentContentInfo(hostSelectedContentInfo);
-            // Fetching host content will fail if disconnected, show appropriate UI state
          }
-      } else {
+      } else if (!isHost && connectionStatus === 'connected') { // Participant was synced
         // Participant was synced and viewing content -> Start Browsing
         setIsBrowsingLocally(true);
-        // No need to sync or change content yet, just change the mode
       }
     }
-    // Scenario 2: In session, Host is on selection page -> Leave session (requires connection)
-    else if (sessionId && isHost && !currentContentInfo) {
-       if (isConnected && socket) {
-           socket.emit('leave_session', { sessionId });
-           // State reset will happen via disconnect/context logic
-       } else {
-           // Cannot leave session if disconnected? Show error?
-           setLocalError("Cannot leave session while disconnected.");
-       }
+    // Scenario 2: In session, Host is on selection page -> Leave session
+    else if (sessionId && isHost && !currentContentInfo && connectionStatus === 'connected') { // Check connection
+       if (socket) socket.emit('leave_session', { sessionId });
     }
     // Scenario 3: In session, Participant is browsing (on selection page) -> Stop browsing
     else if (sessionId && !isHost && isBrowsingLocally) {
        setIsBrowsingLocally(false);
-       if (isConnected) { // Only sync if connected
+       if (connectionStatus === 'connected') { // Only sync if connected
          syncToHost(); // Re-sync
-       } else {
-           // If disconnected, just revert to showing host's last known info (if any)
-           setCurrentContentInfo(hostSelectedContentInfo);
        }
     }
     // Scenario 4: Not in session (on initial screen) -> No action needed? Or exit app?
@@ -343,21 +315,21 @@ const DuaSyncApp = () => {
   // --- Memoized values for rendering ---
   const contentTitle = currentContentInfo?.title || '';
   const contentSource = currentFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : ''); // Add source if available
-  // Use totalAyahs from currentContentInfo if available (more resilient to disconnect)
-  const totalPhrases = currentContentInfo?.totalAyahs ?? currentFullContent?.totalAyahs ?? 0;
+  const totalPhrases = currentFullContent?.totalAyahs ?? 0;
 
   // Determine current phrase data based on content type
   const currentPhraseData = useMemo(() => {
-    // Return default empty strings if content isn't fully loaded yet
     if (!currentFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
       return { arabic: '', transliteration: '', translation: '' };
     }
 
     if (currentContentInfo?.type === 'quran') {
       // Quran structure: currentFullContent.verses is array [{ayah, arabic, transliteration, translation}, ...]
+      // Reverted: Server now sends full arabic text including symbol
       const verse = currentFullContent.verses[currentIndex];
       return {
         arabic: verse?.arabic || '',
+        // arabicAyahEnd: verse?.arabicAyahEnd || '', // Removed
         transliteration: verse?.transliteration || '',
         translation: verse?.translation || '',
       };
@@ -374,149 +346,6 @@ const DuaSyncApp = () => {
   }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
   // --- End Memoized values ---
 
-  // --- Content Rendering Logic ---
-  const renderSessionContent = () => {
-    // Case 1: Participant is browsing locally
-    if (isBrowsingLocally && !isHost) {
-      return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
-    }
-
-    // Case 2: Content Info exists (we know what should be displayed)
-    if (currentContentInfo) {
-      return (
-        <div className="space-y-6 animate-fade-in">
-          {/* Back button and Content navigation status */}
-          <div className="flex items-center justify-between">
-             <BackButton onClick={handleBack} />
-             {/* Show total phrases using the resilient totalPhrases variable */}
-             {totalPhrases > 0 && (
-               <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-                 {currentIndex + 1} of {totalPhrases}
-               </div>
-             )}
-           </div>
-
-          {/* Content title */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-            {/* Show source only if full content is loaded */}
-            {currentFullContent && contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
-          </div>
-
-          {/* Main content display card */}
-          <div className="card p-6 md:p-8 min-h-[200px]">
-            {isLoadingContent ? (
-              // Loading state within the card
-              <div className="flex items-center justify-center h-full">
-                <Loader size={32} className="animate-spin text-primary-500 dark:text-primary-400" />
-                <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading...</span>
-              </div>
-            ) : !currentFullContent ? (
-               // Content not available (e.g., offline Quran or initial load failed)
-               <div className="flex flex-col items-center justify-center h-full text-center">
-                 <WifiOff size={32} className="text-gray-400 dark:text-gray-500 mb-3" />
-                 <p className="text-gray-600 dark:text-dark-text-secondary">
-                   {currentContentInfo?.type === 'quran' ? "Quran content requires an active connection." : "Content currently unavailable."}
-                 </p>
-                 {!isConnected && <p className="text-sm text-gray-500 dark:text-dark-text-muted mt-1">Attempting to reconnect...</p>}
-               </div>
-            ) : (
-              // Actual content rendering
-              <>
-                {/* Arabic text */}
-                <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
-                  <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
-                    {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                  </p>
-                </div>
-                {/* Transliteration */}
-                {showTransliteration && currentPhraseData.transliteration && (
-                  <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
-                    <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
-                  </div>
-                )}
-                {/* Translation */}
-                {showTranslation && currentPhraseData.translation && (
-                  <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
-                    <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Navigation controls (enable based on known total phrases) */}
-          {totalPhrases > 0 && (
-            <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
-              {/* Previous/Next Buttons */}
-              <div className="flex space-x-4">
-                <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn flex items-center ${currentIndex === 0 ? 'btn-disabled' : 'btn-primary'}`}>
-                  <ChevronLeft size={20} className="mr-1" /> Previous
-                </button>
-                <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn flex items-center ${currentIndex >= totalPhrases - 1 ? 'btn-disabled' : 'btn-primary'}`}>
-                  Next <ChevronRight size={20} className="ml-1" />
-                </button>
-              </div>
-              {/* Action Buttons */}
-              <div className="flex space-x-4 mt-4 md:mt-0">
-                {isHost ? (
-                  <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''} ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isConnected}>
-                    {autoAdvance ? (<span className="flex items-center">Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span></span>) : 'Auto'}
-                  </button>
-                ) : (
-                  <>
-                    {!isSyncedToHost && (
-                      <button onClick={syncToHost} className={`btn-accent flex items-center ${!isConnected ? 'btn-disabled' : ''}`} disabled={!isConnected}>
-                        <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
-                      </button>
-                    )}
-                    <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center"> Browse </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Sync status indicator */}
-          {!isHost && !isSyncedToHost && isConnected && (
-            <div className="text-center mt-6">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
-                <RefreshCw size={16} className="mr-1.5" /> Viewing independently. Click Sync to follow host.
-              </div>
-            </div>
-          )}
-
-          {/* Footer message */}
-          <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
-            {isHost ? (isConnected ? "Your navigation controls the session." : "You are offline. Navigation is local.") : (isConnected ? "Navigate freely or sync with the host." : "You are offline. Navigation is local.")}
-          </div>
-        </div>
-      );
-    }
-    // Case 3: Host, no content selected yet
-    else if (isHost) {
-      return <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />;
-    }
-    // Case 4: Participant, waiting for host (not browsing locally, no content info)
-    else {
-      return (
-        <div className="flex flex-col items-center justify-center h-full py-20">
-          <div className="text-center max-w-md">
-            <div className="relative mx-auto w-20 h-20 mb-6">
-               <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
-               <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
-             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
-            <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
-             <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
-          </div>
-        </div>
-      );
-    }
-  };
-  // --- End Content Rendering Logic ---
-
-
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary transition-colors duration-300">
       {/* Header */}
@@ -532,26 +361,16 @@ const DuaSyncApp = () => {
             IqraTogether
           </h1>
           <div className="flex items-center space-x-1 md:space-x-2"> {/* Reduced spacing slightly */}
-            {/* Session controls - Show only if in session */}
-            {!!sessionId && (
+            {/* Session controls - Show only if connected */}
+            {connectionStatus === 'connected' && !!sessionId && (
               <>
-                <button
-                  onClick={() => setShowParticipantsDialog(true)}
-                  className={`btn-icon tooltip-wrapper group ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  aria-label="Participants"
-                  disabled={!isConnected}
-                >
+                <button onClick={() => setShowParticipantsDialog(true)} className="btn-icon tooltip-wrapper group" aria-label="Participants">
                   <Users size={20} />
-                  <span className="tooltip">Participants ({isConnected ? participants.length : '?'})</span> {/* Show count only if connected */}
+                  <span className="tooltip">Participants ({participants.length})</span> {/* Show count */}
                 </button>
-                {/* Only show Share button to Host and if connected */}
+                {/* Only show Share button to Host */}
                 {isHost && (
-                  <button
-                    onClick={() => setShowShareDialog(true)}
-                    className={`btn-icon tooltip-wrapper group ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    aria-label="Share"
-                    disabled={!isConnected}
-                  >
+                  <button onClick={() => setShowShareDialog(true)} className="btn-icon tooltip-wrapper group" aria-label="Share">
                     <Share2 size={20} />
                     <span className="tooltip">Share Session</span>
                   </button>
@@ -578,17 +397,18 @@ const DuaSyncApp = () => {
           </div>
         </div>
       )}
-      {/* Show disconnected only if an attempt was made OR if we were previously in a session */}
-      {(connectionStatus === 'disconnected' || connectionStatus === 'error') && hasAttemptedConnection && (
+      {/* Show disconnected only if an attempt was made */}
+      {connectionStatus === 'disconnected' && hasAttemptedConnection && (
         <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center text-sm font-medium">
           <div className="container-narrow flex items-center justify-center">
-            <WifiOff size={16} className="mr-2" />
-            {error || "Connection lost. Attempting to reconnect..."} {/* Show specific error if available */}
+            <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+            Disconnected
           </div>
         </div>
       )}
-      {/* Keep existing error message display for other errors */}
-      {displayError && connectionStatus !== 'error' && !(connectionStatus === 'disconnected' && hasAttemptedConnection) && (
+      {/* Keep existing error message display */}
+      {/* Error message */}
+      {displayError && (
         <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center">
           <div className="container-narrow flex justify-between items-center">
             <span>{displayError}</span>
@@ -599,8 +419,8 @@ const DuaSyncApp = () => {
         </div>
       )}
 
-      {/* Host status badge - Show only if in session */}
-      {!!sessionId && (
+      {/* Host status badge - Show only if connected */}
+      {connectionStatus === 'connected' && !!sessionId && (
         <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-100 dark:border-dark-bg-tertiary">
           <div className="container-narrow py-2 flex flex-wrap justify-between items-center gap-x-4 gap-y-1"> {/* Added flex-wrap and gap */}
             <div className="flex items-center">
@@ -614,7 +434,7 @@ const DuaSyncApp = () => {
               )}
             </div>
             <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-              Session: <span className="font-medium">{sessionId}</span> {isConnected ? `| ${participants.length} participant${participants.length !== 1 ? 's' : ''}` : '(Offline)'}
+              Session: <span className="font-medium">{sessionId}</span> | {participants.length} participant{participants.length !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -622,14 +442,14 @@ const DuaSyncApp = () => {
 
       {/* Progress bar */}
       {/* Show only if in session and content is selected */}
-      {!!sessionId && currentContentInfo && totalPhrases > 0 && (
+      {connectionStatus === 'connected' && !!sessionId && currentContentInfo && totalPhrases > 0 && (
         <div className="container-narrow pt-4">
           <ProgressIndicator
             currentIndex={currentIndex} // Use index from context
-            // Pass host index if participant is unsynced OR if disconnected
-            hostIndex={!isHost && (!isSyncedToHost || !isConnected) ? hostSelectedContentInfo?.currentIndex ?? 0 : currentIndex}
+            // Pass host index if participant is unsynced
+            hostIndex={!isHost && !isSyncedToHost ? hostSelectedContentInfo?.currentIndex ?? 0 : currentIndex}
             totalPhrases={totalPhrases}
-            isSynced={isConnected && (isSyncedToHost || isHost)} // Sync only possible if connected
+            isSynced={isSyncedToHost || isHost} // Use context sync state
           />
         </div>
       )}
@@ -638,11 +458,166 @@ const DuaSyncApp = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="container-narrow py-6">
 
-          {/* --- RENDER LOGIC BASED ON SESSION ID --- */}
-          {!!sessionId ? (
-            renderSessionContent() // Render based on the function above
-          ) : (
-            // --- Not in Session ---
+          {connectionStatus === 'connected' && !!sessionId ? ( // --- In Session (and connected) ---
+            isBrowsingLocally && !isHost ? (
+              // 1. Participant is browsing locally - Show Selection Page
+              <DuaSelectionPage
+                onSelectDua={handleContentSelection} // Use unified handler
+                onSelectQuran={handleContentSelection} // Use unified handler
+                onBack={handleBack} // Use unified back handler
+              />
+            ) : currentContentInfo && currentFullContent ? (
+              // 2. Content is selected and loaded - Show Content Viewer
+              <div className="space-y-6 animate-fade-in">
+                {/* Back button and Content navigation status */}
+                <div className="flex items-center justify-between">
+                   <BackButton onClick={handleBack} />
+                   <div className="text-sm text-gray-500 dark:text-dark-text-muted">
+                     {currentIndex + 1} of {totalPhrases}
+                   </div>
+                 </div>
+
+                {/* Content title */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
+                  {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
+                </div>
+
+                {/* Main content display */}
+                <div className="card p-6 md:p-8 min-h-[200px]"> {/* Added min-height */}
+                  {/* Arabic text */}
+                  <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
+                    {/* Apply font and add letter-spacing */}
+                    <p
+                      className="leading-loose font-uthmani"
+                      dir="rtl"
+                      style={{ fontSize: `${arabicFontSize}rem` }} // Removed letter-spacing
+                    >
+                      {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                    </p>
+                  </div>
+
+                  {/* Transliteration - Use dangerouslySetInnerHTML */}
+                  {showTransliteration && currentPhraseData.transliteration && (
+                    <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                      <p
+                        className="text-gray-700 dark:text-dark-text-secondary italic"
+                        style={{ fontSize: `${transliterationFontSize}rem` }}
+                        dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Translation - Use dangerouslySetInnerHTML */}
+                  {showTranslation && currentPhraseData.translation && (
+                    <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                      <p
+                        className="text-gray-800 dark:text-dark-text-primary"
+                        style={{ fontSize: `${translationFontSize}rem` }}
+                        dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Navigation controls */}
+                <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
+                  {/* Previous/Next Buttons */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={prevPhrase}
+                      disabled={currentIndex === 0}
+                      className={`btn flex items-center ${currentIndex === 0 ? 'btn-disabled' : 'btn-primary'}`}
+                    >
+                      <ChevronLeft size={20} className="mr-1" /> Previous
+                    </button>
+                    <button
+                      onClick={nextPhrase}
+                      disabled={currentIndex >= totalPhrases - 1}
+                      className={`btn flex items-center ${currentIndex >= totalPhrases - 1 ? 'btn-disabled' : 'btn-primary'}`}
+                    >
+                      Next <ChevronRight size={20} className="ml-1" />
+                    </button>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-4 mt-4 md:mt-0">
+                    {isHost ? (
+                      // Host: Auto-advance button
+                      <button
+                        onClick={() => setAutoAdvance(!autoAdvance)}
+                        className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}
+                      >
+                        {autoAdvance ? (
+                          <span className="flex items-center">
+                            Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span>
+                          </span>
+                        ) : 'Auto'}
+                      </button>
+                    ) : (
+                      // Participant: Sync/Browse buttons
+                      <>
+                        {!isSyncedToHost && (
+                          <button onClick={syncToHost} className="btn-accent flex items-center">
+                            <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
+                          </button>
+                        )}
+                        <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
+                          Browse
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sync status indicator for participants */}
+                {!isHost && !isSyncedToHost && (
+                  <div className="text-center mt-6">
+                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
+                      <RefreshCw size={16} className="mr-1.5" />
+                      Viewing independently. Click Sync to follow host.
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer message */}
+                <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
+                  {isHost ? "Your navigation controls the session." : "Navigate freely or sync with the host."}
+                </div>
+              </div>
+            ) : isLoadingContent ? (
+               // 3. Content selected, but still loading - Show Loading Indicator
+               <div className="flex flex-col items-center justify-center h-full py-20">
+                 <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
+                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
+                 <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
+               </div>
+            ) : isHost ? (
+              // 4. Host, no content selected yet - Show Selection Page
+              <DuaSelectionPage
+                onSelectDua={handleContentSelection} // Use unified handler
+                onSelectQuran={handleContentSelection} // Use unified handler
+                onBack={handleBack} // Host goes back -> leaves session
+              />
+            ) : (
+              // 5. Participant, no content selected by host, not browsing - Show Waiting Screen
+              <div className="flex flex-col items-center justify-center h-full py-20">
+                <div className="text-center max-w-md">
+                  {/* Waiting Spinner */}
+                  <div className="relative mx-auto w-20 h-20 mb-6">
+                     <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
+                     <div className="absolute inset-0 w-full h-full rounded-full border-4 border-t-primary-500 dark:border-t-dark-accent animate-spin"></div>
+                   </div>
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
+                  <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
+                   {/* Browse Button */}
+                   <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto">
+                      Browse Independently
+                    </button>
+                </div>
+              </div>
+            )
+          ) : ( // --- Not in Session (or not connected) ---
             <div className="card-gradient max-w-md mx-auto p-6 md:p-8 mt-8 animate-fade-in">
               <div className="text-center">
                  <div className="flex justify-center mb-6">

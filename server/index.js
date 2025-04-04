@@ -186,10 +186,44 @@ function getMergedSurahData(surahId) { // surahId is expected to be a string lik
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // --- REMOVED Quran Data Handlers ---
-  // Client requests list of Surahs (metadata) - REMOVED
-  // Client requests full content for a specific Surah - REMOVED
-  // --- End REMOVED Quran Data Handlers ---
+  // --- Add New Socket Event Handlers for Quran ---
+
+  // Client requests list of Surahs (metadata)
+  socket.on('get_quran_metadata', (callback) => {
+    console.log(`User ${socket.id} requested Quran metadata`);
+    if (typeof callback === 'function') {
+      if (quranMetadata.length > 0) {
+        // Send only the metadata needed for the selection list
+        const selectionMetadata = quranMetadata.map(s => ({
+            id: s.id,
+            title: s.title,
+            arabic: s.arabic,
+            totalAyahs: s.totalAyahs,
+            // Add any other fields needed for display/filtering in DuaSelectionPage
+            // e.g., lengthCategory: calculateLengthCategory(s.totalAyahs)
+        }));
+        callback({ data: selectionMetadata });
+      } else {
+        callback({ error: 'Quran metadata not available on server.' });
+      }
+    }
+  });
+
+  // Client requests full content for a specific Surah
+  socket.on('get_quran_content', ({ surahId }, callback) => {
+    console.log(`User ${socket.id} requested content for Surah ID: ${surahId}`);
+    if (typeof callback !== 'function') return; // Need callback to send response
+
+    const mergedData = getMergedSurahData(surahId);
+
+    if (mergedData) {
+      callback({ data: mergedData });
+    } else {
+      callback({ error: `Could not retrieve content for Surah ID: ${surahId}` });
+    }
+  });
+
+  // --- End New Socket Event Handlers ---
 
 
   // Create a new session
