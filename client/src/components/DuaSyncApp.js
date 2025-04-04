@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'; // Added useMemo
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader } from 'lucide-react'; // Added Loader
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, WifiOff } from 'lucide-react'; // Added WifiOff, Loader
 import { useSocket } from '../contexts/SocketContext';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
@@ -20,7 +20,7 @@ const DuaSyncApp = () => {
   // Use state and actions from SocketContext
   const {
     socket,
-    connected,
+    // connected, // Replaced by connectionStatus check
     sessionId,
     username,
     isHost,
@@ -43,6 +43,9 @@ const DuaSyncApp = () => {
     updateHostIndex,         // New action
     updateLocalIndex,        // New action
     getQuranMetadata,        // New action
+    connectToServer,         // New action for connecting
+    connectionStatus,        // New state for connection status ('disconnected', 'connecting', 'connected', 'error')
+    hasAttemptedConnection,  // New flag from context
   } = useSocket();
 
   // Local UI state
@@ -61,11 +64,13 @@ const DuaSyncApp = () => {
   const [localError, setLocalError] = useState(null); // Local error state for UI actions
   const [joinSessionId, setJoinSessionId] = useState('');
   const [isJoining, setIsJoining] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'create' or 'join' - action to take after connection
   // const [contentSelected, setContentSelected] = useState(false); // Determined by !!currentContentInfo
   const [isBrowsingLocally, setIsBrowsingLocally] = useState(false); // Keep for participant browsing UI flow
 
   // Combine context error and local error for display
   const displayError = contextError || localError;
+  const isConnected = connectionStatus === 'connected'; // Convenience flag
 
   // Font Size State - Initialize safely from localStorage or defaults (Keep as is)
   const defaultArabicSize = 1.5;
@@ -104,19 +109,36 @@ const DuaSyncApp = () => {
       }
   }, [sessionId]);
 
-  // Check URL for session ID on component mount (Keep as is)
+  // Check URL for session ID on component mount - Updated to trigger connection flow
   useEffect(() => {
-    if (!socket) return;
+    // Don't run this if already connected or connecting or in a session
+    if (connectionStatus === 'connected' || connectionStatus === 'connecting' || sessionId) return;
 
     const params = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = params.get('session');
 
     if (sessionIdFromUrl) {
+      console.log("Session ID found in URL, attempting to join:", sessionIdFromUrl);
       setJoinSessionId(sessionIdFromUrl);
-      setIsJoining(true);
-      setShowNameInputDialog(true);
+      setIsJoining(true); // Mark as joining
+      setPendingAction('join'); // Set pending action
+      // Trigger connection if disconnected
+      if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+        connectToServer();
+      }
+      // The useEffect below will handle showing the NameInputDialog once connected
     }
-  }, [socket]);
+  }, [connectionStatus, connectToServer, sessionId]); // Add dependencies
+
+  // Effect to handle showing NameInputDialog after successful connection
+  useEffect(() => {
+    if (connectionStatus === 'connected' && pendingAction) {
+      console.log(`Connection established, proceeding with pending action: ${pendingAction}`);
+      setShowNameInputDialog(true);
+      // Reset pending action after triggering dialog
+      setPendingAction(null);
+    }
+  }, [connectionStatus, pendingAction]);
 
   // Auto-advance effect (for host only) - Updated
   useEffect(() => {
@@ -124,7 +146,8 @@ const DuaSyncApp = () => {
     // Use currentFullContent to check length
     const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
 
-    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
+    // Only run if connected and host
+    if (isConnected && autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
       interval = setInterval(() => {
         if (currentIndex < totalPhrases - 1) {
           const newIndex = currentIndex + 1;
@@ -140,9 +163,10 @@ const DuaSyncApp = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex]);
+  }, [isConnected, autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex]); // Added isConnected
 
   // --- Navigation Actions ---
+  // Local navigation should always work
   const navigate = (direction) => {
     const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
     if (!currentFullContent || totalPhrases === 0) return;
@@ -150,10 +174,12 @@ const DuaSyncApp = () => {
     const newIndex = currentIndex + direction;
 
     if (newIndex >= 0 && newIndex < totalPhrases) {
-      if (isHost) {
-        updateHostIndex(newIndex); // Host updates globally
+      if (isHost && isConnected) { // Host only updates globally if connected
+        updateHostIndex(newIndex);
       } else {
-        updateLocalIndex(newIndex); // Participant updates locally (if unsynced)
+        // Participant always updates locally first
+        // Host updates locally if disconnected
+        updateLocalIndex(newIndex);
       }
     }
   };
@@ -162,49 +188,64 @@ const DuaSyncApp = () => {
   const prevPhrase = () => navigate(-1);
   // --- End Navigation Actions ---
 
-  // Start hosting a session - Updated
+  // Start hosting a session - Updated for on-demand connection
   const startHosting = () => {
-    if (!connected) {
-      setLocalError("Cannot connect to server. Please try again later.");
-      return;
-    }
     setLocalError(null); // Clear local error
-    setShowNameInputDialog(true);
+    if (isConnected) {
+      // Already connected, show name input directly
+      setShowNameInputDialog(true);
+    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+      // Not connected, initiate connection and set pending action
+      setPendingAction('create');
+      connectToServer();
+    }
+    // If 'connecting', do nothing (button should be disabled)
   };
 
-  // Join as participant - Updated
+  // Join as participant - Updated for on-demand connection
   const joinAsParticipant = () => {
-    if (!connected) {
-      setLocalError("Cannot connect to server. Please try again later.");
-      return;
-    }
     if (!joinSessionId) {
       setLocalError("Please enter a Session ID to join.");
       return;
     }
     setLocalError(null); // Clear local error
     setIsJoining(true); // Keep this flag
-    setShowNameInputDialog(true);
+
+    if (isConnected) {
+      // Already connected, show name input directly
+      setShowNameInputDialog(true);
+    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+      // Not connected, initiate connection and set pending action
+      setPendingAction('join');
+      connectToServer();
+    }
+    // If 'connecting', do nothing (button should be disabled)
   };
 
-  // Handle name submission - Updated
+  // Handle name submission - Updated (Context actions already check connection)
   const handleNameSubmit = (name) => {
     setShowNameInputDialog(false);
     setLocalError(null); // Clear local error
 
-    if (isJoining && joinSessionId) {
-      joinSession(joinSessionId, name); // Use context action
+    // Determine if the original intent was joining or creating
+    // Note: isJoining flag might be slightly less reliable now,
+    // relying on joinSessionId being present is better for join action.
+    if (joinSessionId) {
+      joinSession(joinSessionId, name); // Context action handles connection check
     } else {
-      createSession(name); // Use context action
+      createSession(name); // Context action handles connection check
     }
-    // Reset join state
+
+    // Reset join state variables after submission attempt
     setIsJoining(false);
     setJoinSessionId('');
+    // pendingAction should have been cleared by the useEffect hook already
   };
 
   // Transfer host to another participant - Updated
   const transferHost = (newHostId) => {
-    if (!isHost || !socket || !sessionId) return;
+    // Action requires connection
+    if (!isConnected || !isHost || !socket || !sessionId) return;
     setLocalError(null);
     socket.emit('transfer_host', { sessionId, newHostId });
     setShowParticipantsDialog(false);
@@ -227,12 +268,13 @@ const DuaSyncApp = () => {
     if (!contentInfo) return;
     setLocalError(null);
 
-    if (isHost) {
+    if (isHost && isConnected) { // Host action requires connection
       selectContentAsHost(contentInfo); // Host selects for everyone
       setShowShareDialog(true); // Show share dialog for host
-    } else if (isBrowsingLocally) {
-      selectContentLocally(contentInfo); // Participant selects only for themselves
-      setIsBrowsingLocally(false); // Exit browsing mode
+    } else {
+      // Participant selects locally regardless of connection status
+      selectContentLocally(contentInfo);
+      setIsBrowsingLocally(false); // Exit browsing mode if they were browsing
     }
     // The UI will transition out of the selection page automatically
     // when currentContentInfo/currentFullContent updates in the context.
@@ -245,27 +287,51 @@ const DuaSyncApp = () => {
     if (sessionId && currentContentInfo) {
       if (isHost) {
         // Host goes back from content view -> Show selection page again
-        selectContentAsHost(null); // Deselect content
+        // This action requires connection to notify others
+        if (isConnected) {
+            selectContentAsHost(null); // Deselect content
+        } else {
+            // If host is disconnected, just clear local view? Or prevent back?
+            // Let's clear local view for now.
+            setCurrentContentInfo(null);
+            // Optionally show an error/warning?
+            setLocalError("Cannot change shared content while offline.");
+        }
       } else if (isBrowsingLocally) {
          // Participant was browsing locally and viewing content -> Stop browsing
          setIsBrowsingLocally(false);
-         syncToHost(); // Re-sync to host when stopping browsing
+         if (isConnected) { // Only sync if connected
+           syncToHost(); // Re-sync to host when stopping browsing
+         } else {
+            // If disconnected, just revert to showing host's last known info (if any)
+            setCurrentContentInfo(hostSelectedContentInfo);
+            // Fetching host content will fail if disconnected, show appropriate UI state
+         }
       } else {
-        // Participant was synced and viewing content -> Leave session? Or Browse?
-        // Option A: Leave Session
-        // if (socket) socket.emit('leave_session', { sessionId });
-        // Option B: Start Browsing
+        // Participant was synced and viewing content -> Start Browsing
         setIsBrowsingLocally(true);
+        // No need to sync or change content yet, just change the mode
       }
     }
-    // Scenario 2: In session, Host is on selection page -> Leave session
+    // Scenario 2: In session, Host is on selection page -> Leave session (requires connection)
     else if (sessionId && isHost && !currentContentInfo) {
-       if (socket) socket.emit('leave_session', { sessionId });
+       if (isConnected && socket) {
+           socket.emit('leave_session', { sessionId });
+           // State reset will happen via disconnect/context logic
+       } else {
+           // Cannot leave session if disconnected? Show error?
+           setLocalError("Cannot leave session while disconnected.");
+       }
     }
     // Scenario 3: In session, Participant is browsing (on selection page) -> Stop browsing
     else if (sessionId && !isHost && isBrowsingLocally) {
        setIsBrowsingLocally(false);
-       syncToHost(); // Re-sync
+       if (isConnected) { // Only sync if connected
+         syncToHost(); // Re-sync
+       } else {
+           // If disconnected, just revert to showing host's last known info (if any)
+           setCurrentContentInfo(hostSelectedContentInfo);
+       }
     }
     // Scenario 4: Not in session (on initial screen) -> No action needed? Or exit app?
     // else { }
@@ -321,16 +387,26 @@ const DuaSyncApp = () => {
             IqraTogether
           </h1>
           <div className="flex items-center space-x-1 md:space-x-2"> {/* Reduced spacing slightly */}
-            {/* Session controls */}
+            {/* Session controls - Show only if in session */}
             {!!sessionId && (
               <>
-                <button onClick={() => setShowParticipantsDialog(true)} className="btn-icon tooltip-wrapper group" aria-label="Participants">
+                <button
+                  onClick={() => setShowParticipantsDialog(true)}
+                  className={`btn-icon tooltip-wrapper group ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label="Participants"
+                  disabled={!isConnected}
+                >
                   <Users size={20} />
-                  <span className="tooltip">Participants ({participants.length})</span> {/* Show count */}
+                  <span className="tooltip">Participants ({isConnected ? participants.length : '?'})</span> {/* Show count only if connected */}
                 </button>
-                {/* Only show Share button to Host */}
+                {/* Only show Share button to Host and if connected */}
                 {isHost && (
-                  <button onClick={() => setShowShareDialog(true)} className="btn-icon tooltip-wrapper group" aria-label="Share">
+                  <button
+                    onClick={() => setShowShareDialog(true)}
+                    className={`btn-icon tooltip-wrapper group ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    aria-label="Share"
+                    disabled={!isConnected}
+                  >
                     <Share2 size={20} />
                     <span className="tooltip">Share Session</span>
                   </button>
@@ -348,29 +424,37 @@ const DuaSyncApp = () => {
         </div>
       </header>
 
-      {/* Connection status */}
-      {!connected && (
-        <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center text-sm font-medium">
+      {/* Connection status indicator */}
+      {connectionStatus === 'connecting' && (
+        <div className="bg-blue-100 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 px-4 py-2 text-center text-sm font-medium">
           <div className="container-narrow flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-red-500 mr-2 animate-ping"></div>
-            Disconnected. Attempting to reconnect...
+            <Loader size={16} className="animate-spin mr-2" />
+            Connecting...
           </div>
         </div>
       )}
-
-      {/* Error message */}
-      {displayError && (
+      {/* Show disconnected only if an attempt was made OR if we were previously in a session */}
+      {(connectionStatus === 'disconnected' || connectionStatus === 'error') && hasAttemptedConnection && (
+        <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center text-sm font-medium">
+          <div className="container-narrow flex items-center justify-center">
+            <WifiOff size={16} className="mr-2" />
+            {error || "Connection lost. Attempting to reconnect..."} {/* Show specific error if available */}
+          </div>
+        </div>
+      )}
+      {/* Keep existing error message display for other errors */}
+      {displayError && connectionStatus !== 'error' && !(connectionStatus === 'disconnected' && hasAttemptedConnection) && (
         <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center">
           <div className="container-narrow flex justify-between items-center">
             <span>{displayError}</span>
-            <button onClick={() => setLocalError(null)} className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800">
+            <button onClick={() => { setLocalError(null); /* Also clear context error? Maybe not */ }} className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800">
               <X size={18} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Host status badge */}
+      {/* Host status badge - Show only if in session */}
       {!!sessionId && (
         <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-100 dark:border-dark-bg-tertiary">
           <div className="container-narrow py-2 flex flex-wrap justify-between items-center gap-x-4 gap-y-1"> {/* Added flex-wrap and gap */}
@@ -385,7 +469,7 @@ const DuaSyncApp = () => {
               )}
             </div>
             <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-              Session: <span className="font-medium">{sessionId}</span> | {participants.length} participant{participants.length !== 1 ? 's' : ''}
+              Session: <span className="font-medium">{sessionId}</span> {isConnected ? `| ${participants.length} participant${participants.length !== 1 ? 's' : ''}` : '(Offline)'}
             </div>
           </div>
         </div>
@@ -397,10 +481,10 @@ const DuaSyncApp = () => {
         <div className="container-narrow pt-4">
           <ProgressIndicator
             currentIndex={currentIndex} // Use index from context
-            // Pass host index if participant is unsynced
-            hostIndex={!isHost && !isSyncedToHost ? hostSelectedContentInfo?.currentIndex ?? 0 : currentIndex}
+            // Pass host index if participant is unsynced OR if disconnected
+            hostIndex={!isHost && (!isSyncedToHost || !isConnected) ? hostSelectedContentInfo?.currentIndex ?? 0 : currentIndex}
             totalPhrases={totalPhrases}
-            isSynced={isSyncedToHost || isHost} // Use context sync state
+            isSynced={isConnected && (isSyncedToHost || isHost)} // Sync only possible if connected
           />
         </div>
       )}
@@ -409,6 +493,7 @@ const DuaSyncApp = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="container-narrow py-6">
 
+          {/* --- MODIFIED: Show session view if sessionId exists, regardless of connection --- */}
           {!!sessionId ? ( // --- In Session ---
             isBrowsingLocally && !isHost ? (
               // 1. Participant is browsing locally - Show Selection Page
@@ -473,7 +558,7 @@ const DuaSyncApp = () => {
 
                 {/* Navigation controls */}
                 <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
-                  {/* Previous/Next Buttons */}
+                  {/* Previous/Next Buttons (Always enabled for local nav) */}
                   <div className="flex space-x-4">
                     <button
                       onClick={prevPhrase}
@@ -494,10 +579,11 @@ const DuaSyncApp = () => {
                   {/* Action Buttons */}
                   <div className="flex space-x-4 mt-4 md:mt-0">
                     {isHost ? (
-                      // Host: Auto-advance button
+                      // Host: Auto-advance button (disable if not connected?)
                       <button
                         onClick={() => setAutoAdvance(!autoAdvance)}
-                        className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}
+                        className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''} ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={!isConnected}
                       >
                         {autoAdvance ? (
                           <span className="flex items-center">
@@ -509,7 +595,11 @@ const DuaSyncApp = () => {
                       // Participant: Sync/Browse buttons
                       <>
                         {!isSyncedToHost && (
-                          <button onClick={syncToHost} className="btn-accent flex items-center">
+                          <button
+                            onClick={syncToHost}
+                            className={`btn-accent flex items-center ${!isConnected ? 'btn-disabled' : ''}`}
+                            disabled={!isConnected}
+                          >
                             <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
                           </button>
                         )}
@@ -522,7 +612,7 @@ const DuaSyncApp = () => {
                 </div>
 
                 {/* Sync status indicator for participants */}
-                {!isHost && !isSyncedToHost && (
+                {!isHost && !isSyncedToHost && isConnected && ( // Show only if connected and unsynced
                   <div className="text-center mt-6">
                     <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm">
                       <RefreshCw size={16} className="mr-1.5" />
@@ -533,7 +623,7 @@ const DuaSyncApp = () => {
 
                 {/* Footer message */}
                 <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
-                  {isHost ? "Your navigation controls the session." : "Navigate freely or sync with the host."}
+                  {isHost ? (isConnected ? "Your navigation controls the session." : "You are offline. Navigation is local.") : (isConnected ? "Navigate freely or sync with the host." : "You are offline. Navigation is local.")}
                 </div>
               </div>
             ) : isLoadingContent ? (
@@ -598,6 +688,7 @@ const DuaSyncApp = () => {
                     onChange={handleJoinSessionIdChange}
                     className="input w-full"
                     placeholder="Enter session ID from host"
+                    disabled={connectionStatus === 'connecting'} // Disable while connecting
                   />
                 </div>
               )}
@@ -606,19 +697,45 @@ const DuaSyncApp = () => {
               <div className="flex flex-col space-y-4">
                 {isJoining ? (
                   <>
-                    <button onClick={joinAsParticipant} className="btn-accent flex items-center justify-center">
-                      <UserPlus size={18} className="mr-2" /> Join Session
+                    <button
+                      onClick={joinAsParticipant}
+                      className={`btn-accent flex items-center justify-center ${connectionStatus === 'connecting' ? 'btn-disabled' : ''}`}
+                      disabled={connectionStatus === 'connecting'}
+                    >
+                      {connectionStatus === 'connecting' && pendingAction === 'join' ? (
+                        <Loader size={18} className="animate-spin mr-2" />
+                      ) : (
+                        <UserPlus size={18} className="mr-2" />
+                      )}
+                      {connectionStatus === 'connecting' && pendingAction === 'join' ? 'Connecting...' : 'Join Session'}
                     </button>
-                    <button onClick={() => setIsJoining(false)} className="btn-secondary">
+                    <button
+                      onClick={() => setIsJoining(false)}
+                      className="btn-secondary"
+                      disabled={connectionStatus === 'connecting'} // Disable while connecting
+                    >
                       Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <button onClick={startHosting} className="btn-primary flex items-center justify-center group">
-                      <Crown size={18} className="mr-2 group-hover:animate-bounce-once" /> Start New Session
+                    <button
+                      onClick={startHosting}
+                      className={`btn-primary flex items-center justify-center group ${connectionStatus === 'connecting' ? 'btn-disabled' : ''}`}
+                      disabled={connectionStatus === 'connecting'}
+                    >
+                      {connectionStatus === 'connecting' && pendingAction === 'create' ? (
+                        <Loader size={18} className="animate-spin mr-2" />
+                      ) : (
+                        <Crown size={18} className="mr-2 group-hover:animate-bounce-once" />
+                      )}
+                       {connectionStatus === 'connecting' && pendingAction === 'create' ? 'Connecting...' : 'Start New Session'}
                     </button>
-                    <button onClick={() => setIsJoining(true)} className="btn-accent flex items-center justify-center">
+                    <button
+                      onClick={() => setIsJoining(true)}
+                      className={`btn-accent flex items-center justify-center ${connectionStatus === 'connecting' ? 'btn-disabled' : ''}`}
+                      disabled={connectionStatus === 'connecting'}
+                    >
                       <UserPlus size={18} className="mr-2" /> Join Existing Session
                     </button>
                   </>
@@ -706,7 +823,7 @@ const DuaSyncApp = () => {
               </div>
 
               {/* Auto-Advance Settings (Host only) */}
-              {isHost && (
+              {isHost && connectionStatus === 'connected' && ( // Show only if host and connected
                 <div>
                   <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Auto-Advance Settings</label>
                   <div className="flex items-center bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
@@ -729,7 +846,7 @@ const DuaSyncApp = () => {
       {/* Other Modals (Keep as is) */}
       {showShareDialog && <ShareDialog sessionId={sessionId} sessionUrl={sessionUrl} onClose={() => setShowShareDialog(false)} />}
       {showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
-      {showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setJoinSessionId(''); }} />}
+      {showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setJoinSessionId(''); setPendingAction(null); }} />}
     </div>
   );
 };
