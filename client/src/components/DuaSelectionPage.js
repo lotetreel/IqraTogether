@@ -9,10 +9,10 @@ import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import pat
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('quran'); // Default to Quran
-  const [filter, setFilter] = useState('all'); 
+  const [filter, setFilter] = useState('all');
   
-  // Get Quran list and fetch action from context
-  const { quranSurahList, getQuranMetadata, error: socketError } = useSocket(); 
+  // Get Quran list, fetch action, and connectionStatus from context
+  const { quranSurahList, getQuranMetadata, error: socketError, connectionStatus } = useSocket(); // Added connectionStatus
   const [isLoadingQuranList, setIsLoadingQuranList] = useState(false);
 
   // Fetch Quran metadata when component mounts, tab changes to Quran, or connection is established
