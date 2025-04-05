@@ -8,24 +8,28 @@ import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import pat
 
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('duas'); 
+  const [activeTab, setActiveTab] = useState('quran'); // Default to Quran
   const [filter, setFilter] = useState('all'); 
   
   // Get Quran list and fetch action from context
   const { quranSurahList, getQuranMetadata, error: socketError } = useSocket(); 
   const [isLoadingQuranList, setIsLoadingQuranList] = useState(false);
 
-  // Fetch Quran metadata when component mounts or tab changes to Quran
+  // Fetch Quran metadata when component mounts, tab changes to Quran, or connection is established
   useEffect(() => {
-    if (activeTab === 'quran' && quranSurahList.length === 0) {
+    // Only fetch if Quran tab is active, list is empty, AND socket is connected
+    if (activeTab === 'quran' && quranSurahList.length === 0 && connectionStatus === 'connected') {
       setIsLoadingQuranList(true);
+      console.log("Attempting to fetch Quran metadata..."); // Add log
       getQuranMetadata(); // Call the action from context
-      // Loading state will be handled by checking quranSurahList length or a dedicated loading state if added to context
-      // For now, just check length after a delay
-      const timer = setTimeout(() => setIsLoadingQuranList(false), 2000); // Simple timeout fallback
-      return () => clearTimeout(timer);
+      // Loading state is now primarily handled by the effect below based on list/error changes
+    } else if (activeTab === 'quran' && quranSurahList.length === 0 && connectionStatus !== 'connected') {
+      console.log("Quran tab active, but socket not connected. Waiting for connection..."); // Add log
+      // Optionally set loading state here too, or let the user see an empty state briefly
+      // setIsLoadingQuranList(true); // Maybe set loading even if not connected yet?
     }
-  }, [activeTab, getQuranMetadata, quranSurahList.length]);
+  // Add connectionStatus to dependencies
+  }, [activeTab, getQuranMetadata, quranSurahList.length, connectionStatus]);
 
   // Update loading state when list populates or error occurs
   useEffect(() => {
@@ -87,19 +91,7 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
       {/* Tabs */}
       <div className="flex justify-center mb-8">
         <div className="bg-gray-100 dark:bg-dark-bg-tertiary rounded-xl p-1.5 shadow-inner-light">
-          <button
-            onClick={() => setActiveTab('duas')}
-            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
-              activeTab === 'duas' 
-                ? 'bg-gradient-primary text-white shadow-md' 
-                : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            <span className="flex items-center">
-              <Heart size={18} className="mr-2" />
-              Duas
-            </span>
-          </button>
+          {/* Quran Button First */}
           <button
             onClick={() => setActiveTab('quran')}
             className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
@@ -111,6 +103,20 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
             <span className="flex items-center">
               <Book size={18} className="mr-2" />
               Quran
+            </span>
+          </button>
+          {/* Duas Button Second */}
+          <button
+            onClick={() => setActiveTab('duas')}
+            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
+              activeTab === 'duas' 
+                ? 'bg-gradient-primary text-white shadow-md' 
+                : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+            }`}
+          >
+            <span className="flex items-center">
+              <Heart size={18} className="mr-2" />
+              Duas
             </span>
           </button>
         </div>
