@@ -145,8 +145,9 @@ export const SocketProvider = ({ children }) => {
       console.log(`Development mode: Determined socket URL: ${socketUrl}`);
     }
     try {
+      console.log(`Attempting connection to ${socketUrl} using WebSocket ONLY.`);
       const newSocket = io(socketUrl, {
-        transports: ['websocket', 'polling'],
+        transports: ['websocket'], // Force only WebSocket transport
         reconnection: true, // Ensure reconnection is enabled
         reconnectionAttempts: Infinity, // Keep trying
         reconnectionDelay: 1000, // Initial delay
@@ -185,17 +186,40 @@ export const SocketProvider = ({ children }) => {
       console.error("Error initializing socket connection:", err);
       setConnectionStatus('error'); setError(`Error setting up connection: ${err.message}`);
     }
-  }, [socket, connectionStatus, sessionId, username]); // Added sessionId and username dependencies for rejoin logic
+  }, [socket, connectionStatus]); // Dependencies for the function itself
 
-  // Effect to clean up socket connection when the component unmounts
+  // Effect to automatically connect or reconnect
   useEffect(() => {
+    // Attempt connection if disconnected or in error state, and not already connecting
+    // Also check that socket instance doesn't exist yet to avoid race conditions on quick disconnect/reconnect
+    if (!socket && (connectionStatus === 'disconnected' || connectionStatus === 'error') && connectionStatus !== 'connecting') {
+      console.log(`Connection status is ${connectionStatus}, attempting to connect/reconnect.`);
+      // Re-enable automatic reconnect
+      connectToServer();
+    }
+    // This effect depends on the connection status to trigger retries.
+    // It also depends on connectToServer in case its definition changes (though unlikely here).
+    // It depends on socket to ensure we don't try connecting if a socket instance already exists but status is lagging.
+  }, [connectionStatus, connectToServer, socket]);
+
+  // Effect to clean up socket connection ONLY when the component unmounts
+  useEffect(() => {
+    // Store the socket instance in a ref to access it in the cleanup function
+    // without needing it in the dependency array.
+    // Use a simple object ref as useState/useRef might cause issues here.
+    const socketRef = { current: socket };
     return () => {
-      if (socket) {
+      // Access the socket instance via the ref
+      if (socketRef.current) {
         console.log('Disconnecting socket on component unmount.');
-        socket.disconnect(); setSocket(null); setConnectionStatus('disconnected');
+        socketRef.current.disconnect();
+        // Do NOT setSocket(null) or setConnectionStatus here in the unmount cleanup.
+        // Let the 'disconnect' event handler manage the status update,
+        // which will then trigger the reconnection logic if needed.
+        // Setting state in unmount cleanup is generally discouraged.
       }
     };
-  }, [socket]);
+  }, []); // Empty dependency array: runs cleanup only on unmount
 
   // Effect to set up application-specific event listeners *after* connection
   useEffect(() => {
@@ -391,12 +415,22 @@ export const SocketProvider = ({ children }) => {
     if (contentInfo) {
       console.log(`Locally selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id}).`); setError(null);
       setCurrentContentInfo(contentInfo);
-      if (connectionStatus === 'connected' && !isHost) {
-        console.log("Unsyncing from host due to local selection."); setIsSyncedToHost(false);
+      // Only unsync if actually in a session
+      if (sessionId && connectionStatus === 'connected' && !isHost) {
+        console.log("Unsyncing from host due to local selection.");
+        setIsSyncedToHost(false);
       }
       setFetchTrigger({ type: contentInfo.type, id: contentInfo.id }); // Set trigger
+    } else {
+      // Handle deselecting content locally (e.g., via back button when not in session)
+      console.log("Locally deselecting content.");
+      setCurrentContentInfo(null);
+      setFetchTrigger(null); // Clear fetch trigger
+      // _performFetch will clear currentFullContent automatically if called with null type/id,
+      // but explicitly setting it might be safer depending on timing. Let's rely on _performFetch for now.
+      // setCurrentFullContent(null); // Optional: Explicitly clear full content
     }
-  }, [connectionStatus, isHost]);
+  }, [connectionStatus, isHost, sessionId]); // Removed selectContentLocally from dependencies
 
   const syncToHost = useCallback(() => {
     // Syncing should be possible even if temporarily disconnected, as long as we know the host's state
@@ -447,12 +481,14 @@ export const SocketProvider = ({ children }) => {
       if (newIndex >= 0 && newIndex <= maxIndex) {
         console.log(`Participant updating local index: ${newIndex}.`);
         setCurrentIndex(newIndex); // Update local state
-        // Unsync if navigating locally (regardless of connection status, as sync only matters when connected)
-        console.log("Unsyncing from host due to local navigation.");
-        setIsSyncedToHost(false);
+        // Unsync only if actually in a session
+        if (sessionId) {
+          console.log("Unsyncing from host due to local navigation.");
+          setIsSyncedToHost(false);
+        }
       }
     } else { console.warn("Cannot update local index: Conditions not met (is host or invalid index)."); }
-  }, [isHost, currentFullContent]); // Removed connectionStatus dependency as it's not needed for local update/unsync logic
+  }, [isHost, currentFullContent, sessionId]); // Added sessionId dependency
 
   const getQuranMetadata = useCallback(() => {
     if (socket && connectionStatus === 'connected' && quranSurahList.length === 0) {
