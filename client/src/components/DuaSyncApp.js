@@ -496,6 +496,7 @@ const DuaSyncApp = () => {
                 </>
               )
             )}
+            {/* REMOVED Kids Mode Toggle from header */}
             {/* Settings and Theme Toggle (Always visible) */}
             <button
               onClick={() => setShowSettings(!showSettings)} className="btn-icon tooltip-wrapper group ml-2" aria-label="Settings"> {/* Added ml-2 for spacing */}
@@ -625,85 +626,99 @@ const DuaSyncApp = () => {
                 {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
               </div>
 
-              {/* Main content display */}
-              {/* Card container */}
-              <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
-                {/* Conditional Rendering: Kids Mode Image OR Text Content */}
-                {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? ( // Assuming ID 55 is Al-Rahman - NEEDS VERIFICATION
-                  // Kids Mode: Display Image flanked by buttons, then text below
-                  <div key={`kids-mode-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
-                    {/* Row 1: Prev Button, Image, Next Button */}
-                    <div className="flex items-center justify-between w-full gap-4 mb-4">
-                      {/* Previous Button */}
-                      <button
-                        onClick={prevPhrase}
-                        disabled={currentIndex === 0}
-                        className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
-                         aria-label="Previous Verse"
-                       >
-                         <ChevronLeft size={32} /> {/* Increased size */}
-                       </button>
+              {/* Kids Mode Toggle Button (Moved below title) */}
+              {currentContentInfo?.type === 'quran' && (
+                <div className="flex items-center justify-center mb-6"> {/* Added margin-bottom */}
+                   <button
+                     onClick={() => setIsKidsMode(!isKidsMode)}
+                     className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`}
+                     aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}
+                   >
+                     <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" /> {/* Large icon */}
+                   </button>
+                </div>
+              )}
 
-                      {/* Image */}
-                      <img
-                        src={`/SurahImages/AlRahman/Verse${currentIndex + 1}.png`}
-                        alt={`Verse ${currentIndex + 1} - Kids Illustration`}
-                        className="max-w-[70%] h-auto rounded-lg shadow-md object-contain max-h-[400px]" // Adjusted max-width
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/SurahImages/image_not_found.png';
-                          e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
-                        }}
-                      />
+              {/* Main content display - Conditional rendering based on Kids Mode */}
+              {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? ( // Assuming ID 55 is Al-Rahman - NEEDS VERIFICATION
+                // --- Kids Mode Layout ---
+                <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center h-[calc(100vh-300px)]"> {/* Adjusted height slightly */}
+                  {/* Image Container (Takes most space) */}
+                  <div className="relative flex-grow w-full flex items-center justify-center mb-4">
+                    {/* Previous Button (Overlay/Side) */}
+                    <button
+                      onClick={prevPhrase}
+                      disabled={currentIndex === 0}
+                      className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`}
+                      aria-label="Previous Verse"
+                    >
+                      <ChevronLeft size={32} />
+                    </button>
 
-                      {/* Next Button */}
-                      <button
-                        onClick={nextPhrase}
-                        disabled={currentIndex >= totalPhrases - 1}
-                        className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
-                         aria-label="Next Verse"
+                    {/* Image */}
+                    <img
+                      src={`/SurahImages/AlRahman/Verse${currentIndex + 1}.png`}
+                      alt={`Verse ${currentIndex + 1} - Kids Illustration`}
+                      className="max-w-full max-h-full object-contain rounded-lg" // Allow image to fill container
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/SurahImages/image_not_found.png'; // Placeholder
+                        e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
+                      }}
+                    />
+
+                    {/* Next Button (Overlay/Side) */}
+                    <button
+                      onClick={nextPhrase}
+                      disabled={currentIndex >= totalPhrases - 1}
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`}
+                      aria-label="Next Verse"
+                    >
+                      <ChevronRight size={32} />
+                    </button>
+                  </div>
+
+                  {/* Text Content Below Image */}
+                  <div className="w-full max-w-3xl px-4 flex-shrink-0">
+                     {/* Verse Number */}
+                     <p className="text-center mb-2 text-sm text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1}</p>
+
+                     {/* Arabic Text */}
+                     <div key={`arabic-kids-${currentIndex}`} className="text-center mb-4 animate-fade-in">
+                       <p
+                         className="leading-loose font-uthmani"
+                         dir="rtl"
+                         style={{ fontSize: `${arabicFontSize}rem` }}
                        >
-                         <ChevronRight size={32} /> {/* Increased size */}
-                       </button>
+                         {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                       </p>
                      </div>
 
-                    {/* Verse Number */}
-                    <p className="text-center mt-1 text-sm text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1}</p>
-
-                    {/* Arabic Text (Below image+buttons) */}
-                    <div key={`arabic-kids-${currentIndex}`} className="text-center mt-6 mb-6 animate-fade-in w-full">
-                      <p
-                        className="leading-loose font-uthmani"
-                        dir="rtl"
-                        style={{ fontSize: `${arabicFontSize}rem` }}
-                      >
-                        {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                      </p>
-                    </div>
-
-                    {/* Translation (Below image+buttons) */}
-                    {showTranslation && currentPhraseData.translation && (
-                      <div key={`translation-kids-${currentIndex}`} className="text-center border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up w-full">
-                        <p
-                          className="text-gray-800 dark:text-dark-text-primary"
-                          style={{ fontSize: `${translationFontSize}rem` }}
-                          dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
-                        />
-                      </div>
-                    )}
+                     {/* Translation */}
+                     {showTranslation && currentPhraseData.translation && (
+                       <div key={`translation-kids-${currentIndex}`} className="text-center border-t pt-3 border-gray-200 dark:border-gray-700 animate-slide-up">
+                         <p
+                           className="text-gray-800 dark:text-dark-text-primary"
+                           style={{ fontSize: `${translationFontSize}rem` }}
+                           dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
+                         />
+                       </div>
+                     )}
                   </div>
-                ) : (
-                  // Normal Mode: Display Text Content flanked by buttons
+                </div>
+              ) : (
+                // --- Normal Mode Layout (Inside Card) ---
+                <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
                   <div className="w-full flex items-center justify-between gap-4"> {/* Flex container for buttons and text */}
                     {/* Previous Button */}
                     <button
                       onClick={prevPhrase}
                       disabled={currentIndex === 0}
                       className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
-                       aria-label="Previous Verse"
-                     >
-                       <ChevronLeft size={32} /> {/* Increased size */}
-                     </button>
+                      aria-label="Previous Verse"
+                    >
+                      <ChevronLeft size={32} /> {/* Increased size */}
+                    </button>
 
                     {/* Text Content Block */}
                     <div className="flex-1 min-w-0"> {/* flex-1 to take space, min-w-0 to prevent overflow */}
@@ -746,43 +761,21 @@ const DuaSyncApp = () => {
                       onClick={nextPhrase}
                       disabled={currentIndex >= totalPhrases - 1}
                       className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
-                       aria-label="Next Verse"
-                     >
-                       <ChevronRight size={32} /> {/* Increased size */}
-                     </button>
-                   </div>
-                 )}
-              </div>
+                      aria-label="Next Verse"
+                    >
+                      <ChevronRight size={32} /> {/* Increased size */}
+                    </button>
+                  </div>
+                  {/* REMOVED Kids Mode Toggle Button from here */}
+                </div>
+              )}
 
-              {/* Navigation controls - Updated layout */}
-              {/* REMOVED Original Prev/Next buttons */}
-              {/* <div className="flex flex-col items-center gap-4 mt-8"> */}
-                {/* Row 1: Previous/Next Buttons */}
-                {/* <div className="flex space-x-4"> ... buttons removed ... </div> */}
-
-                {/* Row 2: Kids Mode Button & Action Buttons */}
-                {/* This container now only holds the second row of buttons */}
-                <div className="flex flex-wrap justify-center items-center gap-4 mt-8"> {/* Added mt-8 here */}
-                  {/* Kids Mode Icon Button - Using custom image */}
-                  {/* Only show if content is Quran */}
-                  {currentContentInfo?.type === 'quran' && (
-                    <div className="flex items-center justify-center"> {/* Removed mt-4 md:mt-0 */}
-                       <button
-                         onClick={() => setIsKidsMode(!isKidsMode)}
-                         // Removed tooltip-wrapper and group classes
-                         className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} // Added padding p-1
-                         aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}
-                       >
-                         {/* Use custom image, increased size */}
-                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" /> {/* Increased size further */}
-                         {/* Tooltip removed */}
-                       </button>
-                    </div>
-                  )}
-
+              {/* Action Buttons (Sync/Browse/Auto) - Common below main content */}
+              {/* This container holds session-related buttons */}
+              <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
                   {/* Action Buttons - Conditionally show based on session state */}
                   {!!sessionId && ( // Only show session-related buttons if in a session
-                    <div className="flex space-x-4"> {/* Removed mt-4 md:mt-0 */}
+                    <div className="flex space-x-4">
                       {isHost ? (
                         // Host: Auto-advance button
                         <button
