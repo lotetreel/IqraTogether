@@ -5,11 +5,13 @@ import { useSocket } from '../contexts/SocketContext'; // Import useSocket
 import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
 import BackButton from './ui/BackButton';
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
+import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the Kids Mode icon
 
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('quran'); // Default to Quran
   const [filter, setFilter] = useState('all');
+  const [isKidsFilterActive, setIsKidsFilterActive] = useState(false); // State for Kids Mode filter
   
   // Get Quran list, fetch action, and connectionStatus from context
   const { quranSurahList, getQuranMetadata, error: socketError, connectionStatus } = useSocket(); // Added connectionStatus
@@ -43,15 +45,22 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
     return items.filter(item => {
       // Basic search match (adapt fields as needed)
       const titleMatch = item.title?.toLowerCase().includes(searchTerm.toLowerCase());
-      // Add description search if available in metadata
-      // const descriptionMatch = item.description?.toLowerCase().includes(searchTerm.toLowerCase()); 
-      const matchesSearch = titleMatch; // || descriptionMatch;
+       // Add description search if available in metadata
+       // const descriptionMatch = item.description?.toLowerCase().includes(searchTerm.toLowerCase());
+       const matchesSearch = titleMatch; // || descriptionMatch;
 
-      if (!matchesSearch) return false;
+       if (!matchesSearch) return false;
 
-      // Filter logic (adapt properties based on metadata)
-      if (filter === 'all') return true;
-      
+         // --- Kids Mode Filter (takes precedence) ---
+         if (isKidsFilterActive) {
+           // Check for the flag OR specifically check for Surah Al-Rahman (ID 55) using loose equality (==) as a temporary workaround
+           return item.hasKidsMode === true || (type === 'quran' && item.id == 55); 
+         }
+
+       // --- Regular Filter Logic ---
+       // If Kids Mode is not active, apply the selected filter ('all', 'popular', 'short', etc.)
+       if (filter === 'all') return true;
+
       // Example filters (adjust based on actual metadata fields)
       // if (filter === 'popular') return item.popularity >= 5; // Assuming popularity exists
       
@@ -73,23 +82,36 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
     });
   };
 
+  // Apply the filter function, now including the Kids Mode check
   const filteredDuas = filterContent(duaCollection, 'dua');
-  const filteredQuran = filterContent(quranSurahList, 'quran'); // Use quranSurahList from context
+  const filteredQuran = filterContent(quranSurahList, 'quran');
   // --- End Filtering Logic ---
 
   return (
     <div className="animate-fade-in">
       
       <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 dark:text-dark-text-primary mb-4">
-        {activeTab === 'duas' ? 'Select a Dua to IqraTogether' : 'Select a Surah to IqraTogether'}
-      </h1>
-      
-      <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-8 max-w-lg mx-auto">
-        Choose content to share with your session participants. Everyone will follow along as you navigate.
-      </p>
-      
-      {/* Tabs */}
-      <div className="flex justify-center mb-8">
+         {activeTab === 'duas' ? 'Select a Dua to IqraTogether' : 'Select a Surah to IqraTogether'}
+       </h1>
+ 
+       {/* Kids Mode Button - Moved above tabs */}
+       <div className="flex justify-center mb-4"> {/* Reduced bottom margin */}
+         <button
+           onClick={() => setIsKidsFilterActive(!isKidsFilterActive)}
+           className={`p-1 rounded-lg transition-all duration-200 ${
+             isKidsFilterActive 
+               ? 'bg-accent-100 dark:bg-accent-900/30 ring-2 ring-accent-300 dark:ring-accent-700' 
+               : 'bg-transparent hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+           }`}
+           aria-label={isKidsFilterActive ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}
+         >
+           {/* Large icon, no text */}
+           <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" /> 
+         </button>
+       </div>
+       
+       {/* Tabs */}
+       <div className="flex justify-center mb-8">
         <div className="bg-gray-100 dark:bg-dark-bg-tertiary rounded-xl p-1.5 shadow-inner-light">
           {/* Quran Button First */}
           <button
@@ -119,11 +141,11 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
               Duas
             </span>
           </button>
-        </div>
-      </div>
-      
-      {/* Search and filters */}
-      <div className="mb-8">
+         </div>
+       </div>
+       
+       {/* Search and filters */}
+       <div className="mb-8">
         <div className="relative mb-5">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
           <input
@@ -183,11 +205,23 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
                 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
                 : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
             }`}
-          >
-            <BarChart2 size={16} className="mr-1.5" /> Long
-          </button>
+           >
+             <BarChart2 size={16} className="mr-1.5" /> Long
+           </button>
+           {/* Kids Mode Filter Button */}
+           <button
+             onClick={() => setIsKidsFilterActive(!isKidsFilterActive)}
+             className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
+               isKidsFilterActive
+                 ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-200 ring-1 ring-accent-300 dark:ring-accent-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+             }`}
+            >
+              <BarChart2 size={16} className="mr-1.5" /> Long
+            </button>
+            {/* Kids Mode Filter Button - REMOVED FROM HERE */}
+          </div>
         </div>
-      </div>
       
       {/* Collection grid */}
       {/* Collection grid */}
@@ -195,12 +229,12 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
         {activeTab === 'duas' ? (
           // --- Dua Rendering (remains mostly the same) ---
           filteredDuas.map(dua => ( // Removed onError from Dua image below
-            <div 
-              key={dua.id}
-              // Pass the full dua object or necessary info to onSelectDua
-              onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua' })} 
-              className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-            >
+             <div
+               key={dua.id}
+               // Pass kids filter state along with selection
+               onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsFilterActive })}
+               className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+             >
               {/* Dua card content... (keep existing structure) */}
               <div className="h-40 w-full overflow-hidden relative">
                  <img 
@@ -259,12 +293,12 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
           // --- Quran Rendering (using quranSurahList) ---
           filteredQuran.map(surah => { // Removed console.log
             return (
-            <div 
-              key={surah.id}
-              // Pass necessary info to onSelectQuran
-              onClick={() => onSelectQuran({ id: surah.id, title: surah.title, type: 'quran' })} 
-              className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-            >
+             <div
+               key={surah.id}
+               // Pass kids filter state along with selection
+               onClick={() => onSelectQuran({ id: surah.id, title: surah.title, type: 'quran', startInKidsMode: isKidsFilterActive })}
+               className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+             >
               {/* Adapt card content based on quranMetadata structure */}
               <div className="h-40 w-full overflow-hidden relative">
                  {/* Use specific image for Al-Fatiha (id: 1 or "1"), otherwise placeholder */}

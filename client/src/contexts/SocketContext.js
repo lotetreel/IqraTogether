@@ -500,9 +500,12 @@ export const SocketProvider = ({ children }) => {
         } else if (response.data) {
           console.log('Received Quran metadata.'); setQuranSurahList(response.data);
         }
-      });
-    } else if (quranSurahList.length === 0) { console.warn("Cannot get Quran metadata: Socket not connected."); }
-  }, [socket, connectionStatus, quranSurahList]);
+       });
+     } else if (quranSurahList.length === 0) {
+       // Log if socket isn't connected when attempting fetch
+       console.warn(`Cannot get Quran metadata: Socket status is ${connectionStatus}.`);
+     }
+   }, [socket, connectionStatus]); // Removed quranSurahList dependency
 
   const contextValue = {
     socket, connectionStatus, connected: connectionStatus === 'connected',

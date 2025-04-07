@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle } from 'lucide-react'; // Added Loader, LogIn, PlusCircle
+// Removed Smile icon import, added custom icon import below
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
@@ -13,6 +14,7 @@ import DuaSelectionPage from './DuaSelectionPage';
 import BackButton from './ui/BackButton';
 import ThemeToggle from './ui/ThemeToggle';
 import NetworkInfo from './NetworkInfo';
+import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the custom icon
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -71,6 +73,7 @@ const DuaSyncApp = () => {
   const [showRejoinDialog, setShowRejoinDialog] = useState(false); // State for the rejoin dialog
   // const [contentSelected, setContentSelected] = useState(false); // Determined by !!currentContentInfo
   const [isBrowsingLocally, setIsBrowsingLocally] = useState(false); // Keep for participant browsing UI flow
+  const [isKidsMode, setIsKidsMode] = useState(false); // State for Kids Mode
 
   // Combine context error and local error for display
   const displayError = contextError || localError;
@@ -262,12 +265,15 @@ const DuaSyncApp = () => {
   const handleJoinSessionIdChange = (e) => {
     setJoinSessionId(e.target.value);
   };
-
-  // Handle Dua/Quran selection - Updated to use selectContentAsHost/Locally
-  const handleContentSelection = (contentInfo) => { // Expects { type, id, title }
-    if (!contentInfo) return;
-    setLocalError(null);
-
+ 
+   // Handle Dua/Quran selection - Updated to use selectContentAsHost/Locally
+   const handleContentSelection = (contentInfo) => { // Expects { type, id, title, startInKidsMode? }
+     if (!contentInfo) return;
+     setLocalError(null);
+ 
+     // Set Kids Mode state if the flag is passed (defaults to false if not passed)
+     setIsKidsMode(contentInfo.startInKidsMode || false);
+ 
     // NEW: Handle selection when not in a session (default view)
     if (!sessionId) {
       selectContentLocally(contentInfo); // Just load the content locally
@@ -582,16 +588,35 @@ const DuaSyncApp = () => {
         <div className="container-narrow py-6">
           {/* --- Original Render Logic --- */}
           {
-            // 1. Show Content Viewer if content is selected AND loaded
-            currentContentInfo && currentFullContent ? (
+            // Refined Rendering Logic:
+            // 1. Loading Indicator (Highest priority)
+            isLoadingContent ? (
+              <div className="flex flex-col items-center justify-center h-full py-20">
+                <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
+                <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
+              </div>
+            ) :
+            // 2. Content Viewer (Show if content loaded AND (isHost OR participant is NOT browsing locally))
+            currentContentInfo && currentFullContent && (isHost || !isBrowsingLocally) ? (
               <div className="space-y-6 animate-fade-in">
                 {/* Back button and Content navigation status */}
                 <div className="flex items-center justify-between">
-                 {/* Back button logic might need adjustment based on session state */}
-                 <BackButton onClick={handleBack} />
-                 <div className="text-sm text-gray-500 dark:text-dark-text-muted">
-                   {currentIndex + 1} of {totalPhrases}
-                 </div>
+                  {/* Conditionally render the BackButton */}
+                  {/* Show if:
+                      - Not in a session (viewing locally)
+                      - Is the host (in session)
+                      - Is a participant browsing locally (in session)
+                      Hide if:
+                      - Is a participant synced to the host (in session)
+                  */}
+                  {(!sessionId || isHost || isBrowsingLocally) && (
+                    <BackButton onClick={handleBack} />
+                  )}
+                  {/* Ensure the page number stays aligned */}
+                  <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto'}`}> {/* Add ml-auto if button is hidden */}
+                    {currentIndex + 1} of {totalPhrases}
+                  </div>
                </div>
 
               {/* Content title */}
@@ -601,102 +626,201 @@ const DuaSyncApp = () => {
               </div>
 
               {/* Main content display */}
-              <div className="card p-6 md:p-8 min-h-[200px]"> {/* Added min-height */}
-                {/* Arabic text */}
-                <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
-                  {/* Apply font and add letter-spacing */}
-                  <p
-                    className="leading-loose font-uthmani"
-                    dir="rtl"
-                    style={{ fontSize: `${arabicFontSize}rem` }} // Removed letter-spacing
-                  >
-                    {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                  </p>
-                </div>
-
-                {/* Transliteration - Use dangerouslySetInnerHTML */}
-                {showTransliteration && currentPhraseData.transliteration && (
-                  <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
-                    <p
-                      className="text-gray-700 dark:text-dark-text-secondary italic"
-                      style={{ fontSize: `${transliterationFontSize}rem` }}
-                      dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }}
-                    />
-                  </div>
-                )}
-
-                {/* Translation - Use dangerouslySetInnerHTML */}
-                {showTranslation && currentPhraseData.translation && (
-                  <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
-                    <p
-                      className="text-gray-800 dark:text-dark-text-primary"
-                      style={{ fontSize: `${translationFontSize}rem` }}
-                      dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Navigation controls */}
-              <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-8">
-                {/* Previous/Next Buttons */}
-                <div className="flex space-x-4">
-                  <button
-                    onClick={prevPhrase}
-                    disabled={currentIndex === 0}
-                    className={`btn flex items-center ${currentIndex === 0 ? 'btn-disabled' : 'btn-primary'}`}
-                  >
-                    <ChevronLeft size={20} className="mr-1" /> Previous
-                  </button>
-                  <button
-                    onClick={nextPhrase}
-                    disabled={currentIndex >= totalPhrases - 1}
-                    className={`btn flex items-center ${currentIndex >= totalPhrases - 1 ? 'btn-disabled' : 'btn-primary'}`}
-                  >
-                    Next <ChevronRight size={20} className="ml-1" />
-                  </button>
-                </div>
-
-                {/* Action Buttons - Conditionally show based on session state */}
-                {!!sessionId && ( // Only show session-related buttons if in a session
-                  <div className="flex space-x-4 mt-4 md:mt-0">
-                    {isHost ? (
-                      // Host: Auto-advance button
+              {/* Card container */}
+              <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
+                {/* Conditional Rendering: Kids Mode Image OR Text Content */}
+                {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? ( // Assuming ID 55 is Al-Rahman - NEEDS VERIFICATION
+                  // Kids Mode: Display Image flanked by buttons, then text below
+                  <div key={`kids-mode-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
+                    {/* Row 1: Prev Button, Image, Next Button */}
+                    <div className="flex items-center justify-between w-full gap-4 mb-4">
+                      {/* Previous Button */}
                       <button
-                        onClick={() => setAutoAdvance(!autoAdvance)}
-                        className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}
+                        onClick={prevPhrase}
+                        disabled={currentIndex === 0}
+                        className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
+                         aria-label="Previous Verse"
+                       >
+                         <ChevronLeft size={32} /> {/* Increased size */}
+                       </button>
+
+                      {/* Image */}
+                      <img
+                        src={`/SurahImages/AlRahman/Verse${currentIndex + 1}.png`}
+                        alt={`Verse ${currentIndex + 1} - Kids Illustration`}
+                        className="max-w-[70%] h-auto rounded-lg shadow-md object-contain max-h-[400px]" // Adjusted max-width
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/SurahImages/image_not_found.png';
+                          e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
+                        }}
+                      />
+
+                      {/* Next Button */}
+                      <button
+                        onClick={nextPhrase}
+                        disabled={currentIndex >= totalPhrases - 1}
+                        className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
+                         aria-label="Next Verse"
+                       >
+                         <ChevronRight size={32} /> {/* Increased size */}
+                       </button>
+                     </div>
+
+                    {/* Verse Number */}
+                    <p className="text-center mt-1 text-sm text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1}</p>
+
+                    {/* Arabic Text (Below image+buttons) */}
+                    <div key={`arabic-kids-${currentIndex}`} className="text-center mt-6 mb-6 animate-fade-in w-full">
+                      <p
+                        className="leading-loose font-uthmani"
+                        dir="rtl"
+                        style={{ fontSize: `${arabicFontSize}rem` }}
                       >
-                        {autoAdvance ? (
-                          <span className="flex items-center">
-                            Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span>
-                          </span>
-                        ) : 'Auto'}
-                      </button>
-                    ) : (
-                      // Participant: Sync/Browse buttons (Reconnect button moved to header)
-                      <>
-                        {/* Only show Sync/Browse if connected */}
-                        {connectionStatus === 'connected' && (
-                          <>
-                            {!isSyncedToHost && (
-                              <button onClick={syncToHost} className="btn-accent flex items-center">
-                                <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
-                              </button>
-                            )}
-                            {/* Show Browse button only if synced? Or always when viewing content? Let's show if synced. */}
-                            {isSyncedToHost && (
-                              <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
-                                Browse
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {/* No button needed here when disconnected, Rejoin is in header */}
-                      </>
+                        {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                      </p>
+                    </div>
+
+                    {/* Translation (Below image+buttons) */}
+                    {showTranslation && currentPhraseData.translation && (
+                      <div key={`translation-kids-${currentIndex}`} className="text-center border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up w-full">
+                        <p
+                          className="text-gray-800 dark:text-dark-text-primary"
+                          style={{ fontSize: `${translationFontSize}rem` }}
+                          dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
+                        />
+                      </div>
                     )}
                   </div>
-                )}
+                ) : (
+                  // Normal Mode: Display Text Content flanked by buttons
+                  <div className="w-full flex items-center justify-between gap-4"> {/* Flex container for buttons and text */}
+                    {/* Previous Button */}
+                    <button
+                      onClick={prevPhrase}
+                      disabled={currentIndex === 0}
+                      className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
+                       aria-label="Previous Verse"
+                     >
+                       <ChevronLeft size={32} /> {/* Increased size */}
+                     </button>
+
+                    {/* Text Content Block */}
+                    <div className="flex-1 min-w-0"> {/* flex-1 to take space, min-w-0 to prevent overflow */}
+                      {/* Arabic text */}
+                      <div key={`arabic-${currentIndex}`} className="text-right mb-6 animate-fade-in">
+                        <p
+                          className="leading-loose font-uthmani"
+                          dir="rtl"
+                          style={{ fontSize: `${arabicFontSize}rem` }}
+                        >
+                          {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                        </p>
+                      </div>
+
+                      {/* Transliteration - Use dangerouslySetInnerHTML */}
+                      {showTransliteration && currentPhraseData.transliteration && (
+                        <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                          <p
+                            className="text-gray-700 dark:text-dark-text-secondary italic"
+                            style={{ fontSize: `${transliterationFontSize}rem` }}
+                            dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Translation - Use dangerouslySetInnerHTML */}
+                      {showTranslation && currentPhraseData.translation && (
+                        <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                          <p
+                            className="text-gray-800 dark:text-dark-text-primary"
+                            style={{ fontSize: `${translationFontSize}rem` }}
+                            dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={nextPhrase}
+                      disabled={currentIndex >= totalPhrases - 1}
+                      className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
+                       aria-label="Next Verse"
+                     >
+                       <ChevronRight size={32} /> {/* Increased size */}
+                     </button>
+                   </div>
+                 )}
               </div>
+
+              {/* Navigation controls - Updated layout */}
+              {/* REMOVED Original Prev/Next buttons */}
+              {/* <div className="flex flex-col items-center gap-4 mt-8"> */}
+                {/* Row 1: Previous/Next Buttons */}
+                {/* <div className="flex space-x-4"> ... buttons removed ... </div> */}
+
+                {/* Row 2: Kids Mode Button & Action Buttons */}
+                {/* This container now only holds the second row of buttons */}
+                <div className="flex flex-wrap justify-center items-center gap-4 mt-8"> {/* Added mt-8 here */}
+                  {/* Kids Mode Icon Button - Using custom image */}
+                  {/* Only show if content is Quran */}
+                  {currentContentInfo?.type === 'quran' && (
+                    <div className="flex items-center justify-center"> {/* Removed mt-4 md:mt-0 */}
+                       <button
+                         onClick={() => setIsKidsMode(!isKidsMode)}
+                         // Removed tooltip-wrapper and group classes
+                         className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} // Added padding p-1
+                         aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}
+                       >
+                         {/* Use custom image, increased size */}
+                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" /> {/* Increased size further */}
+                         {/* Tooltip removed */}
+                       </button>
+                    </div>
+                  )}
+
+                  {/* Action Buttons - Conditionally show based on session state */}
+                  {!!sessionId && ( // Only show session-related buttons if in a session
+                    <div className="flex space-x-4"> {/* Removed mt-4 md:mt-0 */}
+                      {isHost ? (
+                        // Host: Auto-advance button
+                        <button
+                          onClick={() => setAutoAdvance(!autoAdvance)}
+                          className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}
+                        >
+                          {autoAdvance ? (
+                            <span className="flex items-center">
+                              Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span>
+                            </span>
+                          ) : 'Auto'}
+                        </button>
+                      ) : (
+                        // Participant: Sync/Browse buttons (Reconnect button moved to header)
+                        <>
+                          {/* Only show Sync/Browse if connected */}
+                          {connectionStatus === 'connected' && (
+                            <>
+                              {!isSyncedToHost && (
+                                <button onClick={syncToHost} className="btn-accent flex items-center">
+                                  <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync
+                                </button>
+                              )}
+                              {/* Show Browse button only if synced? Or always when viewing content? Let's show if synced. */}
+                              {isSyncedToHost && (
+                                <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center">
+                                  Browse
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {/* No button needed here when disconnected, Rejoin is in header */}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              {/* </div> */} {/* End of the original flex-col container */}
 
               {/* Combined Status Indicators - Conditionally show based on session state */}
               {!!sessionId && ( // Only show session-related status if in a session
@@ -730,17 +854,11 @@ const DuaSyncApp = () => {
                 }
               </div>
             </div>
-          ) : // 2. Show Loading Indicator if content is selected but not yet loaded
-          isLoadingContent ? (
+          ) :
+          // 3. Waiting Screen (Participant, in session, host hasn't selected, participant not browsing)
+          !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? (
             <div className="flex flex-col items-center justify-center h-full py-20">
-              <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
-              <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
-            </div>
-          // 3. Show Waiting Screen (Participant, in session, host hasn't selected, not browsing)
-          ) : !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? (
-            <div className="flex flex-col items-center justify-center h-full py-20">
-               <div className="text-center max-w-md">
+              <div className="text-center max-w-md">
                 {/* Waiting Spinner */}
                 <div className="relative mx-auto w-20 h-20 mb-6">
                    <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
@@ -792,6 +910,7 @@ const DuaSyncApp = () => {
                     <input type="checkbox" id="showTransliteration" checked={showTransliteration} onChange={() => setShowTransliteration(!showTransliteration)} className="toggle-checkbox" />
                     <label htmlFor="showTransliteration" className="flex-1 cursor-pointer dark:text-dark-text-secondary ml-3">Show Transliteration</label>
                   </div>
+                  {/* Kids Mode Toggle Removed From Settings */}
                 </div>
               </div>
 

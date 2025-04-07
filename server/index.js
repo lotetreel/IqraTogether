@@ -108,7 +108,10 @@ const io = new Server(server, {
       ? process.env.CLIENT_URL || true  // true = same origin
       : '*',  // In development, allow all origins
     methods: ['GET', 'POST']
-  }
+  },
+  // Increase ping settings for potentially slow/throttled clients
+  pingInterval: 30000, // Send pings every 30 seconds (default: 25000)
+  pingTimeout: 20000   // Wait 20 seconds for pong response (default: 5000)
 });
 
 // --- Removed Static File Serving Block ---
