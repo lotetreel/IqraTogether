@@ -5,6 +5,7 @@ import { useSocket } from '../contexts/SocketContext'; // Import useSocket
 import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
 import BackButton from './ui/BackButton';
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
+import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the Kids Mode icon
 
 const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
@@ -300,17 +301,20 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
                className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
              >
               {/* Adapt card content based on quranMetadata structure */}
-              <div className="h-40 w-full overflow-hidden relative">
-                 {/* Use specific image for Al-Fatiha (id: 1 or "1"), otherwise placeholder */}
-                 <img 
-                   src={surah.id === 1 || surah.id === '1' ? AlFatihaImage : `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`} 
-                   alt={surah.title} 
-                   className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   // Removed onError handler
+               <div className="h-40 w-full overflow-hidden relative">
+                  {/* Use specific images for Al-Fatiha (1) and Al-Rahman (55), otherwise placeholder */}
+                  <img 
+                    src={surah.id == 1 ? AlFatihaImage : surah.id == 55 ? AlRahmanImage : `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`} 
+                    alt={surah.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                    // Removed onError handler
                  />
                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                    <div className="flex justify-between items-end">
-                     <h3 className="text-white font-bold text-lg">{surah.title}</h3>
+                     {/* Conditionally render title for Surah Al-Rahman (55) */}
+                     <h3 className="text-white font-bold text-lg">
+                       {surah.id == 55 ? 'The Merciful' : surah.title}
+                     </h3>
                      {/* Display length based on totalAyahs */}
                      {surah.totalAyahs > 0 && (
                        <div className="badge bg-accent-100 text-accent-800 dark:bg-accent-900/50 dark:text-accent-200">
@@ -318,8 +322,8 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
                        </div>
                      )}
                    </div>
-                   {/* Display Arabic name if available */}
-                   {surah.arabic && <p className="text-white/80 text-sm">{surah.arabic}</p>}
+                   {/* Display Arabic name if available, but NOT for Surah Al-Rahman (55) */}
+                   {surah.arabic && surah.id != 55 && <p className="text-white/80 text-sm">{surah.arabic}</p>}
                  </div>
                </div>
                <div className="p-4 relative">
