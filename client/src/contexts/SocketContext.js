@@ -401,10 +401,16 @@ export const SocketProvider = ({ children }) => {
     if (socket && connectionStatus === 'connected' && isHost && sessionId) {
       if (contentInfo) {
         console.log(`Host selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id})`); setError(null);
+        // Reset index locally immediately for host responsiveness
+        setCurrentIndex(0);
+        setLatestHostIndex(0); // Also reset the latest known host index
         socket.emit('select_content', { sessionId, contentInfo });
-        // Listener 'host_content_updated' will set fetchTrigger
+        // Listener 'host_content_updated' will set fetchTrigger and potentially re-set index from server echo
       } else {
         console.log(`Host deselecting content.`); setError(null);
+        // Reset index when deselecting too
+        setCurrentIndex(0);
+        setLatestHostIndex(0);
         socket.emit('select_content', { sessionId, contentInfo: null });
         setCurrentContentInfo(null); setCurrentFullContent(null); setFetchTrigger(null);
       }
@@ -415,6 +421,7 @@ export const SocketProvider = ({ children }) => {
     if (contentInfo) {
       console.log(`Locally selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id}).`); setError(null);
       setCurrentContentInfo(contentInfo);
+      setCurrentIndex(0); // <<< ADDED: Reset index on local selection
       // Only unsync if actually in a session
       if (sessionId && connectionStatus === 'connected' && !isHost) {
         console.log("Unsyncing from host due to local selection.");
@@ -429,8 +436,9 @@ export const SocketProvider = ({ children }) => {
       // _performFetch will clear currentFullContent automatically if called with null type/id,
       // but explicitly setting it might be safer depending on timing. Let's rely on _performFetch for now.
       // setCurrentFullContent(null); // Optional: Explicitly clear full content
+      setCurrentIndex(0); // <<< ADDED: Reset index on local deselection too
     }
-  }, [connectionStatus, isHost, sessionId]); // Removed selectContentLocally from dependencies
+  }, [connectionStatus, isHost, sessionId]);
 
   const syncToHost = useCallback(() => {
     // Syncing should be possible even if temporarily disconnected, as long as we know the host's state

@@ -839,14 +839,14 @@ const DuaSyncApp = () => {
               {/* Footer message - Adjusted for connection status and session state */}
               <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
                 {!!sessionId
-                  ? (isHost
-                      ? (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.")
-                      : (connectionStatus === 'connected' ? (isSyncedToHost ? "Following host." : "Viewing independently.") : "Connection lost. Navigate locally or use Rejoin in header.")
-                    )
-                  : "Viewing content locally." // Message when not in a session
-                }
-              </div>
-            </div>
+                      ? (isHost
+                          ? (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.")
+                          : (connectionStatus === 'connected' ? (isSyncedToHost ? "Following host." : "Viewing independently.") : "Connection lost. Navigate locally or use Rejoin in header.")
+                        )
+                      : null // Removed "Viewing content locally." message
+                    }
+                  </div>
+                </div>
           ) :
           // 3. Waiting Screen (Participant, in session, host hasn't selected, participant not browsing)
           !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? (
