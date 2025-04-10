@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'; // Removed useRef as it wasn't used here
 import { io } from 'socket.io-client';
+// Import offline storage utils
+import * as offlineStorage from '../utils/offlineStorage';
 // Import duaCollection temporarily to fetch Dua content locally
 // TODO: Consider moving Dua data loading to server as well for consistency
 import { duaCollection, contentMap as localContentMap } from '../data/duaCollection';
@@ -19,63 +21,90 @@ const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingCon
 
   try {
     if (type === 'dua') {
-      // Dua content is loaded locally, no changes needed here
+      // TODO: Implement local file check & download for Duas if desired
+      // For now, load directly from imported data
+      console.log(`Attempting to load Dua ${id} from local map.`);
       const duaData = localContentMap[id];
       if (duaData) {
         await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
         setCurrentFullContent({ ...duaData, verses: { arabic: duaData.arabic || [], transliteration: duaData.transliteration || [], translation: duaData.translation || [] }, totalAyahs: duaData.arabic?.length || 0 });
-      } else { throw new Error(`Dua with ID ${id} not found locally.`); }
+        console.log(`Dua ${id} loaded from local map.`);
+      } else {
+        throw new Error(`Dua with ID ${id} not found locally.`);
+      }
       setIsLoadingContent(false); // Set loading false for Dua
-    } else if (type === 'quran') {
-      const cacheKey = `quran_surah_${id}`;
 
-      // 1. Check connection status
+    } else if (type === 'quran') {
+      const cacheKey = `quran_surah_${id}`; // Keep localStorage key for potential fallback/migration
+      const localPath = offlineStorage.getFilePath('quran', id);
+
+      // --- 1. Prioritize Local Filesystem ---
+      console.log(`Attempting to load Quran ${id} from local path: ${localPath}`);
+      const localData = await offlineStorage.readJsonFile(localPath);
+
+      if (localData) {
+        console.log(`Quran ${id} loaded successfully from local filesystem.`);
+        setCurrentFullContent(localData);
+        setIsLoadingContent(false);
+        return; // Loaded locally, exit
+      }
+      console.log(`Quran ${id} not found locally. Proceeding...`);
+
+      // --- 2. Check connection status (if not found locally) ---
       if (connectionStatus !== 'connected') {
-        console.log(`Offline: Attempting to load Surah ${id} from cache.`);
+        console.log(`Offline: Attempting to load Surah ${id} from localStorage cache (fallback).`);
+        // Fallback to localStorage cache if offline and not found locally
         try {
           const cachedData = localStorage.getItem(cacheKey);
           if (cachedData) {
-            console.log(`Surah ${id} found in cache.`);
-            setCurrentFullContent(JSON.parse(cachedData));
-            setIsLoadingContent(false);
-            return; // Loaded from cache, exit
+            console.log(`Surah ${id} found in localStorage cache.`);
+            const parsedCacheData = JSON.parse(cachedData);
+            setCurrentFullContent(parsedCacheData);
+            // Optionally: Save this cached data to the filesystem now for future offline use
+            try {
+              await offlineStorage.saveJsonData(parsedCacheData, localPath);
+              console.log(`Saved localStorage cache data for Surah ${id} to filesystem.`);
+            } catch (saveErr) {
+              console.error("Failed to save cached data to filesystem:", saveErr);
+            }
           } else {
-            console.log(`Surah ${id} not found in cache.`);
-            setError("Offline: This Surah hasn't been viewed online yet.");
+            console.log(`Surah ${id} not found in local file or cache.`);
+            setError("Offline: This Surah hasn't been downloaded or viewed online yet.");
             setCurrentFullContent(null);
-            setIsLoadingContent(false);
-            return; // Not in cache and offline, exit
           }
         } catch (cacheError) {
           console.error("Error reading from localStorage:", cacheError);
           setError("Error accessing cached data.");
           setCurrentFullContent(null);
+        } finally {
           setIsLoadingContent(false);
-          return; // Error accessing cache, exit
+          return; // Exit after checking cache when offline
         }
       }
 
-      // 2. If connected, fetch from server and cache
+      // --- 3. If connected and not found locally, fetch from server and save locally ---
       if (socket) {
         console.log(`Online: Fetching Surah ${id} from server.`);
-        socket.emit('get_quran_content', { surahId: id }, (response) => {
+        socket.emit('get_quran_content', { surahId: id }, async (response) => { // Make callback async
           if (response.error) {
             console.error('Error fetching Quran content:', response.error);
             setError(`Error fetching Surah ${id}: ${response.error}`);
             setCurrentFullContent(null);
           } else if (response.data) {
-            console.log(`Received Quran content for Surah ${id}. Caching...`);
-            try {
-              // Cache the received data
-              localStorage.setItem(cacheKey, JSON.stringify(response.data));
-              console.log(`Surah ${id} cached successfully.`);
-            } catch (cacheError) {
-              console.error("Error writing to localStorage:", cacheError);
-              // Non-critical error, proceed with setting content
-              setError("Could not cache Surah data (storage might be full).");
-            }
-            // Set the content regardless of caching success/failure
+            console.log(`Received Quran content for Surah ${id}. Saving locally...`);
+            // Set the content immediately for responsiveness
             setCurrentFullContent({ id: response.data.id, title: response.data.title, arabicTitle: response.data.arabicTitle, totalAyahs: response.data.totalAyahs, verses: response.data.verses });
+            try {
+              // Save the received data to the local filesystem
+              await offlineStorage.saveJsonData(response.data, localPath);
+              console.log(`Surah ${id} saved locally successfully.`);
+              // Optionally remove from localStorage cache now if migrating fully
+              // localStorage.removeItem(cacheKey);
+            } catch (saveError) {
+              console.error("Error saving Surah data locally:", saveError);
+              // Non-critical error, content is already set
+              setError("Could not save Surah data locally (storage might be full?).");
+            }
           }
           setIsLoadingContent(false); // Set loading false inside callback
         });
@@ -99,7 +128,6 @@ const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingCon
       setIsLoadingContent(false);
     }
   }
-  // Removed the finally block as loading state is handled within each branch now
 };
 // --- End External Helper Function ---
 

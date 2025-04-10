@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // Removed Smile icon import, added custom icon import below
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
+// Import offline storage utils (adjust path if needed)
+import * as offlineStorage from '../utils/offlineStorage';
+// Import Capacitor Filesystem and core utilities
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
 // import { duaCollection, quranCollection, contentMap } from '../data/duaCollection';
@@ -74,9 +79,18 @@ const DuaSyncApp = () => {
   // const [contentSelected, setContentSelected] = useState(false); // Determined by !!currentContentInfo
   const [isBrowsingLocally, setIsBrowsingLocally] = useState(false); // Keep for participant browsing UI flow
   const [isKidsMode, setIsKidsMode] = useState(false); // State for Kids Mode
+  // State for download statuses
+  const [downloadStatus, setDownloadStatus] = useState({
+    // Example: Track status for specific downloadable content
+    alRahmanImages: 'idle', // 'idle', 'checking', 'downloading', 'downloaded', 'error'
+    // Add more keys as needed, e.g., 'allQuran', 'duaKumayl'
+  });
+  const [downloadError, setDownloadError] = useState(null);
+  const [localKidsImagePath, setLocalKidsImagePath] = useState(null); // State for local image path
+
 
   // Combine context error and local error for display
-  const displayError = contextError || localError;
+  const displayError = contextError || localError || downloadError; // Include download error
 
   // Font Size State - Initialize safely from localStorage or defaults (Keep as is)
   const defaultArabicSize = 1.5;
@@ -388,6 +402,148 @@ const DuaSyncApp = () => {
   }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
   // --- End Memoized values ---
 
+
+  // --- Download Handlers ---
+  const checkDownloadStatus = useCallback(async (key, type, id, filenameForCheck) => {
+    // For image sets like Al-Rahman, we check if the *directory* exists as a proxy
+    // For single files (like Quran JSON), we check the specific file.
+    setDownloadStatus(prev => ({ ...prev, [key]: 'checking' }));
+    setDownloadError(null);
+    try {
+      let pathToCheck;
+      if (type === 'images') {
+        // For images, check the directory containing them
+        pathToCheck = offlineStorage.getFilePath(type, id, 'dummy').split('/').slice(0, -1).join('/'); // Get directory path
+      } else {
+        // For JSON data, check the specific file
+        pathToCheck = offlineStorage.getFilePath(type, id, filenameForCheck);
+      }
+      console.log(`Checking existence of: ${pathToCheck}`);
+      const exists = await offlineStorage.checkFileExists(pathToCheck); // checkFileExists handles dir/file check via stat
+      setDownloadStatus(prev => ({ ...prev, [key]: exists ? 'downloaded' : 'idle' }));
+    } catch (err) {
+      console.error(`Error checking download status for ${key}:`, err);
+      setDownloadStatus(prev => ({ ...prev, [key]: 'error' }));
+      setDownloadError(`Failed to check status for ${key}.`);
+    }
+  }, []);
+
+  const handleDownload = useCallback(async (key, type, id) => {
+    setDownloadStatus(prev => ({ ...prev, [key]: 'downloading' }));
+    setDownloadError(null);
+    console.log(`Starting download for ${key} (${type}, ${id})`);
+    try {
+      if (key === 'alRahmanImages' && type === 'images' && id === 'AlRahman') {
+        const totalVerses = 78; // Specific to Al-Rahman
+        for (let i = 1; i <= totalVerses; i++) {
+          const filename = `Verse${i}.png`;
+          const path = offlineStorage.getFilePath('images', 'AlRahman', filename);
+          // Construct absolute URL - assumes images are served from the root
+          const imageUrl = new URL(`/SurahImages/AlRahman/${filename}`, window.location.origin).href;
+          console.log(`Downloading ${imageUrl} to ${path}`);
+          // Check if file already exists before downloading (optional optimization)
+          // const exists = await offlineStorage.checkFileExists(path);
+          // if (!exists) {
+             await offlineStorage.downloadAndSaveFile(imageUrl, path);
+          // } else {
+          //    console.log(`Skipping already downloaded file: ${filename}`);
+          // }
+          // TODO: Add progress reporting if possible in the future
+        }
+        console.log('Al-Rahman images download complete.');
+      }
+      // TODO: Add logic for downloading other content types (Quran JSON, Dua JSON)
+      // else if (key === 'allQuran' && type === 'quran') { ... }
+      else {
+        console.warn(`Download logic not implemented for key: ${key}`);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate work
+        throw new Error(`Download not implemented for ${key}`);
+      }
+
+      setDownloadStatus(prev => ({ ...prev, [key]: 'downloaded' }));
+    } catch (err) {
+      console.error(`Error downloading ${key}:`, err);
+      setDownloadStatus(prev => ({ ...prev, [key]: 'error' }));
+      setDownloadError(`Download failed for ${key}: ${err.message}`);
+      // Optionally attempt cleanup if download failed mid-way
+      // await handleDelete(key, type, id);
+    }
+  }, []);
+
+  const handleDelete = useCallback(async (key, type, id) => {
+    setDownloadStatus(prev => ({ ...prev, [key]: 'checking' })); // Use 'checking' state visually during delete
+    setDownloadError(null);
+    console.log(`Starting deletion for ${key} (${type}, ${id})`);
+    try {
+      let pathToDelete;
+      if (type === 'images') {
+        // For images, delete the directory containing them
+        pathToDelete = offlineStorage.getFilePath(type, id, 'dummy').split('/').slice(0, -1).join('/');
+      } else {
+        // For JSON data, delete the specific file
+        pathToDelete = offlineStorage.getFilePath(type, id);
+      }
+      console.log(`Deleting path: ${pathToDelete}`);
+      await offlineStorage.deleteFileOrDirectory(pathToDelete);
+      setDownloadStatus(prev => ({ ...prev, [key]: 'idle' }));
+      console.log(`Deletion complete for ${key}`);
+    } catch (err) {
+      console.error(`Error deleting ${key}:`, err);
+      setDownloadStatus(prev => ({ ...prev, [key]: 'error' })); // Revert to error state on failure
+      setDownloadError(`Deletion failed for ${key}: ${err.message}`);
+    }
+  }, []);
+
+  // Effect to check initial download status when settings modal opens
+  useEffect(() => {
+    if (showSettings) {
+      setDownloadError(null); // Clear previous errors
+      // Check status for items you want to manage
+      // For Al-Rahman images, check the directory (pass ID 'AlRahman')
+      checkDownloadStatus('alRahmanImages', 'images', 'AlRahman');
+      // Add checks for other content types here if needed
+      // e.g., checkDownloadStatus('allQuran', 'quran', 'all'); // Assuming 'all' is the ID for bulk Quran data
+    }
+  }, [showSettings, checkDownloadStatus]);
+  // --- End Download Handlers ---
+
+  // Effect to check for and load local Kids Mode image path
+  useEffect(() => {
+    // Only run in Kids Mode for the specific Surah (Al-Rahman, ID 55)
+    if (isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55') {
+      const checkLocalImage = async () => {
+        try {
+          const filename = `Verse${currentIndex + 1}.png`;
+          const relativePath = offlineStorage.getFilePath('images', 'AlRahman', filename);
+          const fileExists = await offlineStorage.checkFileExists(relativePath);
+
+          if (fileExists) {
+            // Get the accessible URI for the WebView
+            const fileUriResult = await Filesystem.getUri({
+              directory: Directory.Documents,
+              path: relativePath
+            });
+            // Convert file URI to web view compatible path
+            const webPath = Capacitor.convertFileSrc(fileUriResult.uri);
+            setLocalKidsImagePath(webPath);
+            console.log(`Local image found and URI set: ${webPath}`);
+          } else {
+            setLocalKidsImagePath(null); // Reset if file doesn't exist locally
+            console.log(`Local image not found: ${relativePath}`);
+          }
+        } catch (error) {
+          console.error('Error checking/getting local image URI:', error);
+          setLocalKidsImagePath(null); // Reset on error
+        }
+      };
+      checkLocalImage();
+    } else {
+      // Reset path if not in Kids Mode or wrong content
+      setLocalKidsImagePath(null);
+    }
+  }, [isKidsMode, currentContentInfo, currentIndex]); // Re-run when mode, content, or index changes
+
+
   // Debug log before render
   console.log('Rendering DuaSyncApp:', {
     sessionId: !!sessionId,
@@ -532,7 +688,7 @@ const DuaSyncApp = () => {
         <div className="bg-red-100 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-2 text-center">
           <div className="container-narrow flex justify-between items-center">
             <span>{displayError}</span>
-            <button onClick={() => { setLocalError(null); /* Also clear context error? Maybe not */ }} className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800">
+            <button onClick={() => { setLocalError(null); setDownloadError(null); /* Also clear context error? Maybe not */ }} className="btn-icon text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800">
               <X size={18} />
             </button>
           </div>
@@ -657,7 +813,8 @@ const DuaSyncApp = () => {
 
                     {/* Image */}
                     <img
-                      src={`/SurahImages/AlRahman/Verse${currentIndex + 1}.png`}
+                      // Use local path if available, otherwise fallback to web path
+                      src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`}
                       alt={`Verse ${currentIndex + 1} - Kids Illustration`}
                       className="max-w-full max-h-full object-contain rounded-lg" // Allow image to fill container
                       onError={(e) => {
@@ -717,7 +874,7 @@ const DuaSyncApp = () => {
                       className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
                       aria-label="Previous Verse"
                     >
-                      <ChevronLeft size={32} /> {/* Increased size */}
+                      <ChevronLeft size={24} /> {/* Reduced size */}
                     </button>
 
                     {/* Text Content Block */}
@@ -763,7 +920,7 @@ const DuaSyncApp = () => {
                       className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`}
                       aria-label="Next Verse"
                     >
-                      <ChevronRight size={32} /> {/* Increased size */}
+                      <ChevronRight size={24} /> {/* Reduced size */}
                     </button>
                   </div>
                   {/* REMOVED Kids Mode Toggle Button from here */}
@@ -940,6 +1097,55 @@ const DuaSyncApp = () => {
                    </div>
                 </div>
               </div>
+
+              {/* --- Download Content Section --- */}
+              <div>
+                <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Download Content</label>
+                <div className="space-y-3">
+                  {/* Example: Al-Rahman Images */}
+                  <div className="flex items-center justify-between bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
+                    <span className="dark:text-dark-text-secondary">Kids Mode Images (Al-Rahman)</span>
+                    <div className="flex items-center space-x-2">
+                      {downloadStatus.alRahmanImages === 'checking' && <Loader size={18} className="animate-spin text-gray-500" />}
+                      {downloadStatus.alRahmanImages === 'downloading' && <Loader size={18} className="animate-spin text-blue-500" />}
+                      {downloadStatus.alRahmanImages === 'downloaded' && <CheckCircle size={18} className="text-green-500" />}
+                      {downloadStatus.alRahmanImages === 'error' && <X size={18} className="text-red-500" />}
+
+                      {/* Download Button */}
+                      {downloadStatus.alRahmanImages !== 'downloaded' && (
+                        <button
+                          onClick={() => handleDownload('alRahmanImages', 'images', 'AlRahman')}
+                          className="btn-icon-sm btn-primary"
+                          disabled={downloadStatus.alRahmanImages === 'checking' || downloadStatus.alRahmanImages === 'downloading'}
+                          aria-label="Download Al-Rahman Images"
+                        >
+                          <DownloadCloud size={16} />
+                        </button>
+                      )}
+                      {/* Delete Button */}
+                      {downloadStatus.alRahmanImages === 'downloaded' && (
+                        <button
+                          onClick={() => handleDelete('alRahmanImages', 'images', 'AlRahman')}
+                          className="btn-icon-sm btn-danger"
+                          disabled={downloadStatus.alRahmanImages === 'checking' || downloadStatus.alRahmanImages === 'downloading'} // Also disable delete while downloading
+                          aria-label="Delete Al-Rahman Images"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Add more download items here (e.g., All Quran, All Duas) */}
+                  {/* Example: All Quran Data */}
+                  {/* <div className="flex items-center justify-between bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
+                    <span className="dark:text-dark-text-secondary">Quran Text & Data</span>
+                     ... buttons based on downloadStatus.allQuran ...
+                  </div> */}
+                </div>
+                {downloadError && <p className="text-red-500 text-sm mt-2">{downloadError}</p>}
+              </div>
+              {/* --- End Download Content Section --- */}
+
 
               {/* Auto-Advance Settings (Host only) */}
               {isHost && connectionStatus === 'connected' && ( // Show only if host and connected
