@@ -532,12 +532,7 @@ const DuaSyncApp = () => {
 
       {/* REMOVED Host status badge from here */}
 
-      {/* Progress bar */}
-      {connectionStatus === 'connected' && !!sessionId && currentContentInfo && totalPhrases > 0 && (
-        <div className="container-narrow pt-4">
-          <ProgressIndicator currentIndex={currentIndex} hostIndex={!isHost && !isSyncedToHost ? hostSelectedContentInfo?.currentIndex ?? 0 : currentIndex} totalPhrases={totalPhrases} isSynced={isSyncedToHost || isHost} />
-        </div>
-      )}
+      {/* REMOVED Progress bar */}
 
       {/* Main content */}
       <div className="flex-1 overflow-y-auto">
@@ -560,7 +555,7 @@ const DuaSyncApp = () => {
               {/* Content title */}
               <div className="text-center mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-                {contentSource && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{contentSource}</p>}
+                {/* REMOVED contentSource paragraph */}
               </div>
               {/* Kids Mode Toggle */}
               {currentContentInfo?.type === 'quran' && (
