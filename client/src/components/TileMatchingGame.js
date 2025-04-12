@@ -124,14 +124,8 @@ const TileMatchingGame = () => {
         createBoard();
     };
 
+    // Calculate grid columns dynamically based on difficulty
     const gridCols = Math.ceil(Math.sqrt(difficulty));
-    const gridStyle = {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
-        gap: '0.75rem',
-        width: '100%',
-        maxWidth: '32rem'
-    };
 
     return (
         <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-150px)]">
@@ -159,9 +153,15 @@ const TileMatchingGame = () => {
                 <p>Matched: <span className="font-semibold">{matchedPairs}</span> / {requiredPairs}</p>
             </div>
 
-            <div id="game-board" style={gridStyle}>
+            {/* Responsive Grid: Full width on small screens, max-width increases on larger screens */}
+            <div
+                id="game-board"
+                className="grid w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl gap-2 sm:gap-3"
+                style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+            >
                 {cards.map((card) => (
-                    <div key={card.id} className="card-container" style={{ aspectRatio: '1 / 1' }}> {/* Apply aspect ratio inline */}
+                    // Use aspect-square for consistent tile shape
+                    <div key={card.id} className="card-container aspect-square">
                         {/* Use ReactCardFlip for animation, ensure it fills container */}
                         <ReactCardFlip
                             isFlipped={card.isFlipped}

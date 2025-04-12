@@ -4,7 +4,7 @@
   "description": "Real-time dua and quran sync application",
   "main": "index.js",
   "scripts": {
-    "start": "cd server && pnpm start",
+    "start": "concurrently \"pnpm run server\" \"pnpm run client\"",
     "build": "cd client && pnpm install && pnpm run build",
     "server": "cd server && pnpm start",
     "client": "cd client && pnpm start",
