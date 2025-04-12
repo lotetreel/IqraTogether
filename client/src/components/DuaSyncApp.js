@@ -133,14 +133,7 @@ const DuaSyncApp = () => {
     }
   }, [connectionStatus, connectToServer, sessionId]);
 
-  // Show NameInputDialog after connection
-  useEffect(() => {
-    if (connectionStatus === 'connected' && pendingAction) {
-      console.log(`Connection established, proceeding with pending action: ${pendingAction}`);
-      setShowNameInputDialog(true);
-      setPendingAction(null);
-    }
-  }, [connectionStatus, pendingAction]);
+  // REMOVED: useEffect that showed NameInputDialog based on pendingAction
 
   // Moved totalPhrases definition earlier
   const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0); // Adjusted for dua
@@ -184,12 +177,18 @@ const DuaSyncApp = () => {
   // Start hosting
   const startHosting = () => {
     setLocalError(null);
-    if (connectionStatus === 'connected') {
-      setShowNameInputDialog(true);
-    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      setPendingAction('create');
-      connectToServer();
+    // Check connection status BEFORE showing the dialog
+    if (connectionStatus !== 'connected') {
+      alert('Please wait for the connection to complete before creating a session.');
+      // Optionally try to connect if disconnected
+      if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+        connectToServer();
+      }
+      return; 
     }
+    // If connected, show the dialog directly
+    setShowNameInputDialog(true);
+    setJoinSessionId(''); // Ensure joinSessionId is cleared if creating
   };
 
   // Join participant
@@ -199,13 +198,20 @@ const DuaSyncApp = () => {
       return;
     }
     setLocalError(null);
-    setIsJoining(true);
-    if (connectionStatus === 'connected') {
-      setShowNameInputDialog(true);
-    } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-      setPendingAction('join');
-      connectToServer();
+    setIsJoining(true); // Keep this for potential UI feedback if needed
+
+    // Check connection status BEFORE showing the dialog
+    if (connectionStatus !== 'connected') {
+      alert('Please wait for the connection to complete before joining a session.');
+      // Optionally try to connect if disconnected
+      if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+        connectToServer();
+      }
+      setIsJoining(false); // Reset joining state if connection failed
+      return;
     }
+    // If connected, show the dialog directly
+    setShowNameInputDialog(true);
   };
 
   // Handle name submission
@@ -803,7 +809,7 @@ const DuaSyncApp = () => {
       {/* Other Modals */}
       {showShareDialog && <ShareDialog sessionId={sessionId} sessionUrl={sessionUrl} onClose={() => setShowShareDialog(false)} />}
       {showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
-      {showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setJoinSessionId(''); setPendingAction(null); }} />}
+      {showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); /* No need to clear joinSessionId here as it's handled in startHosting/joinAsParticipant */ }} />}
       <RejoinDialog isOpen={showRejoinDialog} onClose={() => setShowRejoinDialog(false)} onSubmit={({ sessionId: rejoinSessionId, username: rejoinUsername }) => { setShowRejoinDialog(false); setLocalError(null); console.log(`Attempting explicit rejoin for session ${rejoinSessionId} as ${rejoinUsername}`); if (connectionStatus !== 'connected') { console.log("Not connected, attempting connection first..."); connectToServer(); } joinSession(rejoinSessionId, rejoinUsername, isHost); }} initialSessionId={sessionId} initialUsername={username} />
     </div>
   );

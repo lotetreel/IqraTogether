@@ -1,7 +1,7 @@
 [
   { "id": "1", "title": "Al-Fatihah", "arabic": "الفاتحة", "totalAyahs": 7 },
-  { "id": "2", "title": "Al-Baqarah", "arabic": "البقرة", "totalAyahs": 286 },
-  { "id": "3", "title": "Ali 'Imran", "arabic": "آل عمران", "totalAyahs": 200 },
+  { "id": "2", "title": "Al-Baqarah", "arabic": "البقرة", "totalAyahs": 286, "coverImage": "assets/images/AlBaqara.png" },
+  { "id": "3", "title": "Ali 'Imran", "arabic": "آل عمران", "totalAyahs": 200, "coverImage": "assets/images/AalImran.png" },
   { "id": "4", "title": "An-Nisa", "arabic": "النساء", "totalAyahs": 176 },
   { "id": "5", "title": "Al-Ma'idah", "arabic": "المائدة", "totalAyahs": 120 },
   { "id": "6", "title": "Al-An'am", "arabic": "الأنعام", "totalAyahs": 165 },

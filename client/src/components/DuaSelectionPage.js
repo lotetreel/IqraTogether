@@ -5,6 +5,8 @@ import { useSocket } from '../contexts/SocketContext'; // Import useSocket
 import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
 import BackButton from './ui/BackButton';
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
+import AlBaqaraImage from '../assets/images/AlBaqara.png'; // Import Al-Baqara image
+import AalImranImage from '../assets/images/AalImran.png'; // Import Aal Imran image
 import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the Kids Mode icon
 
@@ -302,10 +304,16 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
              >
               {/* Adapt card content based on quranMetadata structure */}
                <div className="h-40 w-full overflow-hidden relative">
-                  {/* Use specific images for Al-Fatiha (1) and Al-Rahman (55), otherwise placeholder */}
-                  <img 
-                    src={surah.id == 1 ? AlFatihaImage : surah.id == 55 ? AlRahmanImage : `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`} 
-                    alt={surah.title} 
+                  {/* Use specific images for Al-Fatiha (1), Al-Baqara (2), and Al-Rahman (55), otherwise placeholder */}
+                  <img
+                    src={
+                      surah.id == 1 ? AlFatihaImage :
+                      surah.id == 2 ? AlBaqaraImage :
+                      surah.id == 3 ? AalImranImage : // Add check for Aal Imran
+                      surah.id == 55 ? AlRahmanImage :
+                      `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`
+                    }
+                    alt={surah.title}
                     className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
                     // Removed onError handler
                  />
