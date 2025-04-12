@@ -32,8 +32,8 @@ const TileMatchingGame = () => {
     const [canFlip, setCanFlip] = useState(true);
     const [isGameWon, setIsGameWon] = useState(false);
     // State for card size level (e.g., 0: small, 1: medium, 2: large, 3: x-large)
-    const [cardSizeLevel, setCardSizeLevel] = useState(0);
-    const maxCardSizeLevel = 3; // Increase maximum size level
+    const [cardSizeLevel, setCardSizeLevel] = useState(1); // Start at Medium size (level 1)
+    const maxCardSizeLevel = 3; // Keep max level at 3 (X-Large)
 
     const requiredPairs = difficulty / 2;
 
