@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 // Remove direct import of quranCollection
 import { duaCollection } from '../data/duaCollection'; 
 import { useSocket } from '../contexts/SocketContext'; // Import useSocket
-import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader } from 'lucide-react'; // Add Loader
+import { Search, Star, Clock, BookOpen, Heart, BarChart2, Book, Loader, Gamepad2 } from 'lucide-react'; // Add Loader, Gamepad2
 import BackButton from './ui/BackButton';
+import TileMatchingGame from './TileMatchingGame'; // Import the game component
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
 import AlBaqaraImage from '../assets/images/AlBaqara.png'; // Import Al-Baqara image
 import AalImranImage from '../assets/images/AalImran.png'; // Import Aal Imran image
@@ -11,14 +12,14 @@ import AnNisaImage from '../assets/images/AnNisa.png'; // Import An-Nisa image
 import AlMaidahImage from '../assets/images/AlMaidah.png'; // Import Al-Ma'idah image
 import AlAnaamImage from '../assets/images/AlAnaam.png'; // Import Al-An'am image
 import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
-import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the Kids Mode icon
+// Removed KidsModeIcon import, as the toggle is now in DuaSyncApp
 
-const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
+const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) => { // Accept isKidsMode prop
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('quran'); // Default to Quran
+  const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'game'
   const [filter, setFilter] = useState('all');
-  const [isKidsFilterActive, setIsKidsFilterActive] = useState(false); // State for Kids Mode filter
-  
+  // Removed isKidsFilterActive state, will use isKidsMode prop
+
   // Get Quran list, fetch action, and connectionStatus from context
   const { quranSurahList, getQuranMetadata, error: socketError, connectionStatus } = useSocket(); // Added connectionStatus
   const [isLoadingQuranList, setIsLoadingQuranList] = useState(false);
@@ -48,23 +49,25 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
 
   // --- Filtering Logic ---
   const filterContent = (items, type) => {
+    // Define the Surah IDs that have images and are suitable for Kids Mode
+    const kidsModeSurahIds = ['1', '2', '3', '4', '5', '6', '55'];
+
     return items.filter(item => {
-      // Basic search match (adapt fields as needed)
+      // --- Kids Mode Filter (Applied first for Quran) ---
+      if (type === 'quran' && isKidsMode && !kidsModeSurahIds.includes(item.id)) {
+        return false; // Exclude Surahs not in the kids list when Kids Mode is on
+      }
+
+      // --- Basic Search Match ---
       const titleMatch = item.title?.toLowerCase().includes(searchTerm.toLowerCase());
-       // Add description search if available in metadata
-       // const descriptionMatch = item.description?.toLowerCase().includes(searchTerm.toLowerCase());
-       const matchesSearch = titleMatch; // || descriptionMatch;
+      // Add description search if available in metadata
+      // const descriptionMatch = item.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = titleMatch; // || descriptionMatch;
 
-       if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-         // --- Kids Mode Filter (takes precedence) ---
-         if (isKidsFilterActive) {
-           // Check for the flag OR specifically check for Surah Al-Rahman (ID 55) using loose equality (==) as a temporary workaround
-           return item.hasKidsMode === true || (type === 'quran' && item.id == 55); 
-         }
-
-       // --- Regular Filter Logic ---
-       // If Kids Mode is not active, apply the selected filter ('all', 'popular', 'short', etc.)
+      // --- Regular Filter Logic ---
+      // Apply the selected filter ('all', 'popular', 'short', etc.)
        if (filter === 'all') return true;
 
       // Example filters (adjust based on actual metadata fields)
@@ -88,43 +91,37 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
     });
   };
 
-  // Apply the filter function, now including the Kids Mode check
+  // Apply the filter function
   const filteredDuas = filterContent(duaCollection, 'dua');
   const filteredQuran = filterContent(quranSurahList, 'quran');
   // --- End Filtering Logic ---
 
+  // Reset to Quran tab if Kids Mode is turned off while Game tab is active
+  useEffect(() => {
+    if (!isKidsMode && activeTab === 'game') {
+      setActiveTab('quran');
+    }
+  }, [isKidsMode, activeTab]);
+
+
   return (
     <div className="animate-fade-in">
-      
+
       <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 dark:text-dark-text-primary mb-4">
-         {activeTab === 'duas' ? 'Select a Dua to IqraTogether' : 'Select a Surah to IqraTogether'}
+         {activeTab === 'duas' ? 'Select a Dua' : activeTab === 'quran' ? 'Select a Surah' : 'Tile Matching Game'}
        </h1>
- 
-       {/* Kids Mode Button - Moved above tabs */}
-       <div className="flex justify-center mb-4"> {/* Reduced bottom margin */}
-         <button
-           onClick={() => setIsKidsFilterActive(!isKidsFilterActive)}
-           className={`p-1 rounded-lg transition-all duration-200 ${
-             isKidsFilterActive 
-               ? 'bg-accent-100 dark:bg-accent-900/30 ring-2 ring-accent-300 dark:ring-accent-700' 
-               : 'bg-transparent hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-           }`}
-           aria-label={isKidsFilterActive ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}
-         >
-           {/* Large icon, no text */}
-           <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" /> 
-         </button>
-       </div>
-       
+
+       {/* Removed separate Kids Mode Button */}
+
        {/* Tabs */}
        <div className="flex justify-center mb-8">
         <div className="bg-gray-100 dark:bg-dark-bg-tertiary rounded-xl p-1.5 shadow-inner-light">
-          {/* Quran Button First */}
+          {/* Quran Button */}
           <button
             onClick={() => setActiveTab('quran')}
             className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
-              activeTab === 'quran' 
-                ? 'bg-gradient-primary text-white shadow-md' 
+              activeTab === 'quran'
+                ? 'bg-gradient-primary text-white shadow-md'
                 : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
             }`}
           >
@@ -133,12 +130,12 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
               Quran
             </span>
           </button>
-          {/* Duas Button Second */}
+          {/* Duas Button */}
           <button
             onClick={() => setActiveTab('duas')}
             className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
-              activeTab === 'duas' 
-                ? 'bg-gradient-primary text-white shadow-md' 
+              activeTab === 'duas'
+                ? 'bg-gradient-primary text-white shadow-md'
                 : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
             }`}
           >
@@ -147,238 +144,238 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
               Duas
             </span>
           </button>
+          {/* Game Button (Conditional) */}
+          {isKidsMode && (
+            <button
+              onClick={() => setActiveTab('game')}
+              className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
+                activeTab === 'game'
+                  ? 'bg-pink-500 text-white shadow-md' // Use a distinct color for game
+                  : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
+            >
+              <span className="flex items-center">
+                <Gamepad2 size={18} className="mr-2" />
+                Game
+              </span>
+            </button>
+          )}
          </div>
        </div>
-       
-       {/* Search and filters */}
-       <div className="mb-8">
-        <div className="relative mb-5">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-          <input
+
+       {/* Search and filters (Only show if not on Game tab) */}
+       {activeTab !== 'game' && (
+         <div className="mb-8">
+          <div className="relative mb-5">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+            <input
             type="text"
-            placeholder={`Search ${activeTab === 'duas' ? 'duas' : 'surahs'}...`}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="input w-full pl-10"
-          />
-        </div>
-        
-        <div className="flex flex-wrap gap-2 justify-center">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-              filter === 'all' 
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
-                : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('popular')}
-            className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
-              filter === 'popular' 
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
-                : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            <Star size={16} className="mr-1.5" /> Popular
-          </button>
-          <button
-            onClick={() => setFilter('short')}
-            className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
-              filter === 'short' 
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
-                : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            <Clock size={16} className="mr-1.5" /> Short
-          </button>
-          <button
-            onClick={() => setFilter('medium')}
-            className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-              filter === 'medium' 
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
-                : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            Medium
-          </button>
-          <button
-            onClick={() => setFilter('long')}
-            className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
-              filter === 'long' 
-                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700' 
-                : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-           >
-             <BarChart2 size={16} className="mr-1.5" /> Long
-           </button>
-           {/* Kids Mode Filter Button */}
-           <button
-             onClick={() => setIsKidsFilterActive(!isKidsFilterActive)}
-             className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
-               isKidsFilterActive
-                 ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-200 ring-1 ring-accent-300 dark:ring-accent-700'
-                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-             }`}
-            >
-              <BarChart2 size={16} className="mr-1.5" /> Long
-            </button>
-            {/* Kids Mode Filter Button - REMOVED FROM HERE */}
+              placeholder={`Search ${activeTab === 'duas' ? 'duas' : 'surahs'}...`}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="input w-full pl-10"
+            />
           </div>
-        </div>
-      
-      {/* Collection grid */}
-      {/* Collection grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activeTab === 'duas' ? (
-          // --- Dua Rendering (remains mostly the same) ---
-          filteredDuas.map(dua => ( // Removed onError from Dua image below
-             <div
-               key={dua.id}
-               // Pass kids filter state along with selection
-               onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsFilterActive })}
-               className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                filter === 'all'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('popular')}
+              className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
+                filter === 'popular'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
+            >
+              <Star size={16} className="mr-1.5" /> Popular
+            </button>
+            <button
+              onClick={() => setFilter('short')}
+              className={`px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 ${
+                filter === 'short'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
+            >
+              <Clock size={16} className="mr-1.5" /> Short
+            </button>
+            <button
+              onClick={() => setFilter('medium')}
+              className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                filter === 'medium'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
+            >
+              Medium
+            </button>
+            <button
+              onClick={() => setFilter('long')}
+              className={`px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                filter === 'long'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 ring-1 ring-primary-300 dark:ring-primary-700'
+                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+              }`}
              >
-              {/* Dua card content... (keep existing structure) */}
-              <div className="h-40 w-full overflow-hidden relative">
-                 <img 
-                   src={dua.image || `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(dua.title)}`} // Use placeholder if no image
-                   alt={dua.title} 
-                   className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   // Removed onError handler
-                 />
-                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                   <div className="flex justify-between items-end">
-                     <h3 className="text-white font-bold text-lg">{dua.title}</h3>
-                     {dua.length && (
-                       <div className="badge bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                         {dua.length}
+               <BarChart2 size={16} className="mr-1.5" /> Long
+             </button>
+             {/* Removed Kids Mode Filter Button */}
+          </div>
+         </div>
+       )}
+
+      {/* Content Area */}
+      {activeTab === 'game' ? (
+        // --- Game Rendering ---
+        <TileMatchingGame />
+      ) : (
+        // --- Quran/Dua Grid Rendering ---
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeTab === 'duas' ? (
+            // --- Dua Rendering ---
+            filteredDuas.map(dua => (
+               <div
+                 key={dua.id}
+                 // Pass isKidsMode prop along with selection
+                 onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsMode })}
+                 className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+               >
+                {/* Dua card content... */}
+                <div className="h-40 w-full overflow-hidden relative">
+                   <img
+                     src={dua.image || `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(dua.title)}`}
+                     alt={dua.title}
+                     className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                   />
+                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                     <div className="flex justify-between items-end">
+                       <h3 className="text-white font-bold text-lg">{dua.title}</h3>
+                       {dua.length && (
+                         <div className="badge bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                           {dua.length}
+                         </div>
+                       )}
+                     </div>
+                     {dua.arabic && <p className="text-white/80 text-sm">{dua.arabic}</p>}
+                   </div>
+                 </div>
+                 <div className="p-4 relative">
+                   {dua.source && <p className="text-sm text-gray-500 dark:text-dark-text-muted mb-2">Source: {dua.source}</p>}
+                   {dua.description && <p className="text-gray-700 dark:text-dark-text-secondary line-clamp-3">{dua.description}</p>}
+                   <div className="mt-3 flex items-center justify-between">
+                     {dua.recitationTime && <span className="text-xs text-gray-500 dark:text-dark-text-muted">{dua.recitationTime}</span>}
+                     {dua.popularity && (
+                       <div className="flex">
+                         {Array.from({ length: dua.popularity }).map((_, i) => (
+                           <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                         ))}
                        </div>
                      )}
                    </div>
-                   {dua.arabic && <p className="text-white/80 text-sm">{dua.arabic}</p>}
-                 </div>
-               </div>
-               <div className="p-4 relative">
-                 {dua.source && <p className="text-sm text-gray-500 dark:text-dark-text-muted mb-2">Source: {dua.source}</p>}
-                 {dua.description && <p className="text-gray-700 dark:text-dark-text-secondary line-clamp-3">{dua.description}</p>}
-                 <div className="mt-3 flex items-center justify-between">
-                   {dua.recitationTime && <span className="text-xs text-gray-500 dark:text-dark-text-muted">{dua.recitationTime}</span>}
-                   {dua.popularity && (
-                     <div className="flex">
-                       {Array.from({ length: dua.popularity }).map((_, i) => (
-                         <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                       ))}
-                     </div>
-                   )}
-                 </div>
-                 <div className="absolute inset-0 bg-primary-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-primary-500/10">
-                   <span className="btn-primary py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                     Select Dua
-                   </span>
-                 </div>
-               </div>
-            </div>
-          ))
-        ) : isLoadingQuranList ? (
-            // --- Loading State for Quran ---
-            <div className="col-span-full flex justify-center items-center py-12">
-              <Loader size={32} className="animate-spin text-primary-500 dark:text-primary-400" />
-              <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading Quran list...</span>
-            </div>
-        ) : socketError && quranSurahList.length === 0 ? (
-             // --- Error State for Quran ---
-             <div className="col-span-full text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-xl">
-               <Search size={48} className="mx-auto text-red-300 dark:text-red-600 mb-4" />
-               <p className="text-red-600 dark:text-red-300 mb-2 font-medium">Failed to load Quran list</p>
-               <p className="text-sm text-red-500 dark:text-red-400">{socketError}</p>
-             </div>
-        ) : (
-          // --- Quran Rendering (using quranSurahList) ---
-          filteredQuran.map(surah => { // Removed console.log
-            return (
-             <div
-               key={surah.id}
-               // Pass kids filter state along with selection
-               onClick={() => onSelectQuran({ id: surah.id, title: surah.title, type: 'quran', startInKidsMode: isKidsFilterActive })}
-               className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-             >
-              {/* Adapt card content based on quranMetadata structure */}
-               <div className="h-40 w-full overflow-hidden relative">
-                  {/* Use specific images for Al-Fatiha (1), Al-Baqara (2), and Al-Rahman (55), otherwise placeholder */}
-                  <img
-                    src={
-                      surah.id == 1 ? AlFatihaImage :
-                      surah.id == 2 ? AlBaqaraImage :
-                      surah.id == 3 ? AalImranImage :
-                      surah.id == 4 ? AnNisaImage : // Add check for An-Nisa
-                      surah.id == 5 ? AlMaidahImage : // Add check for Al-Ma'idah
-                      surah.id == 6 ? AlAnaamImage : // Add check for Al-An'am
-                      surah.id == 55 ? AlRahmanImage :
-                      `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`
-                    }
-                    alt={surah.title}
-                    className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                    // Removed onError handler
-                 />
-                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                   <div className="flex justify-between items-end">
-                     {/* Conditionally render title for Surah Al-Rahman (55) */}
-                     <h3 className="text-white font-bold text-lg">
-                       {surah.id == 55 ? 'The Merciful' : surah.title}
-                     </h3>
-                     {/* Display length based on totalAyahs */}
-                     {surah.totalAyahs > 0 && (
-                       <div className="badge bg-accent-100 text-accent-800 dark:bg-accent-900/50 dark:text-accent-200">
-                         {surah.totalAyahs} Ayahs
-                       </div>
-                     )}
+                   <div className="absolute inset-0 bg-primary-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-primary-500/10">
+                     <span className="btn-primary py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                       Select Dua
+                     </span>
                    </div>
-                   {/* Display Arabic name if available, but NOT for Surah Al-Rahman (55) */}
-                   {surah.arabic && surah.id != 55 && <p className="text-white/80 text-sm">{surah.arabic}</p>}
                  </div>
-               </div>
-               <div className="p-4 relative">
-                 {/* Add description if available in metadata */}
-                 {/* {surah.description && <p className="text-gray-700 dark:text-dark-text-secondary line-clamp-3 mb-2">{surah.description}</p>} */}
-                 <div className="mt-1 flex items-center justify-between">
-                   <span className="flex items-center text-xs text-gray-500 dark:text-dark-text-muted">
-                     <BookOpen size={14} className="mr-1" /> Quran
-                   </span>
-                   {/* Add popularity stars if available */}
-                   {/* {surah.popularity && (
-                     <div className="flex">
-                       {Array.from({ length: surah.popularity }).map((_, i) => (
-                         <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                       ))}
+              </div>
+            ))
+          ) : activeTab === 'quran' ? (
+            isLoadingQuranList ? (
+                // --- Loading State for Quran ---
+                <div className="col-span-full flex justify-center items-center py-12">
+                  <Loader size={32} className="animate-spin text-primary-500 dark:text-primary-400" />
+                  <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading Quran list...</span>
+                </div>
+            ) : socketError && quranSurahList.length === 0 ? (
+                 // --- Error State for Quran ---
+                 <div className="col-span-full text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                   <Search size={48} className="mx-auto text-red-300 dark:text-red-600 mb-4" />
+                   <p className="text-red-600 dark:text-red-300 mb-2 font-medium">Failed to load Quran list</p>
+                   <p className="text-sm text-red-500 dark:text-red-400">{socketError}</p>
+                 </div>
+            ) : (
+              // --- Quran Rendering ---
+              filteredQuran.map(surah => {
+                return (
+                 <div
+                   key={surah.id}
+                   // Pass isKidsMode prop along with selection
+                   onClick={() => onSelectQuran({ id: surah.id, title: surah.title, type: 'quran', startInKidsMode: isKidsMode })}
+                   className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                 >
+                  {/* Quran card content... */}
+                   <div className="h-40 w-full overflow-hidden relative">
+                      <img
+                        src={
+                          surah.id == 1 ? AlFatihaImage :
+                          surah.id == 2 ? AlBaqaraImage :
+                          surah.id == 3 ? AalImranImage :
+                          surah.id == 4 ? AnNisaImage :
+                          surah.id == 5 ? AlMaidahImage :
+                          surah.id == 6 ? AlAnaamImage :
+                          surah.id == 55 ? AlRahmanImage :
+                          `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`
+                        }
+                        alt={surah.title}
+                        className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                     />
+                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                       <div className="flex justify-between items-end">
+                         <h3 className="text-white font-bold text-lg">
+                           {surah.id == 55 ? 'The Merciful' : surah.title}
+                         </h3>
+                         {surah.totalAyahs > 0 && (
+                           <div className="badge bg-accent-100 text-accent-800 dark:bg-accent-900/50 dark:text-accent-200">
+                             {surah.totalAyahs} Ayahs
+                           </div>
+                         )}
+                       </div>
+                       {surah.arabic && surah.id != 55 && <p className="text-white/80 text-sm">{surah.arabic}</p>}
                      </div>
-                   )} */}
-                 </div>
-                 <div className="absolute inset-0 bg-accent-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-accent-500/10">
-                   <span className="btn-accent py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                     Select Surah
-                   </span>
-                 </div>
-               </div>
-            </div>
-          )})
-        )}
-      </div>
-      
-      {/* No results */}
-      {/* Adjust condition to check loading/error state for Quran */}
-      {(activeTab === 'duas' && filteredDuas.length === 0) || 
-       (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0) ? (
-        <div className="text-center py-12 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl mt-6">
-          <Search size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <p className="text-gray-500 dark:text-dark-text-muted mb-2">No results found</p>
-          <p className="text-sm text-gray-400 dark:text-dark-text-muted">Try a different search term or filter</p>
+                   </div>
+                   <div className="p-4 relative">
+                     <div className="mt-1 flex items-center justify-between">
+                       <span className="flex items-center text-xs text-gray-500 dark:text-dark-text-muted">
+                         <BookOpen size={14} className="mr-1" /> Quran
+                       </span>
+                     </div>
+                     <div className="absolute inset-0 bg-accent-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-accent-500/10">
+                       <span className="btn-accent py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                         Select Surah
+                       </span>
+                     </div>
+                   </div>
+                </div>
+              )})
+            )
+          ) : null /* Should not happen if activeTab is 'dua' or 'quran' */ }
         </div>
-      ) : null}
+      )}
+
+      {/* No results (Only show if not on Game tab) */}
+      {activeTab !== 'game' && (
+        (activeTab === 'duas' && filteredDuas.length === 0) ||
+        (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0)
+      ) ? (
+          <div className="text-center py-12 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl mt-6">
+            <Search size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-dark-text-muted mb-2">No results found</p>
+            <p className="text-sm text-gray-400 dark:text-dark-text-muted">Try a different search term or filter</p>
+          </div>
+        ) : null}
     </div>
   );
 };
+
 
 export default DuaSelectionPage;

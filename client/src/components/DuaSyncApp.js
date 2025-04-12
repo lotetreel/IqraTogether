@@ -20,6 +20,7 @@ import BackButton from './ui/BackButton';
 import ThemeToggle from './ui/ThemeToggle';
 import NetworkInfo from './NetworkInfo';
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the custom icon
+import TileMatchingGame from './TileMatchingGame'; // Import the game component
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -73,7 +74,8 @@ const DuaSyncApp = () => {
   const [pendingAction, setPendingAction] = useState(null);
   const [showRejoinDialog, setShowRejoinDialog] = useState(false);
   const [isBrowsingLocally, setIsBrowsingLocally] = useState(false);
-  const [isKidsMode, setIsKidsMode] = useState(false);
+  const [isKidsMode, setIsKidsMode] = useState(false); // Controls visibility of game tab & potentially other kid features
+  // Removed activeTab state
   const [downloadStatus, setDownloadStatus] = useState({
     alRahmanImages: 'idle',
   });
@@ -445,6 +447,12 @@ const DuaSyncApp = () => {
     }
   }, [isKidsMode, currentContentInfo, currentIndex]);
 
+  // Toggle Kids Mode Handler
+  // Simplified Toggle Kids Mode Handler (no activeTab logic needed here)
+  const toggleKidsMode = () => {
+    setIsKidsMode(!isKidsMode);
+  };
+
   // Debug logs
   if (isDev) {
     console.log('Rendering DuaSyncApp:', { sessionId: !!sessionId, currentContentInfo: !!currentContentInfo, currentFullContent: !!currentFullContent, isLoadingContent, isBrowsingLocally, isHost, connectionStatus });
@@ -543,7 +551,19 @@ const DuaSyncApp = () => {
 
       {/* Main content */}
       <div className="flex-1 overflow-y-auto">
+        {/* Removed Kids Mode Tab Bar */}
+
         <div className="container-narrow py-6">
+          {/* Kids Mode Toggle (Moved here - visible on selection page and content page if host/no session) */}
+          {(!sessionId || isHost) && (
+            <div className="flex items-center justify-center mb-6">
+               <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
+                 <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" />
+               </button>
+            </div>
+          )}
+          {/* Removed direct Game Rendering */}
+          {/* Existing Content Rendering Logic */}
           { isLoadingContent ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
@@ -564,16 +584,10 @@ const DuaSyncApp = () => {
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
                 {/* REMOVED contentSource paragraph */}
               </div>
-              {/* Kids Mode Toggle */}
-              {currentContentInfo?.type === 'quran' && (
-                <div className="flex items-center justify-center mb-6">
-                   <button onClick={() => setIsKidsMode(!isKidsMode)} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
-                     <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-24 h-24" />
-                   </button>
-                </div>
-              )}
+              {/* Kids Mode Toggle - REMOVED FROM HERE */}
 
               {/* Main content display */}
+              {/* Keep Al-Rahman specific image display logic, now only dependent on isKidsMode */}
               {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
                 // --- Kids Mode Layout ---
                 <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center h-[calc(100vh-300px)]">
@@ -679,7 +693,7 @@ const DuaSyncApp = () => {
                 {!!sessionId ? (isHost ? (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.") : (connectionStatus === 'connected' ? (isSyncedToHost ? "Following host." : "Viewing independently.") : "Connection lost. Navigate locally or use Rejoin in header.")) : null }
               </div>
             </div>
-          ) : !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? (
+          ) : !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? ( // Removed check for game tab
             <div className="flex flex-col items-center justify-center h-full py-20">
               <div className="text-center max-w-md">
                 <div className="relative mx-auto w-20 h-20 mb-6">
@@ -691,8 +705,14 @@ const DuaSyncApp = () => {
                  <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
                </div>
             </div>
-          ) : (
-            <DuaSelectionPage onSelectDua={handleContentSelection} onSelectQuran={handleContentSelection} onBack={handleBack} />
+          ) : ( // Render DuaSelectionPage normally, passing isKidsMode
+            <DuaSelectionPage
+              onSelectDua={handleContentSelection}
+              onSelectQuran={handleContentSelection}
+              onBack={handleBack}
+              isKidsMode={isKidsMode} // Pass isKidsMode down
+              // Removed activeTab prop
+            />
           )}
         </div>
       </div>
