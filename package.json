@@ -4,10 +4,11 @@
   "description": "Real-time dua and quran sync application",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"pnpm run server\" \"pnpm run client\"",
+    "start": "cd server && pnpm start",
+    "build": "cd client && pnpm install && pnpm run build",
     "server": "cd server && pnpm start",
     "client": "cd client && pnpm start",
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "install-all": "pnpm install && cd client && pnpm install && cd ../server && pnpm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

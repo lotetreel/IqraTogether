@@ -98,6 +98,18 @@ try {
 // Development CORS configuration
 if (process.env.NODE_ENV !== 'production') {
   app.use(cors());
+} else {
+  // --- Production Static File Serving ---
+  // Serve static files from the React app's build directory
+  const clientBuildPath = path.resolve(__dirname, '../client/build');
+  app.use(express.static(clientBuildPath));
+
+  // The "catchall" handler: for any request that doesn't
+  // match one above, send back React's index.html file.
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(clientBuildPath, 'index.html'));
+  });
+  // --- End Production Static File Serving ---
 }
 
 // Socket.io setup with appropriate CORS settings
@@ -114,8 +126,6 @@ const io = new Server(server, {
   pingTimeout: 20000   // Wait 20 seconds for pong response (default: 5000)
 });
 
-// --- Removed Static File Serving Block ---
-// Frontend will be served separately by Netlify/Vercel etc.
 
 // Store active sessions
 const sessions = new Map();
