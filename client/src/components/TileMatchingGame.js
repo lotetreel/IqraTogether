@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactCardFlip from 'react-card-flip';
-import { Plus, Minus } from 'lucide-react'; // Import Plus and Minus icons
+// Removed Plus, Minus icons
 
 // Import images
 import AlAziz from '../assets/CardMatchingImages/AlAziz.png';
@@ -31,9 +31,7 @@ const TileMatchingGame = () => {
     const [moves, setMoves] = useState(0);
     const [canFlip, setCanFlip] = useState(true);
     const [isGameWon, setIsGameWon] = useState(false);
-    // State for card size level (e.g., 0: small, 1: medium, 2: large, 3: x-large)
-    const [cardSizeLevel, setCardSizeLevel] = useState(1); // Start at Medium size (level 1)
-    const maxCardSizeLevel = 3; // Keep max level at 3 (X-Large)
+    // Removed card size state
 
     const requiredPairs = difficulty / 2;
 
@@ -150,26 +148,7 @@ const TileMatchingGame = () => {
                     <option value="16">Hard (8 pairs)</option>
                     <option value="20">Expert (10 pairs)</option>
                 </select>
-                {/* Card Size Controls */}
-                <div className="ml-4 flex items-center space-x-2">
-                    <span className="text-sm dark:text-dark-text-secondary">Card Size:</span>
-                    <button
-                        onClick={() => setCardSizeLevel(prev => Math.max(0, prev - 1))}
-                        disabled={cardSizeLevel === 0}
-                        className="p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        title="Decrease Card Size"
-                    >
-                        <Minus size={18} className="text-gray-600 dark:text-dark-text-secondary" />
-                    </button>
-                    <button
-                        onClick={() => setCardSizeLevel(prev => Math.min(maxCardSizeLevel, prev + 1))}
-                        disabled={cardSizeLevel === maxCardSizeLevel}
-                        className="p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        title="Increase Card Size"
-                    >
-                        <Plus size={18} className="text-gray-600 dark:text-dark-text-secondary" />
-                    </button>
-                </div>
+                {/* Removed Card Size Controls */}
             </div>
 
             <div className="flex justify-around w-full max-w-xs sm:max-w-sm md:max-w-md mb-4 text-gray-700 dark:text-dark-text-secondary text-lg md:text-xl">
@@ -177,15 +156,10 @@ const TileMatchingGame = () => {
                 <p>Matched: <span className="font-semibold">{matchedPairs}</span> / {requiredPairs}</p>
             </div>
 
-            {/* Responsive Grid: Adjusts size based on cardSizeLevel state */}
+            {/* Responsive Grid: Fixed large size */}
             <div
                 id="game-board"
-                className={`grid w-full px-1 ${
-                    cardSizeLevel === 0 ? 'lg:max-w-lg xl:max-w-xl gap-2 lg:gap-4' // Small
-                    : cardSizeLevel === 1 ? 'lg:max-w-xl xl:max-w-2xl gap-3 lg:gap-5' // Medium
-                    : cardSizeLevel === 2 ? 'lg:max-w-2xl xl:max-w-3xl gap-4 lg:gap-6' // Large
-                    : 'lg:max-w-3xl xl:max-w-4xl gap-5 lg:gap-7' // X-Large
-                }`}
+                className="grid w-full px-1 lg:max-w-4xl xl:max-w-5xl gap-6 lg:gap-8" // Fixed large size & gaps
                 style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
             >
                 {cards.map((card) => (
@@ -233,13 +207,8 @@ const TileMatchingGame = () => {
                                 {card.isImage ? (
                                      <img src={card.symbol} alt="Card" className="object-cover w-full h-full" />
                                 ) : (
-                                    // Adjust emoji size based on card size level
-                                    <span className={`${
-                                        cardSizeLevel === 0 ? 'text-3xl md:text-4xl lg:text-5xl' // Small
-                                        : cardSizeLevel === 1 ? 'text-4xl md:text-5xl lg:text-6xl' // Medium
-                                        : cardSizeLevel === 2 ? 'text-5xl md:text-6xl lg:text-7xl' // Large
-                                        : 'text-6xl md:text-7xl lg:text-8xl' // X-Large
-                                    }`}>
+                                    // Fixed large emoji size
+                                    <span className="text-7xl md:text-8xl lg:text-9xl"> {/* Fixed large text size */}
                                         {card.symbol}
                                     </span>
                                 )}
