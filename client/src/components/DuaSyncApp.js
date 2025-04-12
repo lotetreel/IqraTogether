@@ -133,7 +133,14 @@ const DuaSyncApp = () => {
     }
   }, [connectionStatus, connectToServer, sessionId]);
 
-  // REMOVED: useEffect that showed NameInputDialog based on pendingAction
+  // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
+  useEffect(() => {
+    if (connectionStatus === 'connected' && pendingAction) {
+      console.log(`Connection established, proceeding with pending action: ${pendingAction}`);
+      setShowNameInputDialog(true);
+      setPendingAction(null); // Clear the pending action once the dialog is shown
+    }
+  }, [connectionStatus, pendingAction]);
 
   // Moved totalPhrases definition earlier
   const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0); // Adjusted for dua
