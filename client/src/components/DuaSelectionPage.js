@@ -7,6 +7,9 @@ import BackButton from './ui/BackButton';
 import AlFatihaImage from '../assets/images/AlFatiha.png'; // Correct import path from src
 import AlBaqaraImage from '../assets/images/AlBaqara.png'; // Import Al-Baqara image
 import AalImranImage from '../assets/images/AalImran.png'; // Import Aal Imran image
+import AnNisaImage from '../assets/images/AnNisa.png'; // Import An-Nisa image
+import AlMaidahImage from '../assets/images/AlMaidah.png'; // Import Al-Ma'idah image
+import AlAnaamImage from '../assets/images/AlAnaam.png'; // Import Al-An'am image
 import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the Kids Mode icon
 
@@ -309,7 +312,10 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack }) => {
                     src={
                       surah.id == 1 ? AlFatihaImage :
                       surah.id == 2 ? AlBaqaraImage :
-                      surah.id == 3 ? AalImranImage : // Add check for Aal Imran
+                      surah.id == 3 ? AalImranImage :
+                      surah.id == 4 ? AnNisaImage : // Add check for An-Nisa
+                      surah.id == 5 ? AlMaidahImage : // Add check for Al-Ma'idah
+                      surah.id == 6 ? AlAnaamImage : // Add check for Al-An'am
                       surah.id == 55 ? AlRahmanImage :
                       `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`
                     }
