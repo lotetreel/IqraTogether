@@ -530,23 +530,7 @@ const DuaSyncApp = () => {
         </div>
       )}
 
-      {/* Host status badge */}
-      {connectionStatus === 'connected' && !!sessionId && (
-        <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-100 dark:border-dark-bg-tertiary">
-          <div className="container-narrow py-2 flex flex-wrap justify-between items-center gap-x-4 gap-y-1">
-            <div className="flex items-center">
-              <span className="text-sm text-gray-600 dark:text-dark-text-secondary"> User: <span className="font-medium">{username || '...'}</span> </span>
-              {isHost && ( <span className="ml-2 badge-primary inline-flex items-center"> <Crown size={12} className="mr-1" /> Host </span> )}
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted">
-              <span>Session: <span className="font-medium">{sessionId}</span> | {participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
-              <button onClick={() => setShowRejoinDialog(true)} className="btn-icon-sm tooltip-wrapper group" aria-label="Rejoin Session" disabled={connectionStatus === 'connecting'}>
-                <LogIn size={16} /> <span className="tooltip">Rejoin Session</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* REMOVED Host status badge from here */}
 
       {/* Progress bar */}
       {connectionStatus === 'connected' && !!sessionId && currentContentInfo && totalPhrases > 0 && (
@@ -720,6 +704,29 @@ const DuaSyncApp = () => {
               <button onClick={() => setShowSettings(false)} className="btn-icon"> <X size={24} /> </button>
             </div>
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Session Info (Moved here) */}
+              {connectionStatus === 'connected' && !!sessionId && (
+                <div className="bg-primary-50 dark:bg-dark-bg-secondary p-4 rounded-lg border border-primary-100 dark:border-dark-bg-tertiary space-y-2">
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-2">Session Info</h4>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-dark-text-secondary">User:</span>
+                    <span className="font-medium">{username || '...'} {isHost && <span className="ml-1 badge-primary text-xs">Host</span>}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-dark-text-secondary">Session ID:</span>
+                    <span className="font-mono text-xs bg-gray-100 dark:bg-dark-bg-tertiary px-1.5 py-0.5 rounded">{sessionId}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-dark-text-secondary">Participants:</span>
+                    <span>{participants.length}</span>
+                  </div>
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
+                     <button onClick={() => { setShowSettings(false); setShowRejoinDialog(true); }} className="btn btn-sm btn-secondary w-full flex items-center justify-center" disabled={connectionStatus === 'connecting'}>
+                       <LogIn size={16} className="mr-1.5" /> Rejoin Session
+                     </button>
+                  </div>
+                </div>
+              )}
               {/* Display Options */}
               <div>
                 <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Display Options</label>
