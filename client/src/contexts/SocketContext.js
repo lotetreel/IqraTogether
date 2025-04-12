@@ -1,132 +1,130 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'; // Removed useRef as it wasn't used here
 import { io } from 'socket.io-client';
-// Import offline storage utils
+// Import offline storage utils (still needed for potential future use or other features)
 import * as offlineStorage from '../utils/offlineStorage';
 // Import duaCollection temporarily to fetch Dua content locally
-// TODO: Consider moving Dua data loading to server as well for consistency
 import { duaCollection, contentMap as localContentMap } from '../data/duaCollection';
+// Import the full Quran data
+import quranArabicObj from '../data/arabic.json';
+import quranTransliterationObj from '../data/transliteration.json';
+import quranTranslationObj from '../data/aliquliqarai.json';
+// Import the Surah list metadata
+import quranSurahListLocal from '../data/quranSurahList.json';
 
 const SocketContext = createContext(null);
 
 export const useSocket = () => useContext(SocketContext);
 
-// --- External Helper Function for Fetching ---
-const _performFetch = async (type, id, socket, connectionStatus, setIsLoadingContent, setCurrentFullContent, setError) => {
+// --- Helper Function to Merge Local Quran Data ---
+// (Adapted from server/index.js logic)
+const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a string like "1", "2"
+  const meta = quranSurahListLocal.find(s => s.id === surahId);
+  if (!meta) {
+    console.error(`Local Surah metadata not found for ID: ${surahId}`);
+    return null;
+  }
+
+  // Access the corresponding surah objects using the string key from imported data
+  const arabicSurah = quranArabicObj[surahId];
+  const translitSurah = quranTransliterationObj[surahId];
+  const translationSurah = quranTranslationObj[surahId];
+
+  // Validate that we found the surah objects and they have the Ayahs object
+  if (!arabicSurah?.Ayahs || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
+     console.error(`Missing Ayahs object for Surah ID: ${surahId} in one or more imported files.`);
+     return null;
+  }
+
+  const arabicAyahsObj = arabicSurah.Ayahs;
+  const translitAyahsObj = translitSurah.Ayahs;
+  const translationAyahsObj = translationSurah.Ayahs;
+
+  // Get the number of ayahs from metadata (already calculated)
+  const totalAyahs = meta.totalAyahs;
+
+  // Optional: Check if the number of keys in Ayahs objects matches totalAyahs from metadata
+  if (Object.keys(arabicAyahsObj).length !== totalAyahs ||
+      Object.keys(translitAyahsObj).length !== totalAyahs ||
+      Object.keys(translationAyahsObj).length !== totalAyahs) {
+    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${Object.keys(arabicAyahsObj).length}, etc. Merging based on metadata count.`);
+  }
+
+  // Merge verse data by iterating from 1 to totalAyahs
+  const mergedVerses = [];
+  for (let i = 1; i <= totalAyahs; i++) {
+      const ayahKey = String(i); // Keys in Ayahs object are strings "1", "2", ...
+
+      // Extract text, handling potential missing ayahs in one of the files
+      const arabicText = arabicAyahsObj[ayahKey]?.Arabic ?? '';
+      const translitText = translitAyahsObj[ayahKey]?.Transliteration ?? '';
+      const translationAyahObj = translationAyahsObj[ayahKey];
+      // Use the correct key "Ali Quli Qara'i" for translation
+      const translationText = translationAyahObj?.["Ali Quli Qara'i"] ?? '';
+
+      mergedVerses.push({
+          ayah: i, // Ayah number
+          arabic: arabicText,
+          transliteration: translitText,
+          translation: translationText,
+      });
+  }
+
+  return {
+    id: meta.id,
+    title: meta.title,
+    arabicTitle: meta.arabic, // Use the key from quranSurahListLocal
+    totalAyahs: totalAyahs,
+    verses: mergedVerses,
+  };
+};
+// --- End Helper Function ---
+
+
+// --- External Helper Function for Fetching (Simplified) ---
+const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullContent, setError) => {
+  // Removed socket and connectionStatus as they are no longer needed for Quran fetching
   if (!type || !id) {
     setCurrentFullContent(null); setIsLoadingContent(false); return;
   }
 
-  console.log(`Fetching full content via helper for type: ${type}, id: ${id}`);
+  console.log(`Loading content locally for type: ${type}, id: ${id}`);
   setIsLoadingContent(true); setError(null);
 
   try {
     if (type === 'dua') {
-      // TODO: Implement local file check & download for Duas if desired
-      // For now, load directly from imported data
+      // Load Dua directly from imported data
       console.log(`Attempting to load Dua ${id} from local map.`);
       const duaData = localContentMap[id];
       if (duaData) {
-        await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
+        // Simulate async loading slightly if needed for UI consistency
+        await new Promise(resolve => setTimeout(resolve, 10));
         setCurrentFullContent({ ...duaData, verses: { arabic: duaData.arabic || [], transliteration: duaData.transliteration || [], translation: duaData.translation || [] }, totalAyahs: duaData.arabic?.length || 0 });
         console.log(`Dua ${id} loaded from local map.`);
       } else {
         throw new Error(`Dua with ID ${id} not found locally.`);
       }
-      setIsLoadingContent(false); // Set loading false for Dua
-
     } else if (type === 'quran') {
-      const cacheKey = `quran_surah_${id}`; // Keep localStorage key for potential fallback/migration
-      const localPath = offlineStorage.getFilePath('quran', id);
-
-      // --- 1. Prioritize Local Filesystem ---
-      console.log(`Attempting to load Quran ${id} from local path: ${localPath}`);
-      const localData = await offlineStorage.readJsonFile(localPath);
-
-      if (localData) {
-        console.log(`Quran ${id} loaded successfully from local filesystem.`);
-        setCurrentFullContent(localData);
-        setIsLoadingContent(false);
-        return; // Loaded locally, exit
-      }
-      console.log(`Quran ${id} not found locally. Proceeding...`);
-
-      // --- 2. Check connection status (if not found locally) ---
-      if (connectionStatus !== 'connected') {
-        console.log(`Offline: Attempting to load Surah ${id} from localStorage cache (fallback).`);
-        // Fallback to localStorage cache if offline and not found locally
-        try {
-          const cachedData = localStorage.getItem(cacheKey);
-          if (cachedData) {
-            console.log(`Surah ${id} found in localStorage cache.`);
-            const parsedCacheData = JSON.parse(cachedData);
-            setCurrentFullContent(parsedCacheData);
-            // Optionally: Save this cached data to the filesystem now for future offline use
-            try {
-              await offlineStorage.saveJsonData(parsedCacheData, localPath);
-              console.log(`Saved localStorage cache data for Surah ${id} to filesystem.`);
-            } catch (saveErr) {
-              console.error("Failed to save cached data to filesystem:", saveErr);
-            }
-          } else {
-            console.log(`Surah ${id} not found in local file or cache.`);
-            setError("Offline: This Surah hasn't been downloaded or viewed online yet.");
-            setCurrentFullContent(null);
-          }
-        } catch (cacheError) {
-          console.error("Error reading from localStorage:", cacheError);
-          setError("Error accessing cached data.");
-          setCurrentFullContent(null);
-        } finally {
-          setIsLoadingContent(false);
-          return; // Exit after checking cache when offline
-        }
-      }
-
-      // --- 3. If connected and not found locally, fetch from server and save locally ---
-      if (socket) {
-        console.log(`Online: Fetching Surah ${id} from server.`);
-        socket.emit('get_quran_content', { surahId: id }, async (response) => { // Make callback async
-          if (response.error) {
-            console.error('Error fetching Quran content:', response.error);
-            setError(`Error fetching Surah ${id}: ${response.error}`);
-            setCurrentFullContent(null);
-          } else if (response.data) {
-            console.log(`Received Quran content for Surah ${id}. Saving locally...`);
-            // Set the content immediately for responsiveness
-            setCurrentFullContent({ id: response.data.id, title: response.data.title, arabicTitle: response.data.arabicTitle, totalAyahs: response.data.totalAyahs, verses: response.data.verses });
-            try {
-              // Save the received data to the local filesystem
-              await offlineStorage.saveJsonData(response.data, localPath);
-              console.log(`Surah ${id} saved locally successfully.`);
-              // Optionally remove from localStorage cache now if migrating fully
-              // localStorage.removeItem(cacheKey);
-            } catch (saveError) {
-              console.error("Error saving Surah data locally:", saveError);
-              // Non-critical error, content is already set
-              setError("Could not save Surah data locally (storage might be full?).");
-            }
-          }
-          setIsLoadingContent(false); // Set loading false inside callback
-        });
-        // Note: setIsLoadingContent(false) is handled inside the async callback for socket fetch
+      // Load Quran data by merging imported objects
+      console.log(`Attempting to load Quran ${id} from imported JSON objects.`);
+      const mergedData = getMergedSurahDataLocally(id);
+      if (mergedData) {
+        // Simulate async loading slightly
+        await new Promise(resolve => setTimeout(resolve, 10));
+        setCurrentFullContent(mergedData);
+        console.log(`Quran ${id} loaded successfully from local objects.`);
       } else {
-        // Should not happen if connectionStatus === 'connected', but as a fallback
-        console.error("Cannot fetch Quran content: Socket is null despite being 'connected'.");
-        setError("Internal error: Connection issue.");
-        setCurrentFullContent(null);
-        setIsLoadingContent(false);
+        throw new Error(`Quran Surah with ID ${id} not found or failed to merge locally.`);
       }
     } else {
       throw new Error(`Unknown content type: ${type}`);
     }
   } catch (err) {
-    console.error('Error fetching full content:', err);
+    console.error('Error loading local content:', err);
     setError(`Failed to load content: ${err.message}`);
     setCurrentFullContent(null);
-    // Ensure loading is set to false in case of general errors (except for async quran fetch)
-    if (type !== 'quran' || connectionStatus !== 'connected') {
-      setIsLoadingContent(false);
-    }
+  } finally {
+    // Always set loading to false after attempting to load
+    setIsLoadingContent(false);
   }
 };
 // --- End External Helper Function ---
@@ -146,7 +144,7 @@ export const SocketProvider = ({ children }) => {
   const [latestHostIndex, setLatestHostIndex] = useState(0); // Store the most recent index received from host
   const [isSyncedToHost, setIsSyncedToHost] = useState(true);
   const [participants, setParticipants] = useState([]);
-  const [quranSurahList, setQuranSurahList] = useState([]);
+  const [quranSurahList, setQuranSurahList] = useState(quranSurahListLocal);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState(null);
 
@@ -393,20 +391,17 @@ export const SocketProvider = ({ children }) => {
     // Check if trigger has valid data and call the external helper function
     if (fetchTrigger?.type && fetchTrigger?.id) {
       console.log("Fetch trigger activated:", fetchTrigger);
-      // Call the external helper, passing state and setters
+      // Call the external helper (now only needs type and id)
       _performFetch(
         fetchTrigger.type,
         fetchTrigger.id,
-        socket,
-        connectionStatus,
         setIsLoadingContent,
         setCurrentFullContent,
         setError
       );
     }
   // Dependencies: The effect runs when the trigger changes.
-  // It also needs access to socket and connectionStatus to pass to the helper.
-  }, [fetchTrigger, socket, connectionStatus]);
+  }, [fetchTrigger]); // Removed socket and connectionStatus dependencies
 
   // --- Context Actions ---
   const createSession = useCallback((user) => {
@@ -526,22 +521,39 @@ export const SocketProvider = ({ children }) => {
     } else { console.warn("Cannot update local index: Conditions not met (is host or invalid index)."); }
   }, [isHost, currentFullContent, sessionId]); // Added sessionId dependency
 
+  // Simplified getQuranMetadata - only fetches if explicitly needed and connected,
+  // but primarily relies on the local list.
   const getQuranMetadata = useCallback(() => {
-    if (socket && connectionStatus === 'connected' && quranSurahList.length === 0) {
-      console.log('Requesting Quran metadata from server...'); setError(null);
+    // Check if we already have the list locally
+    if (quranSurahList && quranSurahList.length > 0) {
+      console.log("Quran metadata already loaded locally.");
+      return; // Already have it
+    }
+
+    // If not loaded locally (shouldn't happen with current setup, but for safety)
+    // and connected, try fetching from server as a fallback.
+    if (socket && connectionStatus === 'connected') {
+      console.log('Local Quran metadata missing, requesting from server as fallback...');
+      setError(null);
       socket.emit('get_quran_metadata', (response) => {
         if (response.error) {
-          console.error('Error fetching Quran metadata:', response.error);
-          setError(`Failed to load Quran list: ${response.error}`); setQuranSurahList([]);
+          console.error('Error fetching Quran metadata fallback:', response.error);
+          setError(`Failed to load Quran list fallback: ${response.error}`);
+          setQuranSurahList([]); // Ensure it's empty on error
         } else if (response.data) {
-          console.log('Received Quran metadata.'); setQuranSurahList(response.data);
+          console.log('Received Quran metadata fallback.');
+          setQuranSurahList(response.data); // Use server data if local was missing
         }
        });
-     } else if (quranSurahList.length === 0) {
-       // Log if socket isn't connected when attempting fetch
-       console.warn(`Cannot get Quran metadata: Socket status is ${connectionStatus}.`);
+     } else {
+       // Log if socket isn't connected when attempting fallback fetch
+       console.warn(`Cannot get Quran metadata fallback: Socket status is ${connectionStatus}.`);
+       // Ensure list is empty if it wasn't loaded initially and can't fetch
+       if (!quranSurahList || quranSurahList.length === 0) {
+         setQuranSurahList([]);
+       }
      }
-   }, [socket, connectionStatus]); // Removed quranSurahList dependency
+   }, [socket, connectionStatus, quranSurahList]); // Added quranSurahList dependency back
 
   const contextValue = {
     socket, connectionStatus, connected: connectionStatus === 'connected',
