@@ -197,11 +197,12 @@ const TileMatchingGame = () => {
                                     backgroundColor: '#ffffff', // Tailwind bg-white
                                     cursor: 'default', // Front is only visible when flipped/matched
                                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                                    border: card.isMatched ? '3px solid #4ade80' : 'none'
+                                    border: card.isMatched ? '3px solid #4ade80' : 'none',
+                                    overflow: 'hidden' // Ensure image cropping works correctly
                                 }}
                             >
                                 {card.isImage ? (
-                                     <img src={card.symbol} alt="Card" className="object-contain" style={{maxWidth: '80%', maxHeight: '80%'}} />
+                                     <img src={card.symbol} alt="Card" className="object-cover w-full h-full" /> // Use object-cover and fill dimensions
                                 ) : (
                                     <span className="text-3xl md:text-4xl lg:text-5xl">{card.symbol}</span>
                                 )}
