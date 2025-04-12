@@ -153,10 +153,10 @@ const TileMatchingGame = () => {
                 <p>Matched: <span className="font-semibold">{matchedPairs}</span> / {requiredPairs}</p>
             </div>
 
-            {/* Responsive Grid: Use more width on small screens, constrain on larger ones */}
+            {/* Responsive Grid: Maximize width on smaller screens, constrain only on larger ones */}
             <div
                 id="game-board"
-                className="grid w-full px-2 sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl gap-3 sm:gap-4" // Removed max-w-xs, increased gap, added padding
+                className="grid w-full px-1 lg:max-w-lg xl:max-w-xl gap-2 lg:gap-4" // Removed sm/md max-width, adjusted padding/gap
                 style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
             >
                 {cards.map((card) => (
