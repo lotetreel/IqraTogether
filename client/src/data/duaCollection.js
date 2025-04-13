@@ -1,5 +1,6 @@
 // Removed imports from sampleContent as they are no longer needed
 import DUA_KUMAYL from './dua_kumayl.json'; // Import the specific Dua Kumayl data
+import DUA_SIMAAT from './dua_simaat.json'; // Import the specific Dua Simaat data
 
 // Basic dua collection for preview/selection
 export const duaCollection = [
@@ -15,6 +16,19 @@ export const duaCollection = [
     image: '/images/dua_kumayl.png', // Changed to png extension
     length: 'Long', // Restore original length
     popularity: 5 // Restore original popularity
+  },
+  {
+    id: 'dua-simaat',
+    title: 'Dua Simaat',
+    arabic: 'دعاء السمات',
+    source: 'Imams Baqir & Sadiq (as)',
+    category: 'Friday Afternoon',
+    description: 'Also known as Dua Shubbur. A famous supplication recommended to be recited in the last hour of Friday.',
+    recitationTime: 'Last hour of Friday afternoon',
+    benefits: 'Seeking divine assistance, relief from hardship, forgiveness',
+    image: '/images/Dua_Simaat.png', // Use the actual filename provided
+    length: 'Long',
+    popularity: 4
   }
   // Removed all other Dua entries
 ];
@@ -24,6 +38,7 @@ export const quranCollection = [];
 
 // Content lookup map for full content retrieval
 export const contentMap = {
-  'dua-kumayl': DUA_KUMAYL // Only keep Dua Kumayl entry
+  'dua-kumayl': DUA_KUMAYL, // Only keep Dua Kumayl entry
+  'dua-simaat': DUA_SIMAAT
   // Removed all other entries
 };
