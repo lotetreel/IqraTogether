@@ -14,14 +14,13 @@ import AlRaheem from '../assets/CardMatchingImages/AlRaheem.png';
 import AlRahman from '../assets/CardMatchingImages/AlRahman.png';
 import AlSalam from '../assets/CardMatchingImages/AlSalam.png';
 
-// Default emojis if images are not enough
-const defaultEmojis = ['😊', '🍎', '🚗', '★', '❤️', '☀️', '🚀', '⭐', '🎈', '🎁', '🎉', '🍕', '🍦', '🎲'];
-
-// Array of imported images
 const gameImages = [
     AlAziz, AlJabbar, AlKhaliq, AlMalik, AlMuhaymin,
     AlMumin, AlQuddus, AlRaheem, AlRahman, AlSalam
 ];
+
+// Default emojis if images are not enough
+const defaultEmojis = ['😊', '🍎', '🚗', '★', '❤️', '☀️', '🚀', '⭐', '🎈', '🎁', '🎉', '🍕', '🍦', '🎲'];
 
 const TileMatchingGame = () => {
     const [difficulty, setDifficulty] = useState(12); // Default: 12 cards (6 pairs)
