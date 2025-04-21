@@ -369,20 +369,36 @@ io.on('connection', (socket) => {
 
     // Basic validation
     if (!session || socket.id !== session.hostId) return;
-    if (typeof newIndex !== 'number' || newIndex < 0) return; // Basic index validation
+    if (typeof newIndex !== 'number') return; // Allow 0, but not non-numbers
 
-    // Validate newIndex against the length of the selected content if it's known
-    const contentLength = session.selectedContent?.totalAyahs; // Use stored totalAyahs for Quran
-    if (session.selectedContent?.type === 'quran' && contentLength !== undefined && newIndex >= contentLength) {
-       console.warn(`Invalid index ${newIndex} for content length ${contentLength} in session ${sessionId}`);
-       // Optionally clamp the index or ignore the update
-       newIndex = contentLength - 1; // Clamp to last valid index
-       // return; // Or ignore
+    // --- Revised Validation: Look up contentLength directly ---
+    let contentLength = undefined;
+    if (session.selectedContent?.type === 'quran' && session.selectedContent?.id) {
+        const meta = quranMetadata.find(s => s.id === session.selectedContent.id);
+        contentLength = meta ? meta.totalAyahs : undefined;
+        if (contentLength === undefined) {
+             console.error(`Could not find metadata for selected Quran content ID: ${session.selectedContent.id} in host_update_index`);
+        }
     }
-    // Add similar validation for Duas if their length is known on the server
+    // TODO: Add similar lookup for Dua length if needed
 
-    session.currentIndex = newIndex;
-    console.log(`Host (${socket.id}) navigated to index ${newIndex} in session ${sessionId}`);
+    // Improved Validation & Clamping using looked-up length
+    if (newIndex < 0) {
+        console.warn(`Received negative index ${newIndex}. Clamping to 0.`);
+        newIndex = 0;
+    } else if (contentLength !== undefined) { // Only validate if length is known
+        if (contentLength === 0 && newIndex > 0) {
+            console.warn(`Received index ${newIndex} but content length is 0. Clamping to 0.`);
+            newIndex = 0;
+        } else if (contentLength > 0 && newIndex >= contentLength) { // Correct boundary check
+            console.warn(`Invalid index ${newIndex} for content length ${contentLength}. Clamping to ${contentLength - 1}.`);
+            newIndex = contentLength - 1;
+        }
+    }
+    // If contentLength is undefined (e.g., error finding metadata), we don't clamp the upper bound.
+
+    session.currentIndex = newIndex; // Update session with potentially clamped index
+    console.log(`Host (${socket.id}) navigated to index ${newIndex} in session ${sessionId} (Content Length: ${contentLength})`);
 
     // Emit only the index change to all clients in the session (including host)
     // Clients are responsible for displaying the correct content segment based on this index
