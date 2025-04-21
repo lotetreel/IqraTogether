@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { nanoid } = require('nanoid');
 const path = require('path');
+const process = require('process'); // Import process for error handling
 const fs = require('fs'); // Import fs module
 
 const app = express();
@@ -128,6 +129,23 @@ const io = new Server(server, {
   pingTimeout: 20000   // Wait 20 seconds for pong response (default: 5000)
 });
 
+// --- Basic Error Handling ---
+// Catch unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('!!! Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+  // Consider exiting the process cleanly in production after logging
+  // process.exit(1); // Uncomment if you want the server to restart on unhandled rejections
+});
+
+// Catch uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('!!! Uncaught Exception:', error);
+  // Application specific logging
+  // Consider exiting the process cleanly in production after logging
+  // process.exit(1); // Uncomment if you want the server to restart on uncaught exceptions
+});
+// --- End Basic Error Handling ---
 
 // Store active sessions
 const sessions = new Map();
@@ -679,4 +697,11 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// Optional: Add a basic Express error handler middleware (must be last middleware)
+app.use((err, req, res, next) => {
+  console.error('!!! Express Error Handler:', err.stack);
+  // Avoid sending stack trace in production
+  res.status(500).send(process.env.NODE_ENV === 'production' ? 'Something broke!' : err.stack);
 });
