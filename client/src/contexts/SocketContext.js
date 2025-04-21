@@ -1,13 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'; // Removed useRef as it wasn't used here
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 // Import offline storage utils (still needed for potential future use or other features)
 import * as offlineStorage from '../utils/offlineStorage';
 // Import duaCollection temporarily to fetch Dua content locally
 import { duaCollection, contentMap as localContentMap } from '../data/duaCollection';
-// Import the full Quran data
-import quranDataArray from '../data/quran.json'; // Renamed variable and path
-import quranTransliterationObj from '../data/transliteration.json';
-import quranTranslationObj from '../data/aliquliqarai.json';
+// REMOVED old Quran JSON imports
 // Import the Surah list metadata
 import quranSurahListLocal from '../data/quranSurahList.json';
 
@@ -15,63 +12,59 @@ const SocketContext = createContext(null);
 
 export const useSocket = () => useContext(SocketContext);
 
+// --- Helper Function to Parse Text Data ---
+// Parses a text file content (like quran-uthmani.txt) into an object keyed by surah, then ayah
+const parseQuranTextFile = (textContent) => {
+  if (!textContent) return {};
+  const lines = textContent.trim().split('\n');
+  const data = {};
+  lines.forEach(line => {
+    const parts = line.split('|');
+    if (parts.length === 3) {
+      const [surah, ayah, text] = parts;
+      if (!data[surah]) {
+        data[surah] = {};
+      }
+      data[surah][ayah] = text.trim();
+    }
+  });
+  return data;
+};
+
+
 // --- Helper Function to Merge Local Quran Data ---
-// (Adapted from server/index.js logic)
-const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a string like "1", "2"
+// (Uses parsed text data - Does NOT separate Bismillah)
+const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, parsedTranslitData) => {
   const meta = quranSurahListLocal.find(s => s.id === surahId);
   if (!meta) {
     console.error(`Local Surah metadata not found for ID: ${surahId}`);
     return null;
   }
 
-  // --- MODIFICATION START: Find Surah in the quranDataArray ---
-  const arabicSurah = quranDataArray.find(surah => String(surah.id) === surahId);
-  // --- MODIFICATION END ---
+  const arabicAyahs = parsedUthmaniData[surahId] || {};
+  const translitAyahs = parsedTranslitData[surahId] || {};
+  const translationAyahs = parsedQaraiData[surahId] || {};
 
-  const translitSurah = quranTransliterationObj[surahId];
-  const translationSurah = quranTranslationObj[surahId];
-
-  // --- MODIFICATION START: Validate found surah and check 'verses' array ---
-  if (!arabicSurah?.verses || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
-    console.error(`Missing verses array (arabic) or Ayahs object (translit/translation) for Surah ID: ${surahId}.`);
-    return null;
-  }
-  // --- MODIFICATION END ---
-
-  // --- MODIFICATION START: Use 'verses' array for Arabic ---
-  const arabicVersesArray = arabicSurah.verses;
-  // --- MODIFICATION END ---
-
-  const translitAyahsObj = translitSurah.Ayahs;
-  const translationAyahsObj = translationSurah.Ayahs;
-
-  // Get the number of ayahs from metadata (already calculated)
   const totalAyahs = meta.totalAyahs;
 
-  // --- MODIFICATION START: Update check for Arabic verses array length ---
-  if (arabicVersesArray.length !== totalAyahs ||
-      Object.keys(translitAyahsObj).length !== totalAyahs ||
-      Object.keys(translationAyahsObj).length !== totalAyahs) {
-    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${arabicVersesArray.length}, Translit: ${Object.keys(translitAyahsObj).length}, Translation: ${Object.keys(translationAyahsObj).length}. Merging based on metadata count.`);
+  // Optional: Add a check for ayah count consistency if needed, though relying on metadata is safer
+  if (Object.keys(arabicAyahs).length !== totalAyahs ||
+      Object.keys(translitAyahs).length !== totalAyahs ||
+      Object.keys(translationAyahs).length !== totalAyahs) {
+    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${Object.keys(arabicAyahs).length}, Translit: ${Object.keys(translitAyahs).length}, Translation: ${Object.keys(translationAyahs).length}. Merging based on metadata count.`);
   }
-  // --- MODIFICATION END ---
 
   // Merge verse data by iterating from 1 to totalAyahs
   const mergedVerses = [];
-  for (let i = 1; i <= totalAyahs; i++) {
-      const ayahKey = String(i); // Keys in Ayahs object are strings "1", "2", ...
+  for (let i = 1; i <= totalAyahs; i++) { // Loop through original number of ayahs
+      const ayahKey = String(i);
 
-      // --- MODIFICATION START: Find Arabic verse in array and get 'text' ---
-      const arabicVerse = arabicVersesArray.find(verse => verse.id === i);
-      const arabicText = arabicVerse?.text ?? '';
-      // --- MODIFICATION END ---
-
-      const translitText = translitAyahsObj[ayahKey]?.Transliteration ?? '';
-      const translationAyahObj = translationAyahsObj[ayahKey];
-      const translationText = translationAyahObj?.["Ali Quli Qara'i"] ?? '';
+      const arabicText = arabicAyahs[ayahKey] ?? '';
+      const translitText = translitAyahs[ayahKey] ?? '';
+      const translationText = translationAyahs[ayahKey] ?? '';
 
       mergedVerses.push({
-          ayah: i, // Ayah number
+          ayah: i, // Keep original ayah number
           arabic: arabicText,
           transliteration: translitText,
           translation: translationText,
@@ -81,10 +74,8 @@ const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a 
   return {
     id: meta.id,
     title: meta.title,
-    // --- MODIFICATION START: Use transliteration from new quran.json if available, else fallback ---
-    arabicTitle: arabicSurah.name || meta.arabic, // Prefer name from the new structure
-    // --- MODIFICATION END ---
-    totalAyahs: totalAyahs,
+    arabicTitle: meta.arabic, // Use metadata arabic title
+    totalAyahs: totalAyahs, // Use original total count
     verses: mergedVerses,
   };
 };
@@ -92,8 +83,8 @@ const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a 
 
 
 // --- External Helper Function for Fetching (Simplified) ---
-const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullContent, setError) => {
-  // Removed socket and connectionStatus as they are no longer needed for Quran fetching
+// Now accepts preloaded text data for Quran
+const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullContent, setError, quranUthmaniData, enQaraiData, enTransliterationData) => {
   if (!type || !id) {
     setCurrentFullContent(null); setIsLoadingContent(false); return;
   }
@@ -115,16 +106,20 @@ const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullConten
         throw new Error(`Dua with ID ${id} not found locally.`);
       }
     } else if (type === 'quran') {
-      // Load Quran data by merging imported objects
-      console.log(`Attempting to load Quran ${id} from imported JSON objects.`);
-      const mergedData = getMergedSurahDataLocally(id);
+      // Load Quran data using the preloaded text data
+      console.log(`Attempting to load Quran ${id} from preloaded text data.`);
+      // Check if preloaded data is available
+      if (!quranUthmaniData || !enQaraiData || !enTransliterationData) {
+         throw new Error(`Quran text data not preloaded yet.`);
+      }
+      const mergedData = getMergedSurahDataLocally(id, quranUthmaniData, enQaraiData, enTransliterationData);
       if (mergedData) {
         // Simulate async loading slightly
         await new Promise(resolve => setTimeout(resolve, 10));
         setCurrentFullContent(mergedData);
-        console.log(`Quran ${id} loaded successfully from local objects.`);
+        console.log(`Quran ${id} loaded successfully from preloaded text.`);
       } else {
-        throw new Error(`Quran Surah with ID ${id} not found or failed to merge locally.`);
+        throw new Error(`Quran Surah with ID ${id} not found or failed to merge from preloaded text.`);
       }
     } else {
       throw new Error(`Unknown content type: ${type}`);
@@ -159,8 +154,66 @@ export const SocketProvider = ({ children }) => {
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [error, setError] = useState(null);
 
+  // NEW: State for preloaded text file content
+  const [quranUthmaniText, setQuranUthmaniText] = useState(null);
+  const [enQaraiText, setEnQaraiText] = useState(null);
+  const [enTransliterationText, setEnTransliterationText] = useState(null);
+  const [isTextDataLoading, setIsTextDataLoading] = useState(true); // Loading state for text files
+
+  // NEW: Parsed data state
+  const [quranUthmaniData, setQuranUthmaniData] = useState({});
+  const [enQaraiData, setEnQaraiData] = useState({});
+  const [enTransliterationData, setEnTransliterationData] = useState({});
+
+
   // NEW: State to trigger fetching content
   const [fetchTrigger, setFetchTrigger] = useState(null); // { type, id } | null
+
+  // Effect to preload text files on mount
+  useEffect(() => {
+    const loadTextFiles = async () => {
+      setIsTextDataLoading(true);
+      setError(null); // Clear previous errors
+      try {
+        console.log("Fetching Quran text files...");
+        const [uthmaniRes, qaraiRes, translitRes] = await Promise.all([
+          fetch('/data/quran-uthmani.txt'),
+          fetch('/data/en.qarai.txt'),
+          fetch('/data/en.transliteration.txt')
+        ]);
+
+        if (!uthmaniRes.ok || !qaraiRes.ok || !translitRes.ok) {
+          throw new Error(`Failed to fetch one or more text files: Uthmani (${uthmaniRes.status}), Qarai (${qaraiRes.status}), Translit (${translitRes.status})`);
+        }
+
+        const uthmani = await uthmaniRes.text();
+        const qarai = await qaraiRes.text();
+        const translit = await translitRes.text();
+
+        console.log("Parsing Quran text files...");
+        setQuranUthmaniData(parseQuranTextFile(uthmani));
+        setEnQaraiData(parseQuranTextFile(qarai));
+        setEnTransliterationData(parseQuranTextFile(translit));
+
+        // Keep raw text if needed later, though parsed data is primary now
+        setQuranUthmaniText(uthmani);
+        setEnQaraiText(qarai);
+        setEnTransliterationText(translit);
+
+        console.log("Quran text files loaded and parsed successfully.");
+      } catch (err) {
+        console.error("Error loading or parsing Quran text files:", err);
+        setError(`Failed to load essential Quran data: ${err.message}`);
+        // Set parsed data to empty objects on error
+        setQuranUthmaniData({});
+        setEnQaraiData({});
+        setEnTransliterationData({});
+      } finally {
+        setIsTextDataLoading(false);
+      }
+    };
+    loadTextFiles();
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   // Function to initiate connection
   const connectToServer = useCallback(() => {
@@ -402,17 +455,20 @@ export const SocketProvider = ({ children }) => {
     // Check if trigger has valid data and call the external helper function
     if (fetchTrigger?.type && fetchTrigger?.id) {
       console.log("Fetch trigger activated:", fetchTrigger);
-      // Call the external helper (now only needs type and id)
+      // Call the external helper, passing the preloaded parsed data
       _performFetch(
         fetchTrigger.type,
         fetchTrigger.id,
         setIsLoadingContent,
         setCurrentFullContent,
-        setError
+        setError,
+        quranUthmaniData, // Pass parsed data
+        enQaraiData,      // Pass parsed data
+        enTransliterationData // Pass parsed data
       );
     }
-  // Dependencies: The effect runs when the trigger changes.
-  }, [fetchTrigger]); // Removed socket and connectionStatus dependencies
+  // Dependencies: The effect runs when the trigger or the parsed data changes.
+  }, [fetchTrigger, quranUthmaniData, enQaraiData, enTransliterationData]);
 
   // --- Context Actions ---
   const createSession = useCallback((user) => {
@@ -572,13 +628,24 @@ export const SocketProvider = ({ children }) => {
     sessionId, username, isHost, hostSelectedContentInfo, currentContentInfo,
     currentFullContent, currentIndex, latestHostIndex, // Expose latestHostIndex if needed by UI, maybe not
     isSyncedToHost, participants, quranSurahList,
-    isLoadingContent, error,
+    isLoadingContent: isLoadingContent || isTextDataLoading, // Combine loading states
+    error,
     // Actions
     connectToServer, createSession, joinSession, selectContentAsHost,
     selectContentLocally, syncToHost, updateHostIndex, updateLocalIndex,
     getQuranMetadata,
     // fetchTrigger and _performFetch are internal
   };
+
+  // Display loading indicator or error if essential text data failed to load
+  if (isTextDataLoading) {
+     return <div className="flex items-center justify-center h-screen text-lg font-semibold">Loading Quran Data...</div>;
+  }
+  // Check error state AFTER loading attempt is finished
+  if (!isTextDataLoading && error && error.startsWith("Failed to load essential Quran data")) {
+     return <div className="flex items-center justify-center h-screen text-red-600 p-4 text-center">{error}</div>;
+  }
+
 
   return (
     <SocketContext.Provider value={contextValue}>

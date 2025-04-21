@@ -581,7 +581,7 @@ const DuaSyncApp = () => {
                   <div className="flex items-center justify-between">
                     {(!sessionId || isHost || isBrowsingLocally) && ( <BackButton onClick={handleBack} /> )}
                     <div className="flex items-center space-x-4">
-                      <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto'}`}>
+                    <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto'}`}>
                         {currentIndex + 1} of {totalPhrases}
                       </div>
                       <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Enter Fullscreen">
