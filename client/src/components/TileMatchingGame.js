@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Removed useRef
 import ReactCardFlip from 'react-card-flip';
+import Particles, { initParticlesEngine } from "@tsparticles/react"; // Updated import
+import { loadConfettiPreset } from "@tsparticles/preset-confetti"; // Import confetti preset
+import { tsParticles } from "@tsparticles/engine"; // Import base engine
 // Removed Plus, Minus icons
 
 // Import images
@@ -23,6 +26,68 @@ const gameImages = [
 const defaultEmojis = ['😊', '🍎', '🚗', '★', '❤️', '☀️', '🚀', '⭐', '🎈', '🎁', '🎉', '🍕', '🍦', '🎲'];
 
 const TileMatchingGame = () => {
+    const [init, setInit] = useState(false);
+    // Removed particlesContainerRef
+
+    // this should be run only once per application lifetime
+    useEffect(() => {
+        initParticlesEngine(async (engine) => {
+            // console.log("Initializing particles engine");
+            await loadConfettiPreset(engine); // Load confetti preset
+            // console.log("Confetti preset loaded");
+        }).then(() => {
+            // console.log("Particles engine initialized");
+            setInit(true);
+        });
+    }, []);
+
+
+    // Removed particlesLoaded callback
+
+    // Options for the confetti preset - transparent bg, wider spread
+    const particlesOptions = {
+        preset: "confetti", // Use confetti preset
+        background: {
+            opacity: 0 // Ensure background is transparent
+        },
+        particles: {
+            number: {
+                value: 100 // Particle count
+            },
+            life: { // Increase particle lifespan yet again
+                duration: 15, // Particles last for 15 seconds (13 + 2)
+                count: 1 // Each particle lives once
+            },
+            move: { // Ensure gravity makes them fall down
+                gravity: {
+                    enable: true,
+                    acceleration: 9.81 // Standard gravity
+                },
+                decay: 0.05 // Slow down slightly over time
+            }
+        },
+        emitters: { // Configure the emitter for wider spread
+            position: {
+                x: 50, // Center horizontally
+                y: 0   // Start from the top
+            },
+            life: { // Ensure emitter only fires once
+                count: 1,
+                duration: 0.1, // Emit for a very short duration
+                delay: 0.1
+            },
+            rate: {
+                quantity: 100 // Emit all particles at once
+            },
+            size: {
+                width: 100, // Spread across the full width
+                height: 0
+            },
+            spread: 90 // Increase spread angle (default might be smaller)
+        }
+    }; // Correctly closed the object
+
+
     const [difficulty, setDifficulty] = useState(12); // Default: 12 cards (6 pairs)
     const [cards, setCards] = useState([]);
     const [flippedCards, setFlippedCards] = useState([]);
@@ -30,7 +95,12 @@ const TileMatchingGame = () => {
     const [moves, setMoves] = useState(0);
     const [canFlip, setCanFlip] = useState(true);
     const [isGameWon, setIsGameWon] = useState(false);
+    const [celebrationCardSymbol, setCelebrationCardSymbol] = useState(null);
+    const [showCelebrationPopup, setShowCelebrationPopup] = useState(false);
+    const [isFadingOut, setIsFadingOut] = useState(false); // Combined state for fade-out
     // Removed card size state
+
+    // Removed useEffect for pausing particles
 
     const requiredPairs = difficulty / 2;
 
@@ -105,6 +175,24 @@ const TileMatchingGame = () => {
             setCards(updatedCards);
             setFlippedCards([]);
             setCanFlip(true);
+
+            // Show celebration popup
+            setCelebrationCardSymbol(card1.symbol);
+            setShowCelebrationPopup(true);
+            setIsFadingOut(false); // Reset fade state
+
+            // Synchronized fade-out timers - Further Adjusted duration
+            const displayDuration = 6000; // 8s previous - 2s reduction = 6000ms
+            const fadeDuration = 500; // 0.5s fade
+
+            setTimeout(() => {
+                setIsFadingOut(true); // Start fading after extended display duration
+            }, displayDuration);
+            // Hide popup after fade completes
+            setTimeout(() => {
+                setShowCelebrationPopup(false);
+                setCelebrationCardSymbol(null);
+            }, displayDuration + fadeDuration); // Total time = 6.5s
 
             if (newMatchedCount === requiredPairs) {
                 setIsGameWon(true);
@@ -235,6 +323,41 @@ const TileMatchingGame = () => {
                         >
                             Play Again?
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Celebration Popup with Fireworks */}
+            {init && showCelebrationPopup && celebrationCardSymbol && ( // Only render if engine is initialized and popup should be shown
+                // Overlay background with synchronized fade-out transition
+                <div className={`fixed inset-0 flex items-center justify-center z-50 pointer-events-none bg-black transition-opacity duration-500 ease-in-out ${isFadingOut ? 'bg-opacity-0' : 'bg-opacity-60'}`}>
+                    {/* Confetti Container - Conditionally render based on !isFadingOut */}
+                    {!isFadingOut && (
+                        <Particles
+                            // Removed key prop
+                            id="tsparticles-celebration"
+                            // Removed loaded prop
+                            options={particlesOptions}
+                            // Removed fade class
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            zIndex: 51
+                        }}
+                        />
+                    )}
+                    {/* Card Container - Apply fade based on isFadingOut */}
+                    <div className={`relative z-[52] bg-white dark:bg-dark-bg-secondary p-4 rounded-lg shadow-xl max-w-xs w-full aspect-square flex items-center justify-center transform scale-100 pointer-events-auto transition-opacity duration-500 ease-in-out ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}> {/* Card fade class (500ms) */}
+                        {gameImages.includes(celebrationCardSymbol) ? (
+                            <img src={celebrationCardSymbol} alt="Matched Card" className="object-contain max-w-full max-h-full" />
+                        ) : (
+                            <span className="text-8xl md:text-9xl lg:text-[10rem]"> {/* Even larger emoji */}
+                                {celebrationCardSymbol}
+                            </span>
+                        )}
                     </div>
                 </div>
             )}
