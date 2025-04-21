@@ -627,6 +627,14 @@ const DuaSyncApp = () => {
                   ) : (
                     // --- Normal Mode Layout (Inside Card - Normal View) ---
                     <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
+                      {/* Conditionally display standalone Bismillah */}
+                      {currentFullContent?.displayBismillah && (
+                        <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                          <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
+                            بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                          </p>
+                        </div>
+                      )}
                       {/* Text Content Block */}
                       <div className="w-full">
                         {/* Arabic text */}

@@ -33,7 +33,7 @@ const parseQuranTextFile = (textContent) => {
 
 
 // --- Helper Function to Merge Local Quran Data ---
-// (Uses parsed text data - Does NOT separate Bismillah)
+// (Removes Bismillah prefix from Arabic verse 1 and adds a flag)
 const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, parsedTranslitData) => {
   const meta = quranSurahListLocal.find(s => s.id === surahId);
   if (!meta) {
@@ -46,6 +46,8 @@ const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, 
   const translationAyahs = parsedQaraiData[surahId] || {};
 
   const totalAyahs = meta.totalAyahs;
+  let displayBismillahFlag = false;
+  const bismillahArabicPrefix = "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ "; // Note the space
 
   // Optional: Add a check for ayah count consistency if needed, though relying on metadata is safer
   if (Object.keys(arabicAyahs).length !== totalAyahs ||
@@ -58,14 +60,23 @@ const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, 
   const mergedVerses = [];
   for (let i = 1; i <= totalAyahs; i++) { // Loop through original number of ayahs
       const ayahKey = String(i);
+      let currentArabicText = arabicAyahs[ayahKey] ?? '';
 
-      const arabicText = arabicAyahs[ayahKey] ?? '';
+      // Check and remove Bismillah prefix for verse 1 (except Surah 1 & 9)
+      if (i === 1 && surahId !== '1' && surahId !== '9') {
+          if (currentArabicText.startsWith(bismillahArabicPrefix)) {
+              currentArabicText = currentArabicText.substring(bismillahArabicPrefix.length).trim();
+              displayBismillahFlag = true; // Set flag to show Bismillah separately
+              console.log(`Removed Bismillah prefix for Surah ${surahId} verse 1`);
+          }
+      }
+
       const translitText = translitAyahs[ayahKey] ?? '';
       const translationText = translationAyahs[ayahKey] ?? '';
 
       mergedVerses.push({
           ayah: i, // Keep original ayah number
-          arabic: arabicText,
+          arabic: currentArabicText, // Use potentially modified Arabic text
           transliteration: translitText,
           translation: translationText,
       });
@@ -74,9 +85,10 @@ const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, 
   return {
     id: meta.id,
     title: meta.title,
-    arabicTitle: meta.arabic, // Use metadata arabic title
+    arabicTitle: meta.arabic,
     totalAyahs: totalAyahs, // Use original total count
     verses: mergedVerses,
+    displayBismillah: displayBismillahFlag // Add the flag to the returned object
   };
 };
 // --- End Helper Function ---
