@@ -768,6 +768,14 @@ const DuaSyncApp = () => {
                 // Removed inner flex container properties (flex-grow, justify-center)
                 // Added mx-auto for horizontal centering and py-4 for vertical padding
                 <div className="w-full max-w-5xl mx-auto py-4">
+                  {/* Conditionally display standalone Bismillah only on the first verse */}
+                  {currentFullContent?.displayBismillah && currentIndex === 0 && (
+                    <div className="w-full mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}> {/* Slightly larger for fullscreen */}
+                        بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                      </p>
+                    </div>
+                  )}
                   {/* Text Content Block */}
                   <div className="w-full mb-6">
                     {/* Arabic text */}
