@@ -5,7 +5,7 @@ import * as offlineStorage from '../utils/offlineStorage';
 // Import duaCollection temporarily to fetch Dua content locally
 import { duaCollection, contentMap as localContentMap } from '../data/duaCollection';
 // Import the full Quran data
-import quranArabicObj from '../data/arabic.json';
+import quranDataArray from '../data/quran.json'; // Renamed variable and path
 import quranTransliterationObj from '../data/transliteration.json';
 import quranTranslationObj from '../data/aliquliqarai.json';
 // Import the Surah list metadata
@@ -24,41 +24,50 @@ const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a 
     return null;
   }
 
-  // Access the corresponding surah objects using the string key from imported data
-  const arabicSurah = quranArabicObj[surahId];
+  // --- MODIFICATION START: Find Surah in the quranDataArray ---
+  const arabicSurah = quranDataArray.find(surah => String(surah.id) === surahId);
+  // --- MODIFICATION END ---
+
   const translitSurah = quranTransliterationObj[surahId];
   const translationSurah = quranTranslationObj[surahId];
 
-  // Validate that we found the surah objects and they have the Ayahs object
-  if (!arabicSurah?.Ayahs || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
-     console.error(`Missing Ayahs object for Surah ID: ${surahId} in one or more imported files.`);
-     return null;
+  // --- MODIFICATION START: Validate found surah and check 'verses' array ---
+  if (!arabicSurah?.verses || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
+    console.error(`Missing verses array (arabic) or Ayahs object (translit/translation) for Surah ID: ${surahId}.`);
+    return null;
   }
+  // --- MODIFICATION END ---
 
-  const arabicAyahsObj = arabicSurah.Ayahs;
+  // --- MODIFICATION START: Use 'verses' array for Arabic ---
+  const arabicVersesArray = arabicSurah.verses;
+  // --- MODIFICATION END ---
+
   const translitAyahsObj = translitSurah.Ayahs;
   const translationAyahsObj = translationSurah.Ayahs;
 
   // Get the number of ayahs from metadata (already calculated)
   const totalAyahs = meta.totalAyahs;
 
-  // Optional: Check if the number of keys in Ayahs objects matches totalAyahs from metadata
-  if (Object.keys(arabicAyahsObj).length !== totalAyahs ||
+  // --- MODIFICATION START: Update check for Arabic verses array length ---
+  if (arabicVersesArray.length !== totalAyahs ||
       Object.keys(translitAyahsObj).length !== totalAyahs ||
       Object.keys(translationAyahsObj).length !== totalAyahs) {
-    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${Object.keys(arabicAyahsObj).length}, etc. Merging based on metadata count.`);
+    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${arabicVersesArray.length}, Translit: ${Object.keys(translitAyahsObj).length}, Translation: ${Object.keys(translationAyahsObj).length}. Merging based on metadata count.`);
   }
+  // --- MODIFICATION END ---
 
   // Merge verse data by iterating from 1 to totalAyahs
   const mergedVerses = [];
   for (let i = 1; i <= totalAyahs; i++) {
       const ayahKey = String(i); // Keys in Ayahs object are strings "1", "2", ...
 
-      // Extract text, handling potential missing ayahs in one of the files
-      const arabicText = arabicAyahsObj[ayahKey]?.Arabic ?? '';
+      // --- MODIFICATION START: Find Arabic verse in array and get 'text' ---
+      const arabicVerse = arabicVersesArray.find(verse => verse.id === i);
+      const arabicText = arabicVerse?.text ?? '';
+      // --- MODIFICATION END ---
+
       const translitText = translitAyahsObj[ayahKey]?.Transliteration ?? '';
       const translationAyahObj = translationAyahsObj[ayahKey];
-      // Use the correct key "Ali Quli Qara'i" for translation
       const translationText = translationAyahObj?.["Ali Quli Qara'i"] ?? '';
 
       mergedVerses.push({
@@ -72,7 +81,9 @@ const getMergedSurahDataLocally = (surahId) => { // surahId is expected to be a 
   return {
     id: meta.id,
     title: meta.title,
-    arabicTitle: meta.arabic, // Use the key from quranSurahListLocal
+    // --- MODIFICATION START: Use transliteration from new quran.json if available, else fallback ---
+    arabicTitle: arabicSurah.name || meta.arabic, // Prefer name from the new structure
+    // --- MODIFICATION END ---
     totalAyahs: totalAyahs,
     verses: mergedVerses,
   };

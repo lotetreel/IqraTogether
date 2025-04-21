@@ -11,7 +11,7 @@ const server = http.createServer(app);
 
 // --- Load Quran Data ---
 // Store the parsed objects directly
-let quranArabicObj = {};
+let quranArabicArray = []; // Changed name and type
 let quranTransliterationObj = {};
 let quranTranslationObj = {};
 let quranMetadata = []; // This will still be an array for easy listing
@@ -22,11 +22,13 @@ try {
   const dataPath = path.join(__dirname, 'data'); 
   console.log(`Attempting to load Quran data from: ${dataPath}`);
 
-  console.log('Reading arabic.json...');
-  const arabicRaw = fs.readFileSync(path.join(dataPath, 'arabic.json'), 'utf8');
-  console.log('Parsing arabic.json...');
-  quranArabicObj = JSON.parse(arabicRaw);
-  console.log(`Parsed arabic.json. Root Type: ${typeof quranArabicObj}`);
+  // --- MODIFICATION START: Read quran.json instead of arabic.json ---
+  console.log('Reading quran.json...');
+  const arabicRaw = fs.readFileSync(path.join(dataPath, 'quran.json'), 'utf8');
+  console.log('Parsing quran.json...');
+  // --- MODIFICATION END ---
+  quranArabicArray = JSON.parse(arabicRaw);
+  console.log(`Parsed quran.json. Root Type: ${Array.isArray(quranArabicArray) ? 'array' : typeof quranArabicArray}, Length: ${quranArabicArray.length}`);
 
   console.log('Reading transliteration.json...');
   const transliterationRaw = fs.readFileSync(path.join(dataPath, 'transliteration.json'), 'utf8');
@@ -43,25 +45,25 @@ try {
   console.log('Successfully read and parsed all Quran data files.');
 
   // --- Pre-process Metadata ---
-  console.log('Processing metadata from quranArabicObj...');
-  if (quranArabicObj && typeof quranArabicObj === 'object' && Object.keys(quranArabicObj).length > 0) {
+  console.log('Processing metadata from quranArabicArray...');
+  if (quranArabicArray && Array.isArray(quranArabicArray) && quranArabicArray.length > 0) {
     try {
-        // Iterate over the keys (Surah numbers) of the Arabic object
-        quranMetadata = Object.keys(quranArabicObj).map(surahNumberKey => {
-            const surah = quranArabicObj[surahNumberKey];
-            if (!surah || typeof surah !== 'object' || !surah.Ayahs || typeof surah.Ayahs !== 'object') {
-                console.warn(`Skipping invalid surah data for key ${surahNumberKey}: Missing or invalid structure.`);
+        // Iterate over the array of Surah objects
+        quranMetadata = quranArabicArray.map(surah => {
+            // Validate the structure of the surah object from the array
+            if (!surah || typeof surah !== 'object' || !surah.verses || !Array.isArray(surah.verses)) {
+                console.warn(`Skipping invalid surah data for ID ${surah.id}: Missing or invalid structure (verses array).`);
                 return null;
             }
-            // Calculate total ayahs by counting keys in the Ayahs object
-            const totalAyahs = Object.keys(surah.Ayahs).length;
+            // Calculate total ayahs from the length of the verses array
+            const totalAyahs = surah.verses.length;
 
             return {
-                // Use the key (Surah number) as the ID (convert to number if needed, but string is fine)
-                id: surahNumberKey,
+                // Use the id from the surah object (convert to string for consistency with old code)
+                id: String(surah.id),
                 // Extract names (use optional chaining for safety)
-                title: surah.SurahEnglishNames || surah.SurahTransliteratedName || `Surah ${surahNumberKey}`,
-                arabic: surah.SurahArabicName || '',
+                title: surah.transliteration || `Surah ${surah.id}`,
+                arabic: surah.name || '',
                 totalAyahs: totalAyahs,
             };
         }).filter(meta => meta !== null); // Filter out any null entries
@@ -83,7 +85,7 @@ try {
         quranMetadata = []; // Ensure empty on error
     }
   } else {
-     console.error('Failed to process Quran metadata: quranArabicObj data is missing, not an object, or empty.');
+     console.error('Failed to process Quran metadata: quranArabicArray data is missing, not an array, or empty.');
      quranMetadata = []; // Ensure it's empty on failure
   }
 
@@ -140,17 +142,17 @@ function getMergedSurahData(surahId) { // surahId is expected to be a string lik
   }
 
   // Access the corresponding surah objects using the string key
-  const arabicSurah = quranArabicObj[surahId];
+  const arabicSurah = quranArabicArray.find(surah => String(surah.id) === surahId);
   const translitSurah = quranTransliterationObj[surahId];
   const translationSurah = quranTranslationObj[surahId];
 
   // Validate that we found the surah objects and they have the Ayahs object
-  if (!arabicSurah?.Ayahs || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
-     console.error(`Missing Ayahs object for Surah ID: ${surahId} in one or more files.`);
+  if (!arabicSurah?.verses || !translitSurah?.Ayahs || !translationSurah?.Ayahs) {
+     console.error(`Missing verses array (arabic) or Ayahs object (translit/translation) for Surah ID: ${surahId}.`);
      return null;
   }
 
-  const arabicAyahsObj = arabicSurah.Ayahs;
+  const arabicVersesArray = arabicSurah.verses;
   const translitAyahsObj = translitSurah.Ayahs;
   const translationAyahsObj = translationSurah.Ayahs;
 
@@ -158,10 +160,10 @@ function getMergedSurahData(surahId) { // surahId is expected to be a string lik
   const totalAyahs = meta.totalAyahs;
 
   // Optional: Check if the number of keys in Ayahs objects matches totalAyahs from metadata
-  if (Object.keys(arabicAyahsObj).length !== totalAyahs ||
+  if (arabicVersesArray.length !== totalAyahs ||
       Object.keys(translitAyahsObj).length !== totalAyahs ||
       Object.keys(translationAyahsObj).length !== totalAyahs) {
-    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${Object.keys(arabicAyahsObj).length}, etc. Merging based on metadata count.`);
+    console.warn(`Ayah count mismatch for Surah ID: ${surahId}. Metadata: ${totalAyahs}, Arabic: ${arabicVersesArray.length}, Translit: ${Object.keys(translitAyahsObj).length}, Translation: ${Object.keys(translationAyahsObj).length}. Merging based on metadata count.`);
     // We'll proceed based on meta.totalAyahs, but this indicates potential data inconsistency.
   }
 
@@ -171,7 +173,8 @@ function getMergedSurahData(surahId) { // surahId is expected to be a string lik
       const ayahKey = String(i); // Keys in Ayahs object are strings "1", "2", ...
 
       // Extract text, handling potential missing ayahs in one of the files
-      const arabicText = arabicAyahsObj[ayahKey]?.Arabic ?? '';
+      const arabicVerse = arabicVersesArray.find(verse => verse.id === i);
+      const arabicText = arabicVerse?.text ?? '';
       const translitText = translitAyahsObj[ayahKey]?.Transliteration ?? '';
       // *** Use the correct key "Ali Quli Qara'i" for translation ***
       const translationAyahObj = translationAyahsObj[ayahKey];
@@ -188,7 +191,7 @@ function getMergedSurahData(surahId) { // surahId is expected to be a string lik
   return {
     id: meta.id,
     title: meta.title,
-    arabicTitle: meta.arabic,
+    arabicTitle: arabicSurah.name || meta.arabic, // Prefer name from the new structure
     totalAyahs: totalAyahs,
     verses: mergedVerses,
   };
