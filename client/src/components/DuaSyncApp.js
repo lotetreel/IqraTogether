@@ -646,11 +646,13 @@ const DuaSyncApp = () => {
                   </>
                 )
               )}
-              {/* Go To Button (Moved to Header) */}
-              <button onClick={openGoToModal} className="btn-icon tooltip-wrapper group ml-2" aria-label="Go To Verse/Segment">
-                <Locate size={20} />
-                <span className="tooltip">Go To</span>
-              </button>
+              {/* Go To Button (Moved to Header) - Show if not in session or if host */}
+              {(!sessionId || isHost) && (
+                <button onClick={openGoToModal} className="btn-icon tooltip-wrapper group ml-2" aria-label="Go To Verse/Segment">
+                  <Locate size={20} />
+                  <span className="tooltip">Go To</span>
+                </button>
+              )}
               <button onClick={() => setShowSettings(!showSettings)} className="btn-icon tooltip-wrapper group ml-2" aria-label="Settings">
                 <Settings size={20} />
                 <span className="tooltip">Settings</span>
@@ -705,12 +707,13 @@ const DuaSyncApp = () => {
                 <div className="space-y-6 animate-fade-in">
                   {/* Top Bar: Back Button, Page Number, Fullscreen Button */}
                   <div className="flex items-center justify-between">
-                    {(!sessionId || isHost || isBrowsingLocally) && ( <BackButton onClick={handleBack} /> )}
+                    {/* Back Button: Only show if no session or if host */}
+                    {(!sessionId || isHost) && ( <BackButton onClick={handleBack} /> )}
                     <div className="flex items-center space-x-4">
-                      <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto mr-2'}`}> {/* Added margin */}
+                      {/* Page Number: Adjust margin if back button is hidden */}
+                      <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost) ? '' : 'ml-auto mr-2'}`}>
                         {currentIndex + 1} of {totalPhrases}
                       </div>
-                      {/* Go To Button Removed from here */}
                       <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Enter Fullscreen">
                         <Maximize size={20} />
                         <span className="tooltip">Fullscreen</span>
@@ -735,9 +738,14 @@ const DuaSyncApp = () => {
                     // --- Kids Mode Layout (Normal View) ---
                     <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
                       <div className="relative w-full flex items-center justify-center mb-4" style={{ minHeight: '300px' }}> {/* Added min-height */}
-                        <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
+                        {/* Navigation Buttons - Show if not in session or if host */}
+                        {(!sessionId || isHost) && (
+                          <>
+                            <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
+                            <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
+                          </>
+                        )}
                         <img src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`} alt={`Verse ${currentIndex + 1} - Kids Illustration`} className="max-w-full max-h-[40vh] object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} />
-                        <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
                       </div>
                       <div className="w-full max-w-3xl px-4 flex-shrink-0">
                          <p className="text-center mb-2 text-sm text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1}</p>
@@ -783,32 +791,23 @@ const DuaSyncApp = () => {
                             </div>
                           )}
                       </div>
-                      {/* Navigation Buttons */}
-                      <div className="w-full flex justify-center gap-4 mt-6">
-                         <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={24} /> </button>
-                         <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={24} /> </button>
-                       </div>
+                      {/* Navigation Buttons - Show if not in session or if host */}
+                      {(!sessionId || isHost) && (
+                        <div className="w-full flex justify-center gap-4 mt-6">
+                           <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={24} /> </button>
+                           <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={24} /> </button>
+                         </div>
+                      )}
                     </div>
                   )}
 
-                  {/* Action Buttons (Sync/Browse/Auto) */}
+                  {/* Action Buttons (Auto for Host) */}
                   <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
-                      {!!sessionId && (
+                      {!!sessionId && isHost && ( // Only show Auto button for host
                         <div className="flex space-x-4">
-                          {isHost ? (
-                            <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
-                              {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
-                            </button>
-                          ) : (
-                            <>
-                              {connectionStatus === 'connected' && (
-                                <>
-                                  {!isSyncedToHost && ( <button onClick={syncToHost} className="btn-accent flex items-center"> <RefreshCw size={18} className="mr-2 animate-spin-slow" /> Sync </button> )}
-                                  {isSyncedToHost && ( <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center"> Browse </button> )}
-                                </>
-                              )}
-                            </>
-                          )}
+                          <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
+                            {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
+                          </button>
                         </div>
                       )}
                     </div>
@@ -816,9 +815,7 @@ const DuaSyncApp = () => {
                   {/* Status Indicators */}
                   {!!sessionId && (
                     <div className="text-center mt-6">
-                      {connectionStatus === 'connected' && !isHost && !isSyncedToHost && (
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-sm"> <RefreshCw size={16} className="mr-1.5" /> Viewing independently. Click Sync to follow host. </div>
-                      )}
+                      {/* Removed "Viewing independently" indicator */}
                       {connectionStatus !== 'connected' && (
                          <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 text-sm"> <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> Connection lost. Use the Rejoin button <LogIn size={14} className="inline mx-1"/> in the header if needed. </div>
                       )}
@@ -839,10 +836,10 @@ const DuaSyncApp = () => {
                      </div>
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
                     <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
-                     <button onClick={() => setIsBrowsingLocally(true)} className="btn-secondary flex items-center mt-6 mx-auto"> Browse Independently </button>
+                     {/* Removed "Browse Independently" button */}
                    </div>
                 </div>
-              ) : ( // Render DuaSelectionPage normally
+              ) : ( // Render DuaSelectionPage normally (if not in session or host)
                 <DuaSelectionPage
                   onSelectDua={handleContentSelection}
                   onSelectQuran={handleContentSelection}
@@ -882,10 +879,15 @@ const DuaSyncApp = () => {
                 <> {/* Use Fragment to avoid extra div */}
                   {/* Image container - Added max-width, mx-auto and padding */}
                   <div className="relative w-full max-w-4xl mx-auto flex items-center justify-center mb-4 px-4">
-                    <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={40} /> </button>
+                    {/* Navigation Buttons - Show if not in session or if host */}
+                    {(!sessionId || isHost) && (
+                      <>
+                        <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={40} /> </button>
+                        <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={40} /> </button>
+                      </>
+                    )}
                     {/* Re-added max-h constraint */}
                     <img src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`} alt={`Verse ${currentIndex + 1} - Kids Illustration`} className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} />
-                    <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={40} /> </button>
                   </div>
                   {/* Text container - Added max-width, mx-auto and padding */}
                   <div className="w-full max-w-4xl mx-auto px-4 flex-shrink-0">
@@ -934,11 +936,13 @@ const DuaSyncApp = () => {
                       </div>
                     )}
                   </div>
-                  {/* Navigation Buttons - Removed mt-auto, added explicit margin */}
-                  <div className="w-full flex justify-center gap-6 mt-8 flex-shrink-0">
-                     <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
-                     <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
-                   </div>
+                  {/* Navigation Buttons - Show if not in session or if host */}
+                  {(!sessionId || isHost) && (
+                    <div className="w-full flex justify-center gap-6 mt-8 flex-shrink-0">
+                       <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
+                       <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
+                     </div>
+                  )}
                 </div>
               )}
             </div>

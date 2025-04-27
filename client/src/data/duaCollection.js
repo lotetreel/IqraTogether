@@ -1,6 +1,7 @@
 // Removed imports from sampleContent as they are no longer needed
 import DUA_KUMAYL from './dua_kumayl.json'; // Import the specific Dua Kumayl data
 import DUA_SIMAAT from './dua_simaat.json'; // Import the specific Dua Simaat data
+import SAHIFA_SAJJADIYA_DUA1 from './sahifa_sajjadiya_dua1.json'; // Import the Sahifa Sajjadiya Dua 1 data
 
 // Basic dua collection for preview/selection
 export const duaCollection = [
@@ -29,6 +30,19 @@ export const duaCollection = [
     image: '/images/Dua_Simaat.png', // Use the actual filename provided
     length: 'Long',
     popularity: 4
+  },
+  {
+    id: 'sahifa-sajjadiya-dua1',
+    title: 'Sahifa Sajjadiya - Dua 1',
+    arabic: 'الصحيفة السجادية - الدعاء الأول',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'The first supplication from Sahifa Al-Sajjadiya, focusing on the praise of God.',
+    recitationTime: 'Anytime',
+    benefits: 'Praising God, Understanding Tawhid, Seeking Forgiveness',
+    image: '/images/sahifa_sajjadiya.png', // Placeholder image path
+    length: 'Long',
+    popularity: 5
   }
   // Removed all other Dua entries
 ];
@@ -39,6 +53,7 @@ export const quranCollection = [];
 // Content lookup map for full content retrieval
 export const contentMap = {
   'dua-kumayl': DUA_KUMAYL, // Only keep Dua Kumayl entry
-  'dua-simaat': DUA_SIMAAT
+  'dua-simaat': DUA_SIMAAT,
+  'sahifa-sajjadiya-dua1': SAHIFA_SAJJADIYA_DUA1
   // Removed all other entries
 };
