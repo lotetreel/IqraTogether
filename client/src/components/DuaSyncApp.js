@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 // Removed Smile icon import, added custom icon import below
 // Added Maximize, Minimize, Locate, BookOpen, FileText icons
 import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize, Locate, BookOpen, FileText } from 'lucide-react';
@@ -84,6 +84,7 @@ const DuaSyncApp = () => {
   const [localKidsImagePath, setLocalKidsImagePath] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false); // State for fullscreen mode
   const [pendingGoToIndex, setPendingGoToIndex] = useState(null); // State to manage index after content load
+  const urlCheckPerformed = useRef(false); // Ref to track if URL check has run
 
   // Go To Modal State
   const [showGoToModal, setShowGoToModal] = useState(false);
@@ -132,21 +133,42 @@ const DuaSyncApp = () => {
       }
   }, [sessionId]);
 
-  // Check URL for session ID
+  // Check URL for session ID (Revised)
   useEffect(() => {
-    if (connectionStatus === 'connected' || connectionStatus === 'connecting' || sessionId) return;
+    // Only run this check once on initial mount if not already in a session
+    if (sessionId || urlCheckPerformed.current) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = params.get('session');
+
     if (sessionIdFromUrl) {
-      console.log("Session ID found in URL, attempting to join:", sessionIdFromUrl);
-      setJoinSessionId(sessionIdFromUrl);
-      setIsJoining(true);
-      setPendingAction('join');
-      if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+      console.log("Session ID found in URL on initial load:", sessionIdFromUrl);
+      urlCheckPerformed.current = true; // Mark check as performed
+
+      setJoinSessionId(sessionIdFromUrl); // Store the ID to join
+      setIsJoining(true); // UI flag
+      setPendingAction('join'); // Set the pending action
+
+      // Trigger connection if not already connecting or connected
+      // Check the *current* status directly before calling connect
+      if (connectionStatus !== 'connected' && connectionStatus !== 'connecting') {
+        console.log("Triggering connection for URL join...");
         connectToServer();
+      } else {
+        // If already connected (e.g., very fast reconnect), the other effect should handle pendingAction
+        console.log("Already connected/connecting, pending action set for dialog.");
       }
+    } else {
+      // No session ID in URL, mark check as performed anyway
+      urlCheckPerformed.current = true;
     }
-  }, [connectionStatus, connectToServer, sessionId]);
+    // Dependencies: Only run when connectToServer function reference changes (rarely)
+    // or on initial mount implicitly. We don't want connectionStatus or sessionId
+    // to re-trigger this specific URL check logic after the initial load.
+    // Added connectionStatus back to ensure connectToServer is called if status changes before URL check runs
+  }, [connectToServer, sessionId, connectionStatus]);
 
   // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
   useEffect(() => {
