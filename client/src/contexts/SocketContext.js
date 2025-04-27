@@ -529,7 +529,9 @@ export const SocketProvider = ({ children }) => {
         console.log("Unsyncing from host due to local selection.");
         setIsSyncedToHost(false);
       }
-      setFetchTrigger({ type: contentInfo.type, id: contentInfo.id }); // Set trigger
+      // Ensure the correct type ('quran' or 'dua') is used for fetching
+      const correctedType = contentInfo.type === 'surah' ? 'quran' : contentInfo.type;
+      setFetchTrigger({ type: correctedType, id: contentInfo.id }); // Set trigger with corrected type
     } else {
       // Handle deselecting content locally (e.g., via back button when not in session)
       console.log("Locally deselecting content.");

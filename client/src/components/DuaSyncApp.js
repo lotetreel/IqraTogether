@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // Removed Smile icon import, added custom icon import below
-// Added Maximize and Minimize icons
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize } from 'lucide-react';
+// Added Maximize, Minimize, Locate, BookOpen, FileText icons
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize, Locate, BookOpen, FileText } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 // Import offline storage utils (adjust path if needed)
 import * as offlineStorage from '../utils/offlineStorage';
@@ -10,7 +10,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 // Remove sample content and local data imports if fully relying on context/server
 // import { SAMPLE_DUA, SAMPLE_QURAN } from '../data/sampleContent';
-// import { duaCollection, quranCollection, contentMap } from '../data/duaCollection';
+import { duaCollection, contentMap } from '../data/duaCollection'; // Import dua data
 import ShareDialog from './ShareDialog';
 import NameInputDialog from './NameInputDialog';
 import ParticipantsDialog from './ParticipantsDialog';
@@ -83,6 +83,17 @@ const DuaSyncApp = () => {
   const [downloadError, setDownloadError] = useState(null);
   const [localKidsImagePath, setLocalKidsImagePath] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false); // State for fullscreen mode
+  const [pendingGoToIndex, setPendingGoToIndex] = useState(null); // State to manage index after content load
+
+  // Go To Modal State
+  const [showGoToModal, setShowGoToModal] = useState(false);
+  const [goToStep, setGoToStep] = useState(1); // 1: Type, 2: Item, 3: Verse/Segment
+  const [goToType, setGoToType] = useState(null); // 'surah' or 'dua'
+  const [goToItemId, setGoToItemId] = useState(null);
+  const [goToItemData, setGoToItemData] = useState(null); // Store selected surah/dua data
+  const [goToVerseOrSegment, setGoToVerseOrSegment] = useState('');
+  const [goToMaxVerseOrSegment, setGoToMaxVerseOrSegment] = useState(0);
+  const [goToSearchTerm, setGoToSearchTerm] = useState(''); // For filtering Surahs/Duas
 
   // REMOVED Swipe detection state
 
@@ -460,6 +471,116 @@ const DuaSyncApp = () => {
     setIsFullScreen(!isFullScreen);
   };
 
+  // --- Go To Modal Logic ---
+  const openGoToModal = () => {
+    setGoToStep(1);
+    setGoToType(null);
+    setGoToItemId(null);
+    setGoToItemData(null);
+    setGoToVerseOrSegment('');
+    setGoToMaxVerseOrSegment(0);
+    setGoToSearchTerm('');
+      setShowGoToModal(true);
+      setPendingGoToIndex(null); // Reset pending index when opening modal
+  };
+
+  const handleGoToTypeSelect = (type) => {
+    // Use 'quran' internally when 'Surah' is selected in the UI
+    setGoToType(type === 'surah' ? 'quran' : type);
+    setGoToStep(2);
+    setGoToSearchTerm(''); // Reset search on type change
+  };
+
+  const handleGoToItemSelect = (item) => {
+    setGoToItemId(item.id);
+    setGoToItemData(item); // Store the whole item for easy access to totalAyahs/content
+    setGoToStep(3);
+    // Use 'quran' for the internal type check
+    if (goToType === 'quran') {
+      setGoToMaxVerseOrSegment(item.totalAyahs || 0);
+    } else if (goToType === 'dua') {
+      // Need to fetch/access the specific dua content to get length
+      const duaContent = contentMap[item.id];
+      const segmentCount = duaContent?.arabic?.length || 0; // Assuming arabic array represents segments
+      setGoToMaxVerseOrSegment(segmentCount);
+    }
+  };
+
+  const handleGoToVerseSegmentChange = (e) => {
+    const value = e.target.value;
+    // Allow only numbers
+    if (/^\d*$/.test(value)) {
+      setGoToVerseOrSegment(value);
+    }
+  };
+
+  const handleGoToSubmit = () => {
+    const targetIndex = parseInt(goToVerseOrSegment, 10);
+    if (!isNaN(targetIndex) && targetIndex >= 1 && targetIndex <= goToMaxVerseOrSegment) {
+      const zeroBasedIndex = targetIndex - 1;
+      // Ensure the selected content matches the target type/id before navigating
+      if (currentContentInfo?.id !== goToItemId || currentContentInfo?.type !== goToType) {
+        // If not the current content, select it first
+        // Ensure the correct type ('quran' or 'dua') is passed
+        const contentInfo = {
+          id: goToItemId,
+          type: goToType, // This should already be 'quran' or 'dua' from handleGoToTypeSelect
+          title: goToItemData?.title, // Pass title for display
+          // Add other necessary fields if needed by select functions
+        };
+        console.log("Go To Submit - Selecting new content:", contentInfo); // Debug log
+        if (isHost) {
+          selectContentAsHost(contentInfo);
+        } else {
+          selectContentLocally(contentInfo); // Passes correct type
+          setIsBrowsingLocally(true); // Assume user wants to browse locally after jumping
+          setPendingGoToIndex(zeroBasedIndex); // Set the target index to apply after load
+        }
+        // Removed setTimeout logic here
+      } else {
+        // If it's already the current content, just navigate
+        if (isHost) {
+          updateHostIndex(zeroBasedIndex);
+        } else {
+          updateLocalIndex(zeroBasedIndex);
+        }
+      }
+      setShowGoToModal(false);
+    } else {
+      alert(`Please enter a valid number between 1 and ${goToMaxVerseOrSegment}.`);
+    }
+  };
+
+  const filteredGoToItems = useMemo(() => {
+    if (goToStep !== 2) return [];
+    // Use 'quran' for the internal type check to select the correct list
+    const list = goToType === 'quran' ? quranSurahList : duaCollection;
+    if (!list) return [];
+    return list.filter(item =>
+      item.title.toLowerCase().includes(goToSearchTerm.toLowerCase()) ||
+      (item.arabic && item.arabic.toLowerCase().includes(goToSearchTerm.toLowerCase())) ||
+      item.id.toString().includes(goToSearchTerm)
+    );
+  }, [goToStep, goToType, quranSurahList, duaCollection, goToSearchTerm]);
+  // --- End Go To Modal Logic ---
+
+  // Effect to apply pending Go To index after content loads
+  useEffect(() => {
+    console.log(`Go To Effect Check: pending=${pendingGoToIndex}, currentId=${currentContentInfo?.id}, targetId=${goToItemId}, hasContent=${!!currentFullContent}`); // More detailed log
+    // Check if there's a pending index, content is loaded, and the loaded content matches the target ID
+    if (pendingGoToIndex !== null && currentFullContent && currentContentInfo?.id === goToItemId) {
+      console.log(`Applying pending Go To index: ${pendingGoToIndex} for content ID: ${currentContentInfo.id}`); // Debug log
+      if (isHost) {
+        updateHostIndex(pendingGoToIndex);
+      } else {
+        updateLocalIndex(pendingGoToIndex);
+      }
+      setPendingGoToIndex(null); // Reset after applying
+    }
+  // Ensure dependencies cover the conditions checked inside
+  }, [currentFullContent, currentContentInfo, pendingGoToIndex, isHost, updateHostIndex, updateLocalIndex, goToItemId]);
+
+
   // Debug logs
   if (isDev) {
     console.log('Rendering DuaSyncApp:', { sessionId: !!sessionId, currentContentInfo: !!currentContentInfo, currentFullContent: !!currentFullContent, isLoadingContent, isBrowsingLocally, isHost, connectionStatus });
@@ -525,6 +646,11 @@ const DuaSyncApp = () => {
                   </>
                 )
               )}
+              {/* Go To Button (Moved to Header) */}
+              <button onClick={openGoToModal} className="btn-icon tooltip-wrapper group ml-2" aria-label="Go To Verse/Segment">
+                <Locate size={20} />
+                <span className="tooltip">Go To</span>
+              </button>
               <button onClick={() => setShowSettings(!showSettings)} className="btn-icon tooltip-wrapper group ml-2" aria-label="Settings">
                 <Settings size={20} />
                 <span className="tooltip">Settings</span>
@@ -575,15 +701,16 @@ const DuaSyncApp = () => {
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
                   <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
                 </div>
-              ) : currentContentInfo && currentFullContent && (isHost || !isBrowsingLocally) ? (
+              ) : currentContentInfo && currentFullContent && (!sessionId || isHost || !isBrowsingLocally) ? (
                 <div className="space-y-6 animate-fade-in">
                   {/* Top Bar: Back Button, Page Number, Fullscreen Button */}
                   <div className="flex items-center justify-between">
                     {(!sessionId || isHost || isBrowsingLocally) && ( <BackButton onClick={handleBack} /> )}
                     <div className="flex items-center space-x-4">
-                    <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto'}`}>
+                      <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost || isBrowsingLocally) ? '' : 'ml-auto mr-2'}`}> {/* Added margin */}
                         {currentIndex + 1} of {totalPhrases}
                       </div>
+                      {/* Go To Button Removed from here */}
                       <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Enter Fullscreen">
                         <Maximize size={20} />
                         <span className="tooltip">Fullscreen</span>
@@ -936,6 +1063,105 @@ const DuaSyncApp = () => {
       {!isFullScreen && showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
       {!isFullScreen && showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); }} />}
       {!isFullScreen && <RejoinDialog isOpen={showRejoinDialog} onClose={() => setShowRejoinDialog(false)} onSubmit={({ sessionId: rejoinSessionId, username: rejoinUsername }) => { setShowRejoinDialog(false); setLocalError(null); console.log(`Attempting explicit rejoin for session ${rejoinSessionId} as ${rejoinUsername}`); if (connectionStatus !== 'connected') { console.log("Not connected, attempting connection first..."); connectToServer(); } joinSession(rejoinSessionId, rejoinUsername, isHost); }} initialSessionId={sessionId} initialUsername={username} />}
+
+      {/* Go To Modal */}
+      {!isFullScreen && showGoToModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in p-4">
+          <div className="card w-full max-w-lg animate-slide-up">
+            <div className="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold dark:text-dark-text-primary">Go To...</h3>
+              <button onClick={() => setShowGoToModal(false)} className="btn-icon"> <X size={24} /> </button>
+            </div>
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Step 1: Type Selection */}
+              {goToStep === 1 && (
+                <div className="space-y-4"> {/* Increased spacing */}
+                  <p className="text-gray-700 dark:text-dark-text-secondary mb-4">Select what you want to navigate to:</p>
+                  <button
+                    onClick={() => handleGoToTypeSelect('surah')} // Keep UI selection as 'surah'
+                    className="btn btn-secondary w-full text-left p-4 h-auto transition-all duration-150 hover:bg-primary-50 dark:hover:bg-dark-bg-tertiary hover:shadow-md rounded-lg flex items-center space-x-3 border-2 border-transparent hover:border-primary-600 dark:hover:border-primary-300" // Adjusted hover border color for more prominence
+                  >
+                    <BookOpen size={24} className="text-primary-600 dark:text-primary-400 flex-shrink-0" /> {/* Icon */}
+                    <div className="flex flex-col"> {/* Stack title and description */}
+                      <span className="font-semibold text-base mb-1 text-primary-600 dark:text-primary-400">Surah</span> {/* Color */}
+                      <span className="text-sm text-gray-500 dark:text-dark-text-muted">Select a Surah and Verse</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleGoToTypeSelect('dua')}
+                    className="btn btn-secondary w-full text-left p-4 h-auto transition-all duration-150 hover:bg-primary-50 dark:hover:bg-dark-bg-tertiary hover:shadow-md rounded-lg flex items-center space-x-3 border-2 border-transparent hover:border-primary-600 dark:hover:border-primary-300" // Adjusted hover border color for more prominence
+                  >
+                     <FileText size={24} className="text-primary-600 dark:text-primary-400 flex-shrink-0" /> {/* Icon */}
+                     <div className="flex flex-col"> {/* Stack title and description */}
+                       <span className="font-semibold text-base mb-1 text-primary-600 dark:text-primary-400">Dua</span> {/* Color */}
+                       <span className="text-sm text-gray-500 dark:text-dark-text-muted">Select a Dua and Segment</span>
+                     </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2: Item Selection */}
+              {goToStep === 2 && (
+                <div>
+                  <button onClick={() => setGoToStep(1)} className="btn btn-sm btn-ghost mb-4 flex items-center"> <ChevronLeft size={16} className="mr-1" /> Back </button>
+                  {/* Use 'quran' for internal logic check, but display 'Surah' */}
+                  <p className="text-gray-700 dark:text-dark-text-secondary mb-3">Select {goToType === 'quran' ? 'Surah' : 'Dua'}:</p>
+                  <input
+                    type="text"
+                    placeholder={`Search ${goToType === 'quran' ? 'Surahs' : 'Duas'} by name, Arabic, or ID...`}
+                    value={goToSearchTerm}
+                    onChange={(e) => setGoToSearchTerm(e.target.value)}
+                    className="input w-full mb-3"
+                  />
+                  <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-2 bg-gray-50 dark:bg-dark-bg-secondary">
+                    {filteredGoToItems.length > 0 ? filteredGoToItems.map(item => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleGoToItemSelect(item)}
+                        className="block w-full text-left p-2 rounded hover:bg-primary-100 dark:hover:bg-dark-bg-tertiary transition-colors duration-150"
+                      >
+                        <span className="font-medium">{item.id}. {item.title}</span>
+                        {item.arabic && <span className="text-sm text-gray-600 dark:text-dark-text-muted ml-2">({item.arabic})</span>}
+                      </button>
+                    )) : (
+                      <p className="text-center text-gray-500 dark:text-dark-text-muted p-4">No matches found.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Verse/Segment Selection */}
+              {goToStep === 3 && goToItemData && (
+                <div>
+                  <button onClick={() => setGoToStep(2)} className="btn btn-sm btn-ghost mb-4 flex items-center"> <ChevronLeft size={16} className="mr-1" /> Back </button>
+                  <p className="text-gray-700 dark:text-dark-text-secondary mb-3">
+                    {/* Use 'quran' for internal logic check, but display 'Verse' */}
+                    Enter {goToType === 'quran' ? 'Verse' : 'Segment'} number for <span className="font-semibold">{goToItemData.title}</span>:
+                  </p>
+                  <input
+                    type="number" // Use number input for better mobile experience
+                    inputMode="numeric" // Hint for numeric keyboard
+                    pattern="[0-9]*" // Pattern for numeric input
+                    placeholder={`Number (1 - ${goToMaxVerseOrSegment})`}
+                    value={goToVerseOrSegment}
+                    onChange={handleGoToVerseSegmentChange}
+                    className="input w-full"
+                    min="1"
+                    max={goToMaxVerseOrSegment}
+                  />
+                  <button
+                    onClick={handleGoToSubmit}
+                    className="btn btn-primary w-full mt-4"
+                    disabled={!goToVerseOrSegment || parseInt(goToVerseOrSegment, 10) < 1 || parseInt(goToVerseOrSegment, 10) > goToMaxVerseOrSegment}
+                  >
+                    Go
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
