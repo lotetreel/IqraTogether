@@ -856,16 +856,26 @@ const DuaSyncApp = () => {
         {/* Fullscreen View Container */}
         {isFullScreen && currentContentInfo && currentFullContent && (
           <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto flex flex-col p-4 md:p-8 animate-fade-in">
-            {/* Fullscreen Header: Title and Exit Button */}
+            {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-              <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Exit Fullscreen">
-                <Minimize size={24} />
-                <span className="tooltip">Exit Fullscreen</span>
-              </button>
+              {/* Action Buttons Group */}
+              <div className="flex items-center space-x-2">
+                {/* Settings Button (Opens modal without exiting fullscreen) */}
+                <button onClick={() => setShowSettings(true)} className="btn-icon tooltip-wrapper group" aria-label="Settings">
+                  <Settings size={24} />
+                  <span className="tooltip">Settings</span>
+                </button>
+
+                {/* Exit Fullscreen Button */}
+                <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Exit Fullscreen">
+                  <Minimize size={24} />
+                  <span className="tooltip">Exit Fullscreen</span>
+                </button>
+              </div>
             </div>
 
-            {/* Fullscreen Content Area (Scrollable) - Removed flex-1, kept overflow-y-auto, added padding-top */}
+            {/* Fullscreen Content Area (Scrollable) */}
             <div className="flex-1 min-h-0"> {/* Let outer container handle scrolling and flex */}
               {/* Kids Mode Fullscreen - Simplified structure */}
               {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
@@ -940,15 +950,38 @@ const DuaSyncApp = () => {
         )}
       </div>
 
-      {/* Settings modal - Conditionally render based on fullscreen state */}
-      {!isFullScreen && showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in p-4">
+      {/* Settings modal - Now renders regardless of fullscreen state, controlled only by showSettings */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] animate-fade-in p-4"> {/* Increased z-index */}
           <div className="card w-full max-w-md animate-slide-up">
             <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold dark:text-dark-text-primary">Settings</h3>
               <button onClick={() => setShowSettings(false)} className="btn-icon"> <X size={24} /> </button>
             </div>
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Fullscreen Session Actions (Create/Join) */}
+              {isFullScreen && !sessionId && (
+                <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-3">Session Actions</h4>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => { setShowSettings(false); toggleFullScreen(); startHosting(); }}
+                      className={`btn btn-primary flex-1 flex items-center justify-center ${connectionStatus === 'connecting' ? 'btn-disabled' : ''}`}
+                      disabled={connectionStatus === 'connecting'}
+                    >
+                      <PlusCircle size={16} className="mr-1.5" /> Create
+                    </button>
+                    <button
+                      onClick={() => { setShowSettings(false); toggleFullScreen(); setShowJoinInputInHeader(true); }}
+                      className={`btn btn-accent flex-1 flex items-center justify-center ${connectionStatus === 'connecting' ? 'btn-disabled' : ''}`}
+                      disabled={connectionStatus === 'connecting'}
+                    >
+                      <UserPlus size={16} className="mr-1.5" /> Join
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Session Info */}
               {connectionStatus === 'connected' && !!sessionId && (
                 <div className="bg-primary-50 dark:bg-dark-bg-secondary p-4 rounded-lg border border-primary-100 dark:border-dark-bg-tertiary space-y-2">
@@ -1014,34 +1047,12 @@ const DuaSyncApp = () => {
                        <button onClick={() => setTranslationFontSize(prev => { const current = parseFloat(prev); return (isNaN(current) ? defaultOtherSize : current) + 0.1; })} className="btn-icon-sm btn-secondary">+</button>
                      </div>
                    </div>
-                </div>
-              </div>
-              {/* Download Content Section */}
-              <div>
-                <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Download Content</label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
-                    <span className="dark:text-dark-text-secondary">Kids Mode Images (Al-Rahman)</span>
-                    <div className="flex items-center space-x-2">
-                      {downloadStatus.alRahmanImages === 'checking' && <Loader size={18} className="animate-spin text-gray-500" />}
-                      {downloadStatus.alRahmanImages === 'downloading' && <Loader size={18} className="animate-spin text-blue-500" />}
-                      {downloadStatus.alRahmanImages === 'downloaded' && <CheckCircle size={18} className="text-green-500" />}
-                      {downloadStatus.alRahmanImages === 'error' && <X size={18} className="text-red-500" />}
-                      {downloadStatus.alRahmanImages !== 'downloaded' && (
-                        <button onClick={() => handleDownload('alRahmanImages', 'images', 'AlRahman')} className="btn-icon-sm btn-primary" disabled={downloadStatus.alRahmanImages === 'checking' || downloadStatus.alRahmanImages === 'downloading'} aria-label="Download Al-Rahman Images"> <DownloadCloud size={16} /> </button>
-                      )}
-                      {downloadStatus.alRahmanImages === 'downloaded' && (
-                        <button onClick={() => handleDelete('alRahmanImages', 'images', 'AlRahman')} className="btn-icon-sm btn-danger" disabled={downloadStatus.alRahmanImages === 'checking' || downloadStatus.alRahmanImages === 'downloading'} aria-label="Delete Al-Rahman Images"> <Trash2 size={16} /> </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {downloadError && <p className="text-red-500 text-sm mt-2">{downloadError}</p>}
-              </div>
-              {/* Auto-Advance Settings */}
-              {isHost && connectionStatus === 'connected' && (
-                <div>
-                  <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Auto-Advance Settings</label>
+                 </div>
+               </div>
+               {/* Auto-Advance Settings */}
+               {isHost && connectionStatus === 'connected' && (
+                 <div>
+                   <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Auto-Advance Settings</label>
                   <div className="flex items-center bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
                     <span className="mr-3 dark:text-dark-text-secondary">Interval (seconds):</span>
                     <select value={autoAdvanceInterval} onChange={(e) => setAutoAdvanceInterval(Number(e.target.value))} className="input bg-white dark:bg-dark-bg-tertiary flex-1">
