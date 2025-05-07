@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 // Import offline storage utils (still needed for potential future use or other features)
 import * as offlineStorage from '../utils/offlineStorage';
@@ -148,13 +148,24 @@ const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullConten
 // --- End External Helper Function ---
 
 
+// --- Helper Function to Generate UUID ---
+const generateUUID = () => {
+  // Basic UUID v4 generator
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected', 'error'
   const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false); // NEW: Track if connection was tried
   const [sessionId, setSessionId] = useState(null);
+  const [clientGeneratedId, setClientGeneratedId] = useState(null); // For persistent client identity
   const [username, setUsername] = useState(null);
   const [isHost, setIsHost] = useState(false);
+  const [hasAttemptedRejoin, setHasAttemptedRejoin] = useState(false); // Track rejoin attempt per connection
   const [hostSelectedContentInfo, setHostSelectedContentInfo] = useState(null);
   const [currentContentInfo, setCurrentContentInfo] = useState(null); // Info for locally viewed content
   const [currentFullContent, setCurrentFullContent] = useState(null); // Holds the *full* fetched data (verses, etc.)
@@ -180,6 +191,17 @@ export const SocketProvider = ({ children }) => {
 
   // NEW: State to trigger fetching content
   const [fetchTrigger, setFetchTrigger] = useState(null); // { type, id } | null
+
+  // Effect to manage clientGeneratedId
+  useEffect(() => {
+    let storedClientId = localStorage.getItem('iqraTogether_clientGeneratedId');
+    if (!storedClientId) {
+      storedClientId = generateUUID();
+      localStorage.setItem('iqraTogether_clientGeneratedId', storedClientId);
+    }
+    setClientGeneratedId(storedClientId);
+    console.log('Client Generated ID initialized:', storedClientId);
+  }, []);
 
   // Effect to preload text files on mount
   useEffect(() => {
@@ -260,23 +282,20 @@ export const SocketProvider = ({ children }) => {
         setSocket(newSocket);
         setConnectionStatus('connected');
         setError(null); // Clear connection errors on successful connect
-        // --- REMOVE AUTOMATIC REJOIN ATTEMPT AGAIN ---
-        // Rely solely on manual rejoin via button after connection.
-        console.log('Socket connected. User must explicitly rejoin if needed via button.');
+        console.log('Socket connected successfully. Socket ID:', newSocket.id);
+        // Rejoin attempt will be handled by another useEffect that depends on connectionStatus, clientGeneratedId, and socket
       });
       newSocket.on('disconnect', (reason) => {
         console.log(`Socket disconnected: ${reason}`);
-        // Don't clear the socket instance immediately, allow reconnection attempts
         setConnectionStatus('disconnected');
-        // *** MODIFICATION START ***
+        setHasAttemptedRejoin(false); // Allow rejoin attempt on next successful connection
         // Reset only state that is invalid without connection
         setParticipants([]);
         // Keep session state (sessionId, username, isHost, content info, index)
         // Set error to inform user
-        if (reason !== 'io client disconnect') { // Don't show error if user intentionally disconnected (e.g., closing tab)
+        if (reason !== 'io client disconnect' && reason !== 'io server disconnect') { // Don't show error if user intentionally disconnected or server initiated it (e.g. for rejoin)
              setError("Connection lost. Attempting to reconnect...");
         }
-        // *** MODIFICATION END ***
       });
       newSocket.on('connect_error', (err) => {
         console.error('Socket connection error:', err);
@@ -323,35 +342,129 @@ export const SocketProvider = ({ children }) => {
     };
   }, []); // Empty dependency array: runs cleanup only on unmount
 
+  // Effect to attempt rejoin when socket connects and we have a clientGeneratedId
+  useEffect(() => {
+    if (socket && connectionStatus === 'connected' && clientGeneratedId && !hasAttemptedRejoin) {
+      const storedSessionId = localStorage.getItem('iqraTogether_sessionId');
+      const storedUserId = localStorage.getItem('iqraTogether_userId'); // This should match clientGeneratedId
+      const storedUsername = localStorage.getItem('iqraTogether_username');
+      const storedIsHost = localStorage.getItem('iqraTogether_isHost');
+
+      if (storedSessionId && storedUserId && storedUsername && storedIsHost && storedUserId === clientGeneratedId) {
+        console.log(`Attempting to rejoin session ${storedSessionId} as user ${storedUsername} (User ID: ${clientGeneratedId})`);
+        socket.emit('attempt-rejoin', {
+          sessionId: storedSessionId,
+          userId: clientGeneratedId,
+          username: storedUsername,
+          isHost: JSON.parse(storedIsHost)
+        });
+        setHasAttemptedRejoin(true); // Mark that an attempt has been made for this connection instance
+      } else {
+        // No valid stored session, or clientGeneratedId mismatch (should not happen if logic is correct)
+        setHasAttemptedRejoin(true); // Mark as attempted so we don't retry on this connection
+        console.log('No valid session details in localStorage to attempt rejoin, or clientGeneratedId mismatch.');
+        // Clear potentially inconsistent localStorage
+        localStorage.removeItem('iqraTogether_sessionId');
+        localStorage.removeItem('iqraTogether_userId');
+        localStorage.removeItem('iqraTogether_username');
+        localStorage.removeItem('iqraTogether_isHost');
+      }
+    }
+  }, [socket, connectionStatus, clientGeneratedId, hasAttemptedRejoin]);
+
+
   // Effect to set up application-specific event listeners *after* connection
   useEffect(() => {
     if (!socket || connectionStatus !== 'connected') return;
     console.log("Setting up application-specific socket listeners...");
 
-    // Define handlers that now set the fetchTrigger state
-    const handleSessionCreated = ({ sessionId: newSessionId, username: hostUsername }) => {
-      console.log(`Session created: ${newSessionId} by ${hostUsername}`);
+    const handleSessionCreated = ({ sessionId: newSessionId, username: hostUsername, userId: confirmedUserId }) => {
+      console.log(`Session created: ${newSessionId} by ${hostUsername} (User ID: ${confirmedUserId})`);
       setSessionId(newSessionId); setUsername(hostUsername); setIsHost(true); setIsSyncedToHost(true);
       setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null);
       setCurrentIndex(0); setParticipants([]); setError(null); setFetchTrigger(null);
+      if (clientGeneratedId) {
+        localStorage.setItem('iqraTogether_sessionId', newSessionId);
+        localStorage.setItem('iqraTogether_userId', clientGeneratedId); // Use our stable clientGeneratedId
+        localStorage.setItem('iqraTogether_username', hostUsername);
+        localStorage.setItem('iqraTogether_isHost', JSON.stringify(true));
+        console.log('Session details stored in localStorage after creation.');
+      } else {
+        console.warn('clientGeneratedId not available when storing session details post-creation.');
+      }
     };
-    const handleSessionJoined = ({ sessionId: joinedSessionId, username: joinedUsername, hostSelectedContent: currentHostContentInfo, currentIndex: hostCurrentIndex, isHost: userIsHost, contentSelected, participants: initialParticipants }) => {
-      console.log(`${joinedUsername} joined session ${joinedSessionId}. Host Content: ${currentHostContentInfo?.id}, Index: ${hostCurrentIndex}, Is Host: ${userIsHost}`);
+
+    const handleSessionJoined = ({ sessionId: joinedSessionId, username: joinedUsername, userId: confirmedUserId, hostSelectedContent: currentHostContentInfo, currentIndex: hostCurrentIndex, isHost: userIsHost, contentSelected, participants: initialParticipants }) => {
+      console.log(`${joinedUsername} (User ID: ${confirmedUserId}) joined session ${joinedSessionId}. Host Content: ${currentHostContentInfo?.id}, Index: ${hostCurrentIndex}, Is Host: ${userIsHost}`);
       setSessionId(joinedSessionId); setUsername(joinedUsername); setIsHost(userIsHost);
-       setHostSelectedContentInfo(currentHostContentInfo);
-       setLatestHostIndex(hostCurrentIndex ?? 0); // Initialize latestHostIndex on join
-       setIsSyncedToHost(true);
-       setCurrentContentInfo(currentHostContentInfo);
-       setCurrentIndex(hostCurrentIndex ?? 0); // Set current index as well
-       setError(null);
-       setParticipants(initialParticipants || []); // Set initial participants list
-       if (contentSelected && currentHostContentInfo) {
-         setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
+      setHostSelectedContentInfo(currentHostContentInfo);
+      setLatestHostIndex(hostCurrentIndex ?? 0);
+      setIsSyncedToHost(true);
+      setCurrentContentInfo(currentHostContentInfo);
+      setCurrentIndex(hostCurrentIndex ?? 0);
+      setError(null);
+      setParticipants(initialParticipants || []);
+      if (clientGeneratedId) {
+        localStorage.setItem('iqraTogether_sessionId', joinedSessionId);
+        localStorage.setItem('iqraTogether_userId', clientGeneratedId); // Use our stable clientGeneratedId
+        localStorage.setItem('iqraTogether_username', joinedUsername);
+        localStorage.setItem('iqraTogether_isHost', JSON.stringify(userIsHost));
+        console.log('Session details stored in localStorage after joining.');
+      } else {
+        console.warn('clientGeneratedId not available when storing session details post-join.');
+      }
+
+      if (contentSelected && currentHostContentInfo) {
+        setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
       } else {
         setCurrentFullContent(null); setFetchTrigger(null);
       }
-     };
-     const handleSessionNotFound = ({ sessionId: triedSessionId }) => {
+    };
+
+    const handleSessionRejoined = ({ sessionId: rejoinedSessionId, username: rejoinedUsername, userId: confirmedUserId, hostSelectedContent: currentHostContentInfo, currentIndex: hostCurrentIndex, isHost: userIsHost, contentSelected, participants: initialParticipants, message }) => {
+      console.log(message || `${rejoinedUsername} (User ID: ${confirmedUserId}) REJOINED session ${rejoinedSessionId}. Host Content: ${currentHostContentInfo?.id}, Index: ${hostCurrentIndex}, Is Host: ${userIsHost}`);
+      setSessionId(rejoinedSessionId); setUsername(rejoinedUsername); setIsHost(userIsHost);
+      setHostSelectedContentInfo(currentHostContentInfo);
+      setLatestHostIndex(hostCurrentIndex ?? 0);
+      setIsSyncedToHost(true);
+      setCurrentContentInfo(currentHostContentInfo);
+      setCurrentIndex(hostCurrentIndex ?? 0);
+      setError(null);
+      setParticipants(initialParticipants || []);
+      setHasAttemptedRejoin(true); // Mark rejoin as handled for this connection instance
+
+      if (clientGeneratedId) { // Ensure clientGeneratedId is available
+        localStorage.setItem('iqraTogether_sessionId', rejoinedSessionId);
+        localStorage.setItem('iqraTogether_userId', clientGeneratedId);
+        localStorage.setItem('iqraTogether_username', rejoinedUsername);
+        localStorage.setItem('iqraTogether_isHost', JSON.stringify(userIsHost));
+        console.log('Session details confirmed/updated in localStorage after rejoining.');
+      }
+
+      if (contentSelected && currentHostContentInfo) {
+        setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
+      } else {
+        setCurrentFullContent(null); setFetchTrigger(null);
+      }
+    };
+
+    const handleRejoinFailed = ({ sessionId: triedSessionId, reason }) => {
+      console.error(`Failed to rejoin session ${triedSessionId}: ${reason}`);
+      setError(`Failed to rejoin: ${reason}. Try joining manually or start a new session.`);
+      localStorage.removeItem('iqraTogether_sessionId');
+      localStorage.removeItem('iqraTogether_userId');
+      localStorage.removeItem('iqraTogether_username');
+      localStorage.removeItem('iqraTogether_isHost');
+      console.log('Cleared stored session details from localStorage due to rejoin failure.');
+      setSessionId(null);
+      // setUsername(null); // Keep username for manual re-entry if desired
+      setIsHost(false);
+      setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null);
+      setCurrentIndex(0); setParticipants([]);
+      setHasAttemptedRejoin(true); // Mark that an attempt was made
+    };
+
+    const handleSessionNotFound = ({ sessionId: triedSessionId }) => {
        // Don't clear the client's sessionId/username here.
        // The user might still be trying to rejoin this specific session.
        console.error(`Server reported session ${triedSessionId} not found.`);
@@ -423,23 +536,27 @@ export const SocketProvider = ({ children }) => {
     // Attach listeners
     socket.on('session-created', handleSessionCreated);
     socket.on('session-joined', handleSessionJoined);
+    socket.on('session-rejoined', handleSessionRejoined); // NEW
+    socket.on('rejoin-failed', handleRejoinFailed);     // NEW
+
     // Define handleSessionNotFound INSIDE useEffect to access isHost state
     const handleSessionNotFoundListener = ({ sessionId: triedSessionId }) => {
-       console.error(`Server reported session ${triedSessionId} not found.`);
+       console.error(`Server reported session ${triedSessionId} not found (manual join/other).`);
        if (isHost) {
-         // Host tried to rejoin manually and failed - server state is lost.
-         console.warn(`Received session-not-found as host for ${triedSessionId}. Server state likely lost. Recreating session.`);
-         // Maybe automatically trigger createSession again? Or just show error?
-         // For now, show error indicating manual recreation needed via "Start New Session" or rejoin button again.
          setError(`Session "${triedSessionId}" not found on server. Please try Rejoin Session again or start a new session.`);
        } else {
-         // Joiner tried to rejoin manually and failed.
          setError(`Session "${triedSessionId}" not found. Please wait for the host to start/rejoin the session, then try rejoining again using the button in the header.`);
        }
        setParticipants([]);
+       // Clear local storage if a manual join fails with session-not-found
+       localStorage.removeItem('iqraTogether_sessionId');
+       localStorage.removeItem('iqraTogether_userId');
+       localStorage.removeItem('iqraTogether_username');
+       localStorage.removeItem('iqraTogether_isHost');
+       setSessionId(null); setIsHost(false); // Reset local state too
      };
 
-    socket.on('session-not-found', handleSessionNotFoundListener); // Use the listener defined inside
+    socket.on('session-not-found', handleSessionNotFoundListener);
     socket.on('username-taken', handleUsernameTaken);
     socket.on('host_content_updated', handleHostContentUpdated);
     socket.on('host_index_updated', handleHostIndexUpdated);
@@ -452,7 +569,9 @@ export const SocketProvider = ({ children }) => {
       console.log("Cleaning up application-specific socket listeners...");
       socket.off('session-created', handleSessionCreated);
       socket.off('session-joined', handleSessionJoined);
-      socket.off('session-not-found', handleSessionNotFoundListener); // Use the listener defined inside
+      socket.off('session-rejoined', handleSessionRejoined); // NEW
+      socket.off('rejoin-failed', handleRejoinFailed);     // NEW
+      socket.off('session-not-found', handleSessionNotFoundListener);
       socket.off('username-taken', handleUsernameTaken);
       socket.off('host_content_updated', handleHostContentUpdated);
       socket.off('host_index_updated', handleHostIndexUpdated);
@@ -481,20 +600,18 @@ export const SocketProvider = ({ children }) => {
 
   // --- Context Actions ---
   const createSession = useCallback((user) => {
-    if (socket && connectionStatus === 'connected' && user) {
-      console.log(`Attempting to create session as ${user}`); setError(null);
-      socket.emit('create-session', { username: user });
-    } else { console.warn('Cannot create session: Socket not connected or user missing.'); }
-  }, [socket, connectionStatus]);
+    if (socket && connectionStatus === 'connected' && user && clientGeneratedId) {
+      console.log(`Attempting to create session as ${user} (User ID: ${clientGeneratedId})`); setError(null);
+      socket.emit('create-session', { username: user, userId: clientGeneratedId });
+    } else { console.warn('Cannot create session: Socket not connected, user, or clientGeneratedId missing.'); }
+  }, [socket, connectionStatus, clientGeneratedId]);
 
-  // Update joinSession to accept and pass the isHost flag
-  const joinSession = useCallback((id, user, isJoiningAsHost = false) => { // Add isJoiningAsHost parameter
-    if (socket && connectionStatus === 'connected' && id && user) {
-      console.log(`Attempting to join session ${id} as ${user}. Is Host: ${isJoiningAsHost}`); setError(null);
-      // Pass the flag to the server
-      socket.emit('join-session', { sessionId: id, username: user, isHostAttemptingRejoin: isJoiningAsHost });
-    } else { console.warn('Cannot join session: Socket not connected or details missing.'); }
-  }, [socket, connectionStatus]); // Dependencies remain the same
+  const joinSession = useCallback((id, user, isJoiningAsHost = false) => {
+    if (socket && connectionStatus === 'connected' && id && user && clientGeneratedId) {
+      console.log(`Attempting to join session ${id} as ${user} (User ID: ${clientGeneratedId}). Is Host Rejoin: ${isJoiningAsHost}`); setError(null);
+      socket.emit('join-session', { sessionId: id, username: user, userId: clientGeneratedId, isHostAttemptingRejoin: isJoiningAsHost });
+    } else { console.warn('Cannot join session: Socket not connected, details, or clientGeneratedId missing.'); }
+  }, [socket, connectionStatus, clientGeneratedId]);
 
   const selectContentAsHost = useCallback((contentInfo, fullDataOverride = null) => {
     if (socket && connectionStatus === 'connected' && isHost && sessionId) {
