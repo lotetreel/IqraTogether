@@ -747,6 +747,66 @@ io.on('connection', (socket) => {
     console.log(`User ${participant.name} (UserId: ${userId}) successfully rejoined session ${sessionId}.`);
   });
 
+  socket.on('leave-session', ({ sessionId }) => {
+    if (!sessionId) {
+      console.warn(`Leave-session attempt without sessionId from socket ${socket.id}`);
+      return;
+    }
+    const session = sessions.get(sessionId);
+    if (!session) {
+      console.warn(`Leave-session attempt for non-existent session ${sessionId} by socket ${socket.id}`);
+      return;
+    }
+
+    const participantIndex = session.participants.findIndex(p => p.socketId === socket.id);
+    if (participantIndex === -1) {
+      console.warn(`Socket ${socket.id} tried to leave session ${sessionId} but was not found as a participant.`);
+      return;
+    }
+
+    const leavingParticipant = session.participants[participantIndex];
+    console.log(`User ${leavingParticipant.name} (UserId: ${leavingParticipant.userId}, SocketId: ${socket.id}) is leaving session ${sessionId}.`);
+
+    // Remove participant
+    session.participants.splice(participantIndex, 1);
+
+    // Clear any disconnect timer for this socket
+    if (disconnectTimers.has(socket.id)) {
+      clearTimeout(disconnectTimers.get(socket.id));
+      disconnectTimers.delete(socket.id);
+      console.log(`Cleared disconnect timer for ${socket.id} due to explicit leave.`);
+    }
+
+    // Handle host transfer if the leaving user was the host
+    if (session.hostSocketId === socket.id && session.participants.length > 0) {
+      const newHost = session.participants[0]; // Simplistic: first remaining is new host
+      session.hostUserId = newHost.userId;
+      session.hostSocketId = newHost.socketId;
+      newHost.isHost = true;
+      io.to(sessionId).emit('host_transferred', {
+        newHostId: newHost.userId,
+        participants: session.participants.map(p => ({ name: p.name, isHost: p.isHost, status: p.status, userId: p.userId }))
+      });
+      console.log(`Host left session ${sessionId}, new host ${newHost.name} (UserId: ${newHost.userId}) assigned.`);
+    }
+
+    // Notify remaining participants
+    io.to(sessionId).emit('update_participants', {
+      participants: session.participants.map(p => ({ name: p.name, isHost: p.isHost, status: p.status, userId: p.userId }))
+    });
+
+    // Delete session if empty
+    if (session.participants.length === 0) {
+      sessions.delete(sessionId);
+      console.log(`Session ${sessionId} removed - no participants remaining after explicit leave.`);
+    }
+    
+    // Instruct the client's socket to actually leave the Socket.IO room
+    socket.leave(sessionId);
+    // Optionally, server can also force disconnect the socket if desired, but client-side reset is usually enough
+    // socket.disconnect(true); 
+  });
+
 });
 
 const PORT = process.env.PORT || 5000;

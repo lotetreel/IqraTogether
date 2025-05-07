@@ -58,6 +58,7 @@ const DuaSyncApp = () => {
     connectionStatus,        // New state for connection status ('disconnected', 'connecting', 'connected', 'error')
     hasAttemptedConnection,  // New flag from context
     isAttemptingRejoin,      // New state: true if actively trying to rejoin from localStorage
+    disconnectSession,       // New action to disconnect from session
   } = useSocket();
 
   // Local UI state
@@ -1154,8 +1155,21 @@ const DuaSyncApp = () => {
                   </div>
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
                      <button onClick={() => { setShowSettings(false); setShowRejoinDialog(true); }} className="btn btn-sm btn-secondary w-full flex items-center justify-center" disabled={connectionStatus === 'connecting'}>
-                       <LogIn size={16} className="mr-1.5" /> Rejoin Session
+                        <LogIn size={16} className="mr-1.5" /> Rejoin Session
                      </button>
+                  </div>
+                  <div className="pt-3">
+                    <button 
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to disconnect from this session?')) {
+                          disconnectSession();
+                          setShowSettings(false); // Close settings modal after disconnecting
+                        }
+                      }} 
+                      className="btn btn-sm btn-danger w-full flex items-center justify-center"
+                    >
+                      <X size={16} className="mr-1.5" /> Disconnect from Session
+                    </button>
                   </div>
                 </div>
               )}

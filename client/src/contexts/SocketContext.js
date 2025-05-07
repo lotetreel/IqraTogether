@@ -828,6 +828,38 @@ export const SocketProvider = ({ children }) => {
     connectToServer, createSession, joinSession, selectContentAsHost,
     selectContentLocally, syncToHost, updateHostIndex, updateLocalIndex,
     getQuranMetadata,
+    disconnectSession: useCallback(() => {
+      if (socket && sessionId) {
+        console.log(`Manually disconnecting from session ${sessionId}`);
+        socket.emit('leave-session', { sessionId });
+        // Clear local session state immediately
+        setSessionId(null);
+        setUsername(null);
+        setIsHost(false);
+        setParticipants([]);
+        setHostSelectedContentInfo(null);
+        setCurrentContentInfo(null);
+        setCurrentFullContent(null);
+        setCurrentIndex(0);
+        setLatestHostIndex(0);
+        setIsSyncedToHost(true); // Reset to default
+        setError(null); // Clear any session-related errors
+        setFetchTrigger(null);
+
+        // Clear localStorage
+        localStorage.removeItem('iqraTogether_sessionId');
+        localStorage.removeItem('iqraTogether_userId'); // Keep clientGeneratedId
+        localStorage.removeItem('iqraTogether_username');
+        localStorage.removeItem('iqraTogether_isHost');
+        
+        // Optionally, fully disconnect the socket if no immediate reconnect is desired
+        // socket.disconnect();
+        // setSocket(null); // Or let the disconnect event handler manage this
+        // setConnectionStatus('disconnected');
+        // setHasAttemptedRejoin(false); // Allow rejoin attempts if user connects again later
+        console.log('Session state and localStorage cleared for manual disconnect.');
+      }
+    }, [socket, sessionId]),
     // fetchTrigger and _performFetch are internal
   };
 
