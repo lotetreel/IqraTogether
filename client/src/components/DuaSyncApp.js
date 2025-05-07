@@ -57,6 +57,7 @@ const DuaSyncApp = () => {
     connectToServer,         // New action for connecting
     connectionStatus,        // New state for connection status ('disconnected', 'connecting', 'connected', 'error')
     hasAttemptedConnection,  // New flag from context
+    isAttemptingRejoin,      // New state: true if actively trying to rejoin from localStorage
   } = useSocket();
 
   // Local UI state
@@ -172,13 +173,19 @@ const DuaSyncApp = () => {
   }, [connectToServer, sessionId, connectionStatus]);
 
   // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
+  // AND we are not currently in the middle of an automatic rejoin attempt.
   useEffect(() => {
-    if (connectionStatus === 'connected' && pendingAction) {
+    if (connectionStatus === 'connected' && pendingAction && !isAttemptingRejoin) {
       console.log(`Connection established, proceeding with pending action: ${pendingAction}`);
-      setShowNameInputDialog(true);
-      setPendingAction(null); // Clear the pending action once the dialog is shown
+      // Ensure we don't show name input if a session/username already got populated by a successful auto-rejoin
+      if (!sessionId && !username) {
+        setShowNameInputDialog(true);
+      } else {
+        console.log("Pending action for URL join, but session/username already exists (likely from auto-rejoin). Skipping NameInputDialog.");
+      }
+      setPendingAction(null); // Clear the pending action
     }
-  }, [connectionStatus, pendingAction]);
+  }, [connectionStatus, pendingAction, isAttemptingRejoin, sessionId, username]);
 
   // totalPhrases calculation needs to exclude 'alkafi_chapter'
   const totalPhrases = useMemo(() => {
@@ -228,18 +235,22 @@ const DuaSyncApp = () => {
   // Start hosting
   const startHosting = () => {
     setLocalError(null);
-    // Check connection status BEFORE showing the dialog
+    if (isAttemptingRejoin) {
+      alert("Please wait, attempting to rejoin previous session...");
+      return;
+    }
     if (connectionStatus !== 'connected') {
-      alert('Please wait for the connection to complete before creating a session.');
-      // Optionally try to connect if disconnected
+      setPendingAction('create'); // Set pending action
+      alert('Connecting to server... Please try again shortly.');
       if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
         connectToServer();
       }
-      return; 
+      return;
     }
-    // If connected, show the dialog directly
-    setShowNameInputDialog(true);
-    setJoinSessionId(''); // Ensure joinSessionId is cleared if creating
+    if (!username && !sessionId) { // Only show if not already in a session
+      setShowNameInputDialog(true);
+    }
+    setJoinSessionId('');
   };
 
   // Join participant
@@ -249,20 +260,30 @@ const DuaSyncApp = () => {
       return;
     }
     setLocalError(null);
-    setIsJoining(true); // Keep this for potential UI feedback if needed
+    if (isAttemptingRejoin) {
+      alert("Please wait, attempting to rejoin previous session...");
+      return;
+    }
+    setIsJoining(true); 
 
-    // Check connection status BEFORE showing the dialog
     if (connectionStatus !== 'connected') {
-      alert('Please wait for the connection to complete before joining a session.');
-      // Optionally try to connect if disconnected
+      setPendingAction('join'); // Set pending action
+      alert('Connecting to server... Please try again shortly.');
       if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
         connectToServer();
       }
-      setIsJoining(false); // Reset joining state if connection failed
+      // setIsJoining(false); // Keep isJoining true as action is pending
       return;
     }
-    // If connected, show the dialog directly
-    setShowNameInputDialog(true);
+    if (!username && !sessionId) { // Only show if not already in a session
+      setShowNameInputDialog(true);
+    } else {
+      // If already in a session (e.g. auto-rejoined), but user clicked join again.
+      // We could either ignore, or show RejoinDialog to confirm if they want to switch.
+      // For now, let's assume if they have a session, they don't need the name input.
+      console.log("Join clicked, but already in a session. User might need to leave current session first or use Rejoin Dialog.");
+      setIsJoining(false);
+    }
   };
 
   // Handle name submission
@@ -1203,7 +1224,7 @@ const DuaSyncApp = () => {
       {/* Other Modals - Conditionally render based on fullscreen state */}
       {!isFullScreen && showShareDialog && <ShareDialog sessionId={sessionId} sessionUrl={sessionUrl} onClose={() => setShowShareDialog(false)} />}
       {!isFullScreen && showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
-      {!isFullScreen && showNameInputDialog && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); }} />}
+      {!isFullScreen && showNameInputDialog && !isAttemptingRejoin && (!username || !sessionId) && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setPendingAction(null); }} />}
       {!isFullScreen && <RejoinDialog isOpen={showRejoinDialog} onClose={() => setShowRejoinDialog(false)} onSubmit={({ sessionId: rejoinSessionId, username: rejoinUsername }) => { setShowRejoinDialog(false); setLocalError(null); console.log(`Attempting explicit rejoin for session ${rejoinSessionId} as ${rejoinUsername}`); if (connectionStatus !== 'connected') { console.log("Not connected, attempting connection first..."); connectToServer(); } joinSession(rejoinSessionId, rejoinUsername, isHost); }} initialSessionId={sessionId} initialUsername={username} />}
 
       {/* Go To Modal */}

@@ -165,7 +165,8 @@ export const SocketProvider = ({ children }) => {
   const [clientGeneratedId, setClientGeneratedId] = useState(null); // For persistent client identity
   const [username, setUsername] = useState(null);
   const [isHost, setIsHost] = useState(false);
-  const [hasAttemptedRejoin, setHasAttemptedRejoin] = useState(false); // Track rejoin attempt per connection
+  const [hasAttemptedRejoin, setHasAttemptedRejoin] = useState(false); // Track if a rejoin was tried for the current connection
+  const [isAttemptingRejoin, setIsAttemptingRejoin] = useState(false); // True if actively trying to rejoin from localStorage
   const [hostSelectedContentInfo, setHostSelectedContentInfo] = useState(null);
   const [currentContentInfo, setCurrentContentInfo] = useState(null); // Info for locally viewed content
   const [currentFullContent, setCurrentFullContent] = useState(null); // Holds the *full* fetched data (verses, etc.)
@@ -345,29 +346,31 @@ export const SocketProvider = ({ children }) => {
   // Effect to attempt rejoin when socket connects and we have a clientGeneratedId
   useEffect(() => {
     if (socket && connectionStatus === 'connected' && clientGeneratedId && !hasAttemptedRejoin) {
+      setHasAttemptedRejoin(true); // Mark that we will attempt/evaluate rejoin for this connection cycle
       const storedSessionId = localStorage.getItem('iqraTogether_sessionId');
-      const storedUserId = localStorage.getItem('iqraTogether_userId'); // This should match clientGeneratedId
+      const storedUserId = localStorage.getItem('iqraTogether_userId');
       const storedUsername = localStorage.getItem('iqraTogether_username');
       const storedIsHost = localStorage.getItem('iqraTogether_isHost');
 
       if (storedSessionId && storedUserId && storedUsername && storedIsHost && storedUserId === clientGeneratedId) {
         console.log(`Attempting to rejoin session ${storedSessionId} as user ${storedUsername} (User ID: ${clientGeneratedId})`);
+        setIsAttemptingRejoin(true); // Set flag before emitting
         socket.emit('attempt-rejoin', {
           sessionId: storedSessionId,
           userId: clientGeneratedId,
           username: storedUsername,
           isHost: JSON.parse(storedIsHost)
         });
-        setHasAttemptedRejoin(true); // Mark that an attempt has been made for this connection instance
       } else {
-        // No valid stored session, or clientGeneratedId mismatch (should not happen if logic is correct)
-        setHasAttemptedRejoin(true); // Mark as attempted so we don't retry on this connection
         console.log('No valid session details in localStorage to attempt rejoin, or clientGeneratedId mismatch.');
-        // Clear potentially inconsistent localStorage
-        localStorage.removeItem('iqraTogether_sessionId');
-        localStorage.removeItem('iqraTogether_userId');
-        localStorage.removeItem('iqraTogether_username');
-        localStorage.removeItem('iqraTogether_isHost');
+        setIsAttemptingRejoin(false); // No attempt will be made
+        // Clear potentially inconsistent localStorage only if there's a mismatch with clientGeneratedId but other data exists
+        if (storedUserId && storedUserId !== clientGeneratedId) {
+            localStorage.removeItem('iqraTogether_sessionId');
+            localStorage.removeItem('iqraTogether_userId');
+            localStorage.removeItem('iqraTogether_username');
+            localStorage.removeItem('iqraTogether_isHost');
+        }
       }
     }
   }, [socket, connectionStatus, clientGeneratedId, hasAttemptedRejoin]);
@@ -431,7 +434,8 @@ export const SocketProvider = ({ children }) => {
       setCurrentIndex(hostCurrentIndex ?? 0);
       setError(null);
       setParticipants(initialParticipants || []);
-      setHasAttemptedRejoin(true); // Mark rejoin as handled for this connection instance
+      // setHasAttemptedRejoin(true); // Already set when attempt was initiated
+      setIsAttemptingRejoin(false); // Rejoin attempt finished (successfully)
 
       if (clientGeneratedId) { // Ensure clientGeneratedId is available
         localStorage.setItem('iqraTogether_sessionId', rejoinedSessionId);
@@ -461,7 +465,8 @@ export const SocketProvider = ({ children }) => {
       setIsHost(false);
       setHostSelectedContentInfo(null); setCurrentContentInfo(null); setCurrentFullContent(null);
       setCurrentIndex(0); setParticipants([]);
-      setHasAttemptedRejoin(true); // Mark that an attempt was made
+      // setHasAttemptedRejoin(true); // Already set when attempt was initiated
+      setIsAttemptingRejoin(false); // Rejoin attempt finished (failed)
     };
 
     const handleSessionNotFound = ({ sessionId: triedSessionId }) => {
@@ -792,6 +797,7 @@ export const SocketProvider = ({ children }) => {
     isSyncedToHost, participants, quranSurahList,
     isLoadingContent: isLoadingContent || isTextDataLoading, // Combine loading states
     error,
+    isAttemptingRejoin, // Expose new state
     // Actions
     connectToServer, createSession, joinSession, selectContentAsHost,
     selectContentLocally, syncToHost, updateHostIndex, updateLocalIndex,
