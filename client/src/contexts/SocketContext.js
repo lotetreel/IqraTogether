@@ -409,7 +409,7 @@ export const SocketProvider = ({ children }) => {
       setParticipants(initialParticipants || []);
       if (clientGeneratedId) {
         localStorage.setItem('iqraTogether_sessionId', joinedSessionId);
-        localStorage.setItem('iqraTogether_userId', clientGeneratedId); // Use our stable clientGeneratedId
+        localStorage.setItem('iqraTogether_userId', clientGeneratedId); 
         localStorage.setItem('iqraTogether_username', joinedUsername);
         localStorage.setItem('iqraTogether_isHost', JSON.stringify(userIsHost));
         console.log('Session details stored in localStorage after joining.');
@@ -418,7 +418,19 @@ export const SocketProvider = ({ children }) => {
       }
 
       if (contentSelected && currentHostContentInfo) {
-        setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
+        if (currentHostContentInfo.type === 'alkafi_chapter' && currentHostContentInfo.fullContentForAlKafi) {
+          console.log('Setting AlKafi chapter content directly on session join (fullContentForAlKafi provided).');
+          setCurrentFullContent(currentHostContentInfo.fullContentForAlKafi);
+          setIsLoadingContent(false);
+          setFetchTrigger(null); // No separate fetch needed
+        } else if (currentHostContentInfo.type === 'alkafi_chapter' && !currentHostContentInfo.fullContentForAlKafi) {
+          console.warn('AlKafi chapter active on session join, but fullContentForAlKafi missing. Client cannot load.');
+          setError('Failed to load AlKafi chapter from session: Data missing.');
+          setCurrentFullContent(null);
+          setFetchTrigger(null);
+        } else {
+          setFetchTrigger({ type: currentHostContentInfo.type, id: currentHostContentInfo.id });
+        }
       } else {
         setCurrentFullContent(null); setFetchTrigger(null);
       }
@@ -497,13 +509,27 @@ export const SocketProvider = ({ children }) => {
     const handleHostContentUpdated = ({ selectedContent: newHostContentInfo, currentIndex: newHostIndex }) => {
       console.log('Host content updated:', newHostContentInfo, 'Index:', newHostIndex);
       setHostSelectedContentInfo(newHostContentInfo);
-      setLatestHostIndex(newHostIndex ?? 0); // Update latest host index on content change too
+      setLatestHostIndex(newHostIndex ?? 0); 
       setError(null);
       if (isSyncedToHost) {
         setCurrentContentInfo(newHostContentInfo);
-        setCurrentIndex(newHostIndex ?? 0); // Update local index if synced
+        setCurrentIndex(newHostIndex ?? 0); 
         if (newHostContentInfo) {
-          setFetchTrigger({ type: newHostContentInfo.type, id: newHostContentInfo.id });
+          // If it's an AlKafi chapter AND the full content is provided by the server
+          if (newHostContentInfo.type === 'alkafi_chapter' && newHostContentInfo.fullContentForAlKafi) {
+            console.log('Setting AlKafi chapter content directly from host update (fullContentForAlKafi provided).');
+            setCurrentFullContent(newHostContentInfo.fullContentForAlKafi);
+            setIsLoadingContent(false); 
+            setFetchTrigger(null); // No separate fetch needed
+          } else if (newHostContentInfo.type === 'alkafi_chapter' && !newHostContentInfo.fullContentForAlKafi) {
+            console.warn('AlKafi chapter selected by host, but fullContentForAlKafi missing. Client cannot load this content type via _performFetch.');
+            setError('Failed to load AlKafi chapter: Data missing from host update.');
+            setCurrentFullContent(null);
+            setFetchTrigger(null);
+          } else {
+            // For other types like 'quran' or 'dua'
+            setFetchTrigger({ type: newHostContentInfo.type, id: newHostContentInfo.id });
+          }
         } else {
           setCurrentFullContent(null); setFetchTrigger(null);
         }

@@ -423,41 +423,55 @@ io.on('connection', (socket) => {
 
 
   // Host selects Dua/Quran Content
-  socket.on('select_content', ({ sessionId, contentInfo }) => {
+  socket.on('select_content', ({ sessionId, contentInfo, fullContentForAlKafi }) => { // Added fullContentForAlKafi
     const session = sessions.get(sessionId);
-    if (!session || socket.id !== session.hostSocketId) { // Check against hostSocketId
+    if (!session || socket.id !== session.hostSocketId) { 
       console.warn(`Unauthorized content selection attempt in session ${sessionId} by ${socket.id} (expected host ${session?.hostSocketId})`);
        return;
     }
 
-    // Handle host deselecting content (contentInfo is null)
     if (contentInfo === null) {
         console.log(`Host (${socket.id}) deselected content in session ${sessionId}`);
         session.selectedContent = null;
         session.currentIndex = 0;
     }
-    // Handle host selecting content (validate contentInfo)
     else if (contentInfo && contentInfo.type && contentInfo.id && contentInfo.title) {
         console.log(`Host (${socket.id}) selected ${contentInfo.type} in session ${sessionId}: ID ${contentInfo.id}`);
-
-        // Reset index when new content is selected
         session.currentIndex = 0;
 
-        // Find totalAyahs if it's Quran content
-        let totalAyahs = undefined;
-        if (contentInfo.type === 'quran') {
-            const meta = quranMetadata.find(s => s.id === contentInfo.id);
-            totalAyahs = meta ? meta.totalAyahs : 0;
-        }
-
-        session.selectedContent = { // Store essential info + totalAyahs for Quran
+        let selectedContentData = {
             type: contentInfo.type,
             id: contentInfo.id,
             title: contentInfo.title,
-            totalAyahs: totalAyahs // Store this for potential validation/UI
         };
+
+        if (contentInfo.type === 'quran') {
+            const meta = quranMetadata.find(s => s.id === contentInfo.id);
+            selectedContentData.totalAyahs = meta ? meta.totalAyahs : 0;
+        } else if (contentInfo.type === 'dua') {
+            // Assuming dua content is small and full structure might be in contentMap on client
+            // Or if server has access to duaCollection.js or similar:
+            // const duaData = serverDuaCollection.find(d => d.id === contentInfo.id);
+            // selectedContentData.totalAyahs = duaData ? duaData.arabic.length : 0;
+            // For now, client calculates totalAyahs for dua from local map.
+            // Server can just store what's given or omit totalAyahs for dua if not critical for server logic.
+        } else if (contentInfo.type === 'alkafi_chapter') {
+            if (fullContentForAlKafi && fullContentForAlKafi.hadithsInChapter) {
+                selectedContentData.totalHadiths = fullContentForAlKafi.hadithsInChapter.length;
+                selectedContentData.fullContentForAlKafi = fullContentForAlKafi; // Store the full Al Kafi data
+                // Also store other relevant metadata from contentInfo if needed
+                selectedContentData.volumeId = contentInfo.volumeId;
+                selectedContentData.volumeName = contentInfo.volumeName;
+                selectedContentData.bookId = contentInfo.bookId;
+                selectedContentData.bookName = contentInfo.bookName;
+                selectedContentData.chapterName = contentInfo.chapterName;
+            } else {
+                console.warn(`AlKafi chapter selected by host (${contentInfo.id}) but fullContentForAlKafi or hadithsInChapter is missing.`);
+                // Potentially emit an error back to host or handle gracefully
+            }
+        }
+        session.selectedContent = selectedContentData;
     }
-    // Handle invalid contentInfo object
     else {
         console.warn(`Invalid contentInfo received in session ${sessionId}:`, contentInfo);
         socket.emit('error', { message: 'Invalid content selection data.' });
@@ -486,26 +500,31 @@ io.on('connection', (socket) => {
         if (contentLength === undefined) {
              console.error(`Could not find metadata for selected Quran content ID: ${session.selectedContent.id} in host_update_index`);
         }
+    } else if (session.selectedContent?.type === 'alkafi_chapter') {
+        contentLength = session.selectedContent.totalHadiths; // Use totalHadiths stored in session
+        if (contentLength === undefined) {
+            console.error(`totalHadiths not found for selected AlKafi chapter: ${session.selectedContent.id} in host_update_index`);
+        }
     }
-    // TODO: Add similar lookup for Dua length if needed
+    // TODO: Add similar lookup for Dua length if needed (e.g., session.selectedContent.totalSegments)
 
     // Improved Validation & Clamping using looked-up length
     if (newIndex < 0) {
-        console.warn(`Received negative index ${newIndex}. Clamping to 0.`);
+        console.warn(`Received negative index ${newIndex} for ${session.selectedContent?.type}. Clamping to 0.`);
         newIndex = 0;
-    } else if (contentLength !== undefined) { // Only validate if length is known
-        if (contentLength === 0 && newIndex > 0) {
-            console.warn(`Received index ${newIndex} but content length is 0. Clamping to 0.`);
+    } else if (contentLength !== undefined) { 
+        if (contentLength === 0 && newIndex > 0) { // Handles empty content
+            console.warn(`Received index ${newIndex} for ${session.selectedContent?.type} but content length is 0. Clamping to 0.`);
             newIndex = 0;
-        } else if (contentLength > 0 && newIndex >= contentLength) { // Correct boundary check
-            console.warn(`Invalid index ${newIndex} for content length ${contentLength}. Clamping to ${contentLength - 1}.`);
+        } else if (contentLength > 0 && newIndex >= contentLength) { // Correct boundary for 0-indexed
+            console.warn(`Invalid index ${newIndex} for ${session.selectedContent?.type} (length ${contentLength}). Clamping to ${contentLength - 1}.`);
             newIndex = contentLength - 1;
         }
     }
-    // If contentLength is undefined (e.g., error finding metadata), we don't clamp the upper bound.
+    // If contentLength is undefined (e.g., error or not applicable like for some Duas), we don't clamp the upper bound.
 
-    session.currentIndex = newIndex; // Update session with potentially clamped index
-    console.log(`Host (${socket.id}) navigated to index ${newIndex} in session ${sessionId} (Content Length: ${contentLength})`);
+    session.currentIndex = newIndex; 
+    console.log(`Host (${socket.id}) navigated to index ${newIndex} in session ${sessionId} for ${session.selectedContent?.type} (Content Length: ${contentLength})`);
 
     // Emit only the index change to all clients in the session (including host)
     // Clients are responsible for displaying the correct content segment based on this index

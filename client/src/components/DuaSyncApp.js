@@ -187,33 +187,33 @@ const DuaSyncApp = () => {
     }
   }, [connectionStatus, pendingAction, isAttemptingRejoin, sessionId, username]);
 
-  // totalPhrases calculation needs to exclude 'alkafi_chapter'
   const totalPhrases = useMemo(() => {
     if (currentContentInfo?.type === 'alkafi_chapter') {
-      return 0; // Not applicable for chapter view, individual hadith navigation removed
+      // For AlKafi chapters, totalPhrases is the number of hadiths
+      return currentFullContent?.totalHadiths ?? 0;
     }
-    // Previous logic for 'alkafi' (single hadith view) is removed
+    // For Quran and Dua
     return currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
   }, [currentContentInfo, currentFullContent]);
 
-  // Auto-advance effect - ensure it doesn't run for 'alkafi_chapter'
+  // Auto-advance effect
   useEffect(() => {
     let interval;
-    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0 && currentContentInfo?.type !== 'alkafi_chapter') {
+    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
       interval = setInterval(() => {
         if (currentIndex < totalPhrases - 1) {
           updateHostIndex(currentIndex + 1);
         } else {
-          setAutoAdvance(false);
+          setAutoAdvance(false); // Stop at the end
         }
       }, autoAdvanceInterval * 1000);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases, currentContentInfo?.type]);
+  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases]);
 
-  // --- Navigation Actions --- (No longer apply to AlKafi chapter view)
+  // --- Navigation Actions ---
   const navigate = useCallback((direction) => {
-    if (currentContentInfo?.type === 'alkafi_chapter' || !currentFullContent || totalPhrases === 0) return;
+    if (!currentFullContent || totalPhrases === 0) return;
     
     const newIndex = currentIndex + direction;
 
@@ -221,10 +221,10 @@ const DuaSyncApp = () => {
       if (isHost) {
         updateHostIndex(newIndex);
       } else {
-        updateLocalIndex(newIndex);
+        updateLocalIndex(newIndex); // This will also set isBrowsingLocally if participant navigates
       }
     }
-  }, [currentFullContent, currentIndex, isHost, totalPhrases, updateHostIndex, updateLocalIndex, currentContentInfo?.type]);
+  }, [currentFullContent, currentIndex, isHost, totalPhrases, updateHostIndex, updateLocalIndex]);
 
   const nextPhrase = useCallback(() => navigate(1), [navigate]);
   const prevPhrase = useCallback(() => navigate(-1), [navigate]);
@@ -892,8 +892,12 @@ const DuaSyncApp = () => {
                   ) : currentContentInfo?.type === 'alkafi_chapter' ? (
                     // --- AlKafi Chapter View Rendering ---
                     <AlKafiChapterView
-                      chapterFullContent={currentFullContent} // Contains { hadithsInChapter, bookName, etc. }
-                      // onBack is handled by the main BackButton via handleBack
+                      chapterFullContent={currentFullContent} 
+                      currentHadithIndex={currentIndex}
+                      totalHadiths={totalPhrases} // totalPhrases is correctly calculated for alkafi_chapter now
+                      onNavigateHadith={navigate} // Use the generic navigate function
+                      isHost={isHost}
+                      isBrowsingLocally={isBrowsingLocally}
                       arabicFontSize={arabicFontSize}
                       translationFontSize={translationFontSize}
                       showTranslation={showTranslation}
@@ -934,18 +938,16 @@ const DuaSyncApp = () => {
                     </div>
                   )}
 
-                  {/* Action Buttons (Auto for Host) - Don't show for alkafi_chapter */}
-                  {currentContentInfo?.type !== 'alkafi_chapter' && (
-                    <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
-                        {!!sessionId && isHost && (
-                          <div className="flex space-x-4">
-                            <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
-                              {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                  )}
+                  {/* Action Buttons (Auto for Host) */}
+                  <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
+                      {!!sessionId && isHost && (
+                        <div className="flex space-x-4">
+                          <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
+                            {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   {/* Status Indicators */}
                   {!!sessionId && (
                     <div className="text-center mt-6">
@@ -961,11 +963,11 @@ const DuaSyncApp = () => {
                       (isHost ? 
                         (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.") : 
                         (connectionStatus === 'connected' ? 
-                          (isSyncedToHost ? "Following host." : (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi chapter locally." : "Viewing independently.")) : 
+                          (isSyncedToHost ? "Following host." : (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi hadith locally." : "Viewing independently.")) : 
                           "Connection lost. Navigate locally or use Rejoin in header."
                         )
                       ) : 
-                      (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi chapter." : null)
+                      (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi hadith." : null)
                     }
                   </div>
                 </div>
