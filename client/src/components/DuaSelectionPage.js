@@ -13,10 +13,21 @@ import AlMaidahImage from '../assets/images/AlMaidah.png'; // Import Al-Ma'idah 
 import AlAnaamImage from '../assets/images/AlAnaam.png'; // Import Al-An'am image
 import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
 // Removed KidsModeIcon import, as the toggle is now in DuaSyncApp
+import AlKafiSelectionPage from './AlKafiSelectionPage'; // Import the new Al Kafi selection page
 
-const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) => { // Accept isKidsMode prop
+const DuaSelectionPage = ({ 
+  onSelectDua, 
+  onSelectQuran, 
+  onSelectAlKafi, 
+  onBack, 
+  isKidsMode,
+  // Pass through font and display props for AlKafiSelectionPage
+  arabicFontSize, 
+  translationFontSize, 
+  showTranslation 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'sahifa', 'game'
+  const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'sahifa', 'alkafi', 'game'
   const [filter, setFilter] = useState('all');
   // Removed isKidsFilterActive state, will use isKidsMode prop
 
@@ -108,6 +119,9 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
     if (!isKidsMode && activeTab === 'game') {
       setActiveTab('quran');
     }
+    // Reset search term when tab changes
+    setSearchTerm('');
+    setFilter('all');
   }, [isKidsMode, activeTab]);
 
 
@@ -118,6 +132,7 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
          {activeTab === 'duas' ? 'Select a Dua' :
           activeTab === 'quran' ? 'Select a Surah' :
           activeTab === 'sahifa' ? 'Select a Sahifa Supplication' :
+          activeTab === 'alkafi' ? 'Select from Al-Kafi' :
           'Tile Matching Game'}
        </h1>
 
@@ -168,6 +183,20 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
               Sahifa
             </span>
           </button>
+          {/* Al Kafi Button */}
+          <button
+            onClick={() => setActiveTab('alkafi')}
+            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
+              activeTab === 'alkafi'
+                ? 'bg-gradient-primary text-white shadow-md'
+                : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+            }`}
+          >
+            <span className="flex items-center">
+              <LucideIcons.Library size={18} className="mr-2" /> {/* Using Library icon for Al Kafi */}
+              Al Kafi
+            </span>
+          </button>
           {/* Game Button (Conditional) */}
           {isKidsMode && (
             <button
@@ -187,8 +216,8 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
          </div>
        </div>
 
-       {/* Search and filters (Only show if not on Game tab) */}
-       {activeTab !== 'game' && (
+       {/* Search and filters (Only show if not on Game tab and not AlKafi tab) */}
+       {activeTab !== 'game' && activeTab !== 'alkafi' && (
          <div className="mb-8">
           <div className="relative mb-5">
             <LucideIcons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
@@ -261,8 +290,17 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
       {activeTab === 'game' ? (
         // --- Game Rendering ---
         <TileMatchingGame />
+      ) : activeTab === 'alkafi' ? (
+        // --- Al Kafi Rendering ---
+        <AlKafiSelectionPage 
+          onSelectAlKafi={onSelectAlKafi} 
+          isKidsMode={isKidsMode} 
+          arabicFontSize={arabicFontSize}
+          translationFontSize={translationFontSize}
+          showTranslation={showTranslation}
+        />
       ) : (
-        // --- Quran/Dua Grid Rendering ---
+        // --- Quran/Dua/Sahifa Grid Rendering ---
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activeTab === 'duas' ? (
             // --- Dua Rendering ---
@@ -435,8 +473,8 @@ const DuaSelectionPage = ({ onSelectDua, onSelectQuran, onBack, isKidsMode }) =>
         </div>
       )}
 
-      {/* No results (Only show if not on Game tab) */}
-      {activeTab !== 'game' && (
+      {/* No results (Only show if not on Game tab and not AlKafi tab) */}
+      {activeTab !== 'game' && activeTab !== 'alkafi' && (
         (activeTab === 'duas' && filteredDuas.length === 0) ||
         (activeTab === 'sahifa' && filteredSahifa.length === 0) || // Check Sahifa results
         (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0)

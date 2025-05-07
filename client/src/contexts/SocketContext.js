@@ -460,26 +460,23 @@ export const SocketProvider = ({ children }) => {
       socket.off('host_transferred', handleHostTransferred);
       socket.off('error', handleServerError);
     };
-  }, [socket, connectionStatus, isSyncedToHost]); // Dependencies are correct
+  }, [socket, connectionStatus, isSyncedToHost, isHost]); // Added isHost
 
   // Effect: Trigger fetch when fetchTrigger state changes
   useEffect(() => {
-    // Check if trigger has valid data and call the external helper function
     if (fetchTrigger?.type && fetchTrigger?.id) {
       console.log("Fetch trigger activated:", fetchTrigger);
-      // Call the external helper, passing the preloaded parsed data
       _performFetch(
         fetchTrigger.type,
         fetchTrigger.id,
         setIsLoadingContent,
         setCurrentFullContent,
         setError,
-        quranUthmaniData, // Pass parsed data
-        enQaraiData,      // Pass parsed data
-        enTransliterationData // Pass parsed data
+        quranUthmaniData,
+        enQaraiData,
+        enTransliterationData
       );
     }
-  // Dependencies: The effect runs when the trigger or the parsed data changes.
   }, [fetchTrigger, quranUthmaniData, enQaraiData, enTransliterationData]);
 
   // --- Context Actions ---
@@ -499,18 +496,31 @@ export const SocketProvider = ({ children }) => {
     } else { console.warn('Cannot join session: Socket not connected or details missing.'); }
   }, [socket, connectionStatus]); // Dependencies remain the same
 
-  const selectContentAsHost = useCallback((contentInfo) => {
+  const selectContentAsHost = useCallback((contentInfo, fullDataOverride = null) => {
     if (socket && connectionStatus === 'connected' && isHost && sessionId) {
       if (contentInfo) {
-        console.log(`Host selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id})`); setError(null);
-        // Reset index locally immediately for host responsiveness
-        setCurrentIndex(0);
-        setLatestHostIndex(0); // Also reset the latest known host index
-        socket.emit('select_content', { sessionId, contentInfo });
-        // Listener 'host_content_updated' will set fetchTrigger and potentially re-set index from server echo
+        console.log(`Host selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id})`);
+        setError(null);
+        const newIndex = contentInfo.currentIndex !== undefined ? contentInfo.currentIndex : 0;
+        // For alkafi_chapter, currentIndex is not applicable in the same way for individual phrase navigation
+        if (contentInfo.type !== 'alkafi_chapter') {
+          setCurrentIndex(newIndex);
+          setLatestHostIndex(newIndex);
+        } else {
+          setCurrentIndex(0); // Default for chapter view
+          setLatestHostIndex(0);
+        }
+        
+        if ((contentInfo.type === 'alkafi_chapter' || contentInfo.type === 'alkafi') && fullDataOverride) {
+          console.log(`Host setting ${contentInfo.type} content directly with fullDataOverride.`);
+          setCurrentFullContent(fullDataOverride);
+          setIsLoadingContent(false); 
+          socket.emit('select_content', { sessionId, contentInfo, fullContentForAlKafi: fullDataOverride });
+        } else {
+          socket.emit('select_content', { sessionId, contentInfo });
+        }
       } else {
         console.log(`Host deselecting content.`); setError(null);
-        // Reset index when deselecting too
         setCurrentIndex(0);
         setLatestHostIndex(0);
         socket.emit('select_content', { sessionId, contentInfo: null });
@@ -519,43 +529,64 @@ export const SocketProvider = ({ children }) => {
     } else { console.warn('Cannot select content as host: Socket not connected or not host.'); }
   }, [socket, connectionStatus, isHost, sessionId]);
 
-  const selectContentLocally = useCallback((contentInfo) => {
+  const selectContentLocally = useCallback((contentInfo, fullDataOverride = null) => {
     if (contentInfo) {
-      console.log(`Locally selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id}).`); setError(null);
+      console.log(`Locally selecting ${contentInfo.type}: ${contentInfo.title} (ID: ${contentInfo.id}).`);
+      setError(null);
       setCurrentContentInfo(contentInfo);
-      setCurrentIndex(0); // <<< ADDED: Reset index on local selection
-      // Only unsync if actually in a session
+      // Use currentIndex from contentInfo if available (for AlKafi), otherwise default to 0
+      setCurrentIndex(contentInfo.currentIndex !== undefined ? contentInfo.currentIndex : 0);
+
       if (sessionId && connectionStatus === 'connected' && !isHost) {
         console.log("Unsyncing from host due to local selection.");
         setIsSyncedToHost(false);
       }
-      // Ensure the correct type ('quran' or 'dua') is used for fetching
-      const correctedType = contentInfo.type === 'surah' ? 'quran' : contentInfo.type;
-      setFetchTrigger({ type: correctedType, id: contentInfo.id }); // Set trigger with corrected type
+
+      if (fullDataOverride && (contentInfo.type === 'alkafi_chapter' || contentInfo.type === 'alkafi')) { 
+        console.log(`Setting ${contentInfo.type} content directly with fullDataOverride for local view.`);
+        setCurrentFullContent(fullDataOverride);
+        setIsLoadingContent(false); 
+        setFetchTrigger(null); 
+      } else {
+        const correctedType = contentInfo.type === 'surah' ? 'quran' : contentInfo.type;
+        if ((correctedType === 'alkafi_chapter' || correctedType === 'alkafi') && !fullDataOverride) {
+            console.warn(`${correctedType} selected without fullDataOverride. This might lead to issues.`);
+            setCurrentFullContent(null); 
+            setIsLoadingContent(false);
+            setFetchTrigger(null);
+        } else {
+            setFetchTrigger({ type: correctedType, id: contentInfo.id });
+        }
+      }
     } else {
-      // Handle deselecting content locally (e.g., via back button when not in session)
       console.log("Locally deselecting content.");
       setCurrentContentInfo(null);
-      setFetchTrigger(null); // Clear fetch trigger
-      // _performFetch will clear currentFullContent automatically if called with null type/id,
-      // but explicitly setting it might be safer depending on timing. Let's rely on _performFetch for now.
-      // setCurrentFullContent(null); // Optional: Explicitly clear full content
-      setCurrentIndex(0); // <<< ADDED: Reset index on local deselection too
+      setCurrentFullContent(null); 
+      setFetchTrigger(null); 
+      setCurrentIndex(0);
     }
   }, [connectionStatus, isHost, sessionId]);
-
+  
   const syncToHost = useCallback(() => {
-    // Syncing should be possible even if temporarily disconnected, as long as we know the host's state
-    if (!isHost && hostSelectedContentInfo) { // Check if host has selected content
+    if (!isHost && hostSelectedContentInfo) {
       console.log('Syncing to host content. Host index:', latestHostIndex);
       setError(null);
       setIsSyncedToHost(true);
-      setCurrentContentInfo(hostSelectedContentInfo); // Set content info
-      setCurrentIndex(latestHostIndex); // Use the LATEST known host index
-      // Trigger fetch only if content info actually exists
-      setFetchTrigger({ type: hostSelectedContentInfo.type, id: hostSelectedContentInfo.id });
+      setCurrentContentInfo(hostSelectedContentInfo);
+      setCurrentIndex(latestHostIndex); 
+      
+      if ((hostSelectedContentInfo.type === 'alkafi_chapter' || hostSelectedContentInfo.type === 'alkafi') && hostSelectedContentInfo.fullContentForAlKafi) {
+        console.log(`Syncing to ${hostSelectedContentInfo.type} content, using fullContentForAlKafi from host.`);
+        setCurrentFullContent(hostSelectedContentInfo.fullContentForAlKafi);
+        setIsLoadingContent(false);
+        setFetchTrigger(null);
+      } else if (hostSelectedContentInfo) {
+        setFetchTrigger({ type: hostSelectedContentInfo.type, id: hostSelectedContentInfo.id });
+      } else {
+         setCurrentFullContent(null); 
+         setFetchTrigger(null);
+      }
     } else if (!isHost && !hostSelectedContentInfo) {
-      // Host hasn't selected anything, sync means going to waiting screen
       console.log('Syncing to host (no content selected).');
       setError(null);
       setIsSyncedToHost(true);
@@ -563,9 +594,9 @@ export const SocketProvider = ({ children }) => {
       setCurrentFullContent(null);
       setFetchTrigger(null);
     } else {
-      console.warn("Cannot sync to host: Conditions not met (is host or host info missing).");
+      console.warn("Cannot sync to host: Conditions not met.");
     }
-  }, [isHost, hostSelectedContentInfo, latestHostIndex]); // Depend on latestHostIndex now
+  }, [isHost, hostSelectedContentInfo, latestHostIndex]);
 
   const updateHostIndex = useCallback((newIndex) => {
     // Always update local state if the index is valid

@@ -22,6 +22,7 @@ import ThemeToggle from './ui/ThemeToggle';
 import NetworkInfo from './NetworkInfo';
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the custom icon
 import TileMatchingGame from './TileMatchingGame'; // Import the game component
+import AlKafiChapterView from './AlKafiChapterView'; // Import AlKafiChapterView
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -179,14 +180,19 @@ const DuaSyncApp = () => {
     }
   }, [connectionStatus, pendingAction]);
 
-  // Moved totalPhrases definition earlier
-  const totalPhrases = currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0); // Adjusted for dua
+  // totalPhrases calculation needs to exclude 'alkafi_chapter'
+  const totalPhrases = useMemo(() => {
+    if (currentContentInfo?.type === 'alkafi_chapter') {
+      return 0; // Not applicable for chapter view, individual hadith navigation removed
+    }
+    // Previous logic for 'alkafi' (single hadith view) is removed
+    return currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
+  }, [currentContentInfo, currentFullContent]);
 
-  // Auto-advance effect
+  // Auto-advance effect - ensure it doesn't run for 'alkafi_chapter'
   useEffect(() => {
     let interval;
-    // Use totalPhrases defined above
-    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
+    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0 && currentContentInfo?.type !== 'alkafi_chapter') {
       interval = setInterval(() => {
         if (currentIndex < totalPhrases - 1) {
           updateHostIndex(currentIndex + 1);
@@ -196,13 +202,14 @@ const DuaSyncApp = () => {
       }, autoAdvanceInterval * 1000);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases]); // Added totalPhrases dependency
+  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases, currentContentInfo?.type]);
 
-  // --- Navigation Actions ---
+  // --- Navigation Actions --- (No longer apply to AlKafi chapter view)
   const navigate = useCallback((direction) => {
-    // Use totalPhrases defined above
-    if (!currentFullContent || totalPhrases === 0) return;
+    if (currentContentInfo?.type === 'alkafi_chapter' || !currentFullContent || totalPhrases === 0) return;
+    
     const newIndex = currentIndex + direction;
+
     if (newIndex >= 0 && newIndex < totalPhrases) {
       if (isHost) {
         updateHostIndex(newIndex);
@@ -210,7 +217,7 @@ const DuaSyncApp = () => {
         updateLocalIndex(newIndex);
       }
     }
-  }, [currentFullContent, currentIndex, isHost, totalPhrases, updateHostIndex, updateLocalIndex]); // Added dependencies
+  }, [currentFullContent, currentIndex, isHost, totalPhrases, updateHostIndex, updateLocalIndex, currentContentInfo?.type]);
 
   const nextPhrase = useCallback(() => navigate(1), [navigate]);
   const prevPhrase = useCallback(() => navigate(-1), [navigate]);
@@ -289,30 +296,76 @@ const DuaSyncApp = () => {
     setJoinSessionId(e.target.value);
   };
  
-   // Handle content selection
-   const handleContentSelection = (contentInfo) => {
+   // Handle content selection (Quran, Dua)
+   const handleContentSelection = (contentInfo, fullData = null) => {
      if (!contentInfo) return;
      setLocalError(null);
      setIsKidsMode(contentInfo.startInKidsMode || false);
+
+     // If fullData is provided (e.g., for AlKafi initial selection or navigation), use it
+     // The selectContentLocally/AsHost functions in SocketContext should handle this
+     const dataToPass = fullData ? [contentInfo, fullData] : [contentInfo];
+
      if (!sessionId) {
-       selectContentLocally(contentInfo);
+       selectContentLocally(...dataToPass);
      } else if (isHost && connectionStatus === 'connected') {
-       selectContentAsHost(contentInfo);
-       setShowShareDialog(true);
+       selectContentAsHost(...dataToPass);
+       if (contentInfo.type !== 'alkafi') setShowShareDialog(true); // Don't show share for AlKafi for now
      } else if (isBrowsingLocally) {
-       selectContentLocally(contentInfo);
-       setIsBrowsingLocally(false);
+       selectContentLocally(...dataToPass);
+       setIsBrowsingLocally(false); // After selecting, assume user wants to follow host if session active
      } else if (!isHost && !isBrowsingLocally && connectionStatus === 'connected') {
-       selectContentLocally(contentInfo);
+       // Participant selecting something new, implies browsing locally
+       selectContentLocally(...dataToPass);
        setIsBrowsingLocally(true);
-     } else if (!isHost && connectionStatus !== 'connected') {
-       selectContentLocally(contentInfo);
+     } else if (!isHost && connectionStatus !== 'connected') { // Offline participant
+       selectContentLocally(...dataToPass);
      }
    };
+  
+  // Specific handler for Al Kafi chapter selection from AlKafiSelectionPage
+  const handleAlKafiChapterSelection = (chapterSelectionInfo) => {
+    if (!chapterSelectionInfo || !chapterSelectionInfo.hadiths) return;
+    setLocalError(null);
+    setIsKidsMode(chapterSelectionInfo.startInKidsMode || false);
+
+    // contentInfo now represents the chapter
+    const contentInfo = {
+        type: 'alkafi_chapter', // Updated type
+        id: chapterSelectionInfo.chapterId, // Use chapterId as the primary ID for currentContentInfo
+        title: chapterSelectionInfo.title, // e.g., "Book Name - Chapter Name"
+        volumeId: chapterSelectionInfo.volumeId,
+        volumeName: chapterSelectionInfo.volumeName,
+        bookId: chapterSelectionInfo.bookId,
+        bookName: chapterSelectionInfo.bookName,
+        chapterName: chapterSelectionInfo.chapterName,
+        startInKidsMode: chapterSelectionInfo.startInKidsMode,
+    };
+    
+    // currentFullContent for AlKafi chapter view will store the list of hadiths and other relevant info
+    const fullContent = {
+        hadithsInChapter: chapterSelectionInfo.hadiths,
+        bookName: chapterSelectionInfo.bookName,
+        chapterName: chapterSelectionInfo.chapterName,
+        volumeName: chapterSelectionInfo.volumeName,
+        // No individual hadith data here, AlKafiChapterView will iterate through hadithsInChapter
+    };
+
+    // Use the generic handleContentSelection, passing the chapter info and its full content (the hadiths list)
+    // The second argument `fullContent` will be used by selectContentLocally/AsHost in SocketContext
+    handleContentSelection(contentInfo, fullContent);
+  };
+
 
   // Back button logic
   const handleBack = () => {
     setLocalError(null);
+    // If viewing AlKafi chapter content, go back to DuaSelectionPage (AlKafi tab will be active by default if no other content was selected prior)
+    if (currentContentInfo?.type === 'alkafi_chapter') {
+        selectContentLocally(null); 
+        return;
+    }
+
     if (!sessionId && currentContentInfo) {
         selectContentLocally(null);
         return;
@@ -328,8 +381,10 @@ const DuaSyncApp = () => {
            selectContentLocally(null);
          }
       } else if (!isHost && connectionStatus === 'connected') {
-        setIsBrowsingLocally(true);
-      } else if (!isHost && connectionStatus !== 'connected') {
+        // Participant was following, now wants to browse locally from selection page
+        setIsBrowsingLocally(true); 
+        // Don't clear content, let them see selection page with host content still in background
+      } else if (!isHost && connectionStatus !== 'connected') { // Offline participant
         selectContentLocally(null);
       }
       return;
@@ -340,7 +395,8 @@ const DuaSyncApp = () => {
        }
        return;
     }
-    else if (sessionId && !isHost && isBrowsingLocally) {
+    // If a participant is browsing locally and hits back from selection page, sync to host
+    else if (sessionId && !isHost && isBrowsingLocally && !currentContentInfo) {
        setIsBrowsingLocally(false);
        if (connectionStatus === 'connected') {
          syncToHost();
@@ -348,17 +404,32 @@ const DuaSyncApp = () => {
        return;
     }
   };
+  
+  const handleGoToChapterListFromAlKafi = () => {
+    // This function is called from AlKafiViewer to go back to the selection page,
+    // effectively clearing the current hadith view.
+    selectContentLocally(null); 
+    // We want DuaSelectionPage to show the 'alkafi' tab.
+    // Since DuaSelectionPage's activeTab is local state, we can't directly set it here.
+    // A workaround: DuaSyncApp could pass a `defaultTab` prop to DuaSelectionPage.
+    // For now, it will go to the default tab of DuaSelectionPage (Quran).
+    // This needs refinement if specific tab persistence is required after backing out of AlKafiViewer.
+  };
 
   // Memoized values
   const contentTitle = currentContentInfo?.title || '';
-  const contentSource = currentFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : '');
-  // totalPhrases is defined earlier now
+  // For AlKafi chapter, source might be derived from volume/book name
+  const contentSource = currentContentInfo?.type === 'alkafi_chapter' 
+    ? currentContentInfo?.volumeName 
+    : (currentFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : ''));
+  // totalPhrases is memoized earlier, not applicable to alkafi_chapter
 
   const currentPhraseData = useMemo(() => {
-    // Use totalPhrases defined above
-    if (!currentFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
-      return { arabic: '', transliteration: '', translation: '' };
+    // This function is for single phrase display, not applicable to alkafi_chapter view
+    if (currentContentInfo?.type === 'alkafi_chapter' || !currentFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
+      return { arabic: '', transliteration: '', translation: '', english: '' };
     }
+
     if (currentContentInfo?.type === 'quran') {
       const verse = currentFullContent.verses[currentIndex];
       return {
@@ -373,8 +444,9 @@ const DuaSyncApp = () => {
         translation: currentFullContent.verses?.translation?.[currentIndex] || '',
       };
     }
-    return { arabic: '', transliteration: '', translation: '' };
-  }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]); // Added totalPhrases dependency
+    // 'alkafi' single hadith view logic removed as it's now chapter based
+    return { arabic: '', transliteration: '', translation: '', english: '' };
+  }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
 
   // Download Handlers
   const checkDownloadStatus = useCallback(async (key, type, id, filenameForCheck) => {
@@ -729,28 +801,43 @@ const DuaSyncApp = () => {
                 <div className="space-y-6 animate-fade-in">
                   {/* Top Bar: Back Button, Page Number, Fullscreen Button */}
                   <div className="flex items-center justify-between">
-                    {/* Back Button: Only show if no session or if host */}
-                    {(!sessionId || isHost) && ( <BackButton onClick={handleBack} /> )}
+                    {/* Back Button: Show if no session, host, or viewing AlKafi */}
+                    {(!sessionId || isHost || currentContentInfo?.type === 'alkafi') && ( <BackButton onClick={handleBack} /> )}
+                    
                     <div className="flex items-center space-x-4">
-                      {/* Page Number: Adjust margin if back button is hidden */}
-                      <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost) ? '' : 'ml-auto mr-2'}`}>
-                        {currentIndex + 1} of {totalPhrases}
-                      </div>
+                       {/* Page Number: Not applicable for alkafi_chapter view */}
+                       {currentContentInfo?.type !== 'alkafi_chapter' && (
+                         <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost) ? '' : 'ml-auto mr-2'}`}>
+                           {`${currentIndex + 1} of ${totalPhrases}`}
+                         </div>
+                       )}
                       <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Enter Fullscreen">
                         <Maximize size={20} />
                         <span className="tooltip">Fullscreen</span>
                       </button>
                     </div>
                   </div>
-                  {/* Content title */}
-                  <div className="text-center mb-6">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
-                  </div>
-                  {/* Kids Mode Toggle (Only if Al-Rahman) - Condition modified to allow participants */}
+
+                  {/* Content title - For alkafi_chapter, title is handled by AlKafiChapterView */}
+                  {currentContentInfo?.type !== 'alkafi_chapter' && (
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
+                    </div>
+                  )}
+
+                  {/* Kids Mode Toggle (Only if Al-Rahman) - Not applicable to alkafi_chapter */}
                   {currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' && (
                     <div className="flex items-center justify-center mb-6">
                        <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
-                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" /> {/* Smaller icon */}
+                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" />
+                       </button>
+                    </div>
+                  )}
+
+                  {currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' && (
+                    <div className="flex items-center justify-center mb-6">
+                       <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
+                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" />
                        </button>
                     </div>
                   )}
@@ -758,9 +845,9 @@ const DuaSyncApp = () => {
                   {/* Main content display (Normal View) */}
                   {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
                     // --- Kids Mode Layout (Normal View) ---
-                    <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
-                      <div className="relative w-full flex items-center justify-center mb-4" style={{ minHeight: '300px' }}> {/* Added min-height */}
-                        {/* Navigation Buttons - Show if not in session or if host */}
+                    // ... (Kids mode rendering - unchanged) ...
+                     <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
+                       <div className="relative w-full flex items-center justify-center mb-4" style={{ minHeight: '300px' }}>
                         {(!sessionId || isHost) && (
                           <>
                             <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
@@ -781,63 +868,66 @@ const DuaSyncApp = () => {
                          )}
                       </div>
                     </div>
+                  ) : currentContentInfo?.type === 'alkafi_chapter' ? (
+                    // --- AlKafi Chapter View Rendering ---
+                    <AlKafiChapterView
+                      chapterFullContent={currentFullContent} // Contains { hadithsInChapter, bookName, etc. }
+                      // onBack is handled by the main BackButton via handleBack
+                      arabicFontSize={arabicFontSize}
+                      translationFontSize={translationFontSize}
+                      showTranslation={showTranslation}
+                    />
                   ) : (
-                    // --- Normal Mode Layout (Inside Card - Normal View) ---
+                    // --- Normal Mode Layout (Quran/Dua) ---
                     <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
-                      {/* Conditionally display standalone Bismillah only on the first verse */}
-                      {currentFullContent?.displayBismillah && currentIndex === 0 && (
+                      {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
                         <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
                           <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
                             بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
                           </p>
                         </div>
                       )}
-                      {/* Text Content Block */}
                       <div className="w-full">
-                        {/* Arabic text */}
-                          <div key={`arabic-${currentIndex}`} className="text-center mb-6 animate-fade-in">
-                            <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
-                              {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                            </p>
+                        <div key={`arabic-${currentIndex}`} className="text-center mb-6 animate-fade-in">
+                          <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
+                            {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                          </p>
+                        </div>
+                        {showTransliteration && currentPhraseData.transliteration && (
+                          <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                            <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
                           </div>
-                          {/* Transliteration */}
-                          {showTransliteration && currentPhraseData.transliteration && (
-                            <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
-                              <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
-                            </div>
-                          )}
-                          {/* Translation */}
-                          {showTranslation && currentPhraseData.translation && (
-                            <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
-                              <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} />
-                            </div>
-                          )}
+                        )}
+                        {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
+                           <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                             <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
+                           </div>
+                         )}
                       </div>
-                      {/* Navigation Buttons - Show if not in session or if host */}
-                      {(!sessionId || isHost) && (
+                      {(!sessionId || isHost) && currentContentInfo?.type !== 'alkafi' && ( // Hide for AlKafi as viewer has its own
                         <div className="w-full flex justify-center gap-4 mt-6">
-                           <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={24} /> </button>
-                           <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={24} /> </button>
+                           <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={24} /> </button>
+                           <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={24} /> </button>
                          </div>
                       )}
                     </div>
                   )}
 
-                  {/* Action Buttons (Auto for Host) */}
-                  <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
-                      {!!sessionId && isHost && ( // Only show Auto button for host
-                        <div className="flex space-x-4">
-                          <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
-                            {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
+                  {/* Action Buttons (Auto for Host) - Don't show for alkafi_chapter */}
+                  {currentContentInfo?.type !== 'alkafi_chapter' && (
+                    <div className="flex flex-wrap justify-center items-center gap-4 mt-8">
+                        {!!sessionId && isHost && (
+                          <div className="flex space-x-4">
+                            <button onClick={() => setAutoAdvance(!autoAdvance)} className={`btn-secondary flex items-center ${autoAdvance ? 'ring-2 ring-primary-300 dark:ring-dark-accent' : ''}`}>
+                              {autoAdvance ? ( <span className="flex items-center"> Auto <span className="ml-2 w-2 h-2 rounded-full bg-primary-500 dark:bg-dark-accent animate-pulse"></span> </span> ) : 'Auto'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                  )}
                   {/* Status Indicators */}
                   {!!sessionId && (
                     <div className="text-center mt-6">
-                      {/* Removed "Viewing independently" indicator */}
                       {connectionStatus !== 'connected' && (
                          <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 text-sm"> <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div> Connection lost. Use the Rejoin button <LogIn size={14} className="inline mx-1"/> in the header if needed. </div>
                       )}
@@ -846,11 +936,20 @@ const DuaSyncApp = () => {
 
                   {/* Footer message */}
                   <div className="text-center text-gray-500 dark:text-dark-text-muted text-sm mt-8">
-                    {!!sessionId ? (isHost ? (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.") : (connectionStatus === 'connected' ? (isSyncedToHost ? "Following host." : "Viewing independently.") : "Connection lost. Navigate locally or use Rejoin in header.")) : null }
+                    {!!sessionId ? 
+                      (isHost ? 
+                        (connectionStatus === 'connected' ? "Your navigation controls the session." : "You are the host (offline). Navigation is local.") : 
+                        (connectionStatus === 'connected' ? 
+                          (isSyncedToHost ? "Following host." : (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi chapter locally." : "Viewing independently.")) : 
+                          "Connection lost. Navigate locally or use Rejoin in header."
+                        )
+                      ) : 
+                      (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi chapter." : null)
+                    }
                   </div>
                 </div>
-              ) : !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally ? (
-                <div className="flex flex-col items-center justify-center h-full py-20">
+              ) : !!sessionId && !isHost && !currentContentInfo && !isBrowsingLocally && connectionStatus === 'connected' ? (
+                 <div className="flex flex-col items-center justify-center h-full py-20">
                   <div className="text-center max-w-md">
                     <div className="relative mx-auto w-20 h-20 mb-6">
                        <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-dark-bg-tertiary opacity-25"></div>
@@ -858,15 +957,18 @@ const DuaSyncApp = () => {
                      </div>
                     <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Waiting for Host</h2>
                     <p className="text-gray-600 dark:text-dark-text-secondary">The host hasn't selected any content yet.</p>
-                     {/* Removed "Browse Independently" button */}
                    </div>
                 </div>
-              ) : ( // Render DuaSelectionPage normally (if not in session or host)
+              ) : ( 
                 <DuaSelectionPage
                   onSelectDua={handleContentSelection}
                   onSelectQuran={handleContentSelection}
+                  onSelectAlKafi={handleAlKafiChapterSelection} // Updated prop name
                   onBack={handleBack}
                   isKidsMode={isKidsMode}
+                  arabicFontSize={arabicFontSize}
+                  translationFontSize={translationFontSize}
+                  showTranslation={showTranslation}
                 />
               )}
           </div>
@@ -896,82 +998,85 @@ const DuaSyncApp = () => {
 
             {/* Fullscreen Content Area (Scrollable) */}
             <div className="flex-1 min-h-0"> {/* Let outer container handle scrolling and flex */}
-              {/* Kids Mode Fullscreen - Simplified structure */}
               {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
-                <> {/* Use Fragment to avoid extra div */}
-                  {/* Image container - Added max-width, mx-auto and padding */}
+                // Kids mode Quran fullscreen rendering
+                 <> 
                   <div className="relative w-full max-w-4xl mx-auto flex items-center justify-center mb-4 px-4">
-                    {/* Navigation Buttons - Show if not in session or if host */}
                     {(!sessionId || isHost) && (
                       <>
                         <button onClick={prevPhrase} disabled={currentIndex === 0} className={`absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Previous Verse"> <ChevronLeft size={40} /> </button>
                         <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={40} /> </button>
                       </>
                     )}
-                    {/* Re-added max-h constraint */}
                     <img src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`} alt={`Verse ${currentIndex + 1} - Kids Illustration`} className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} />
                   </div>
-                  {/* Text container - Added max-width, mx-auto and padding */}
                   <div className="w-full max-w-4xl mx-auto px-4 flex-shrink-0">
                      <p className="text-center mb-2 text-base text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1} of {totalPhrases}</p>
                      <div key={`arabic-kids-fs-${currentIndex}`} className="text-center mb-4">
-                       <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.2}rem` }}> {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>} </p> {/* Slightly larger font */}
+                       <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.2}rem` }}> {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>} </p>
                      </div>
                      {showTranslation && currentPhraseData.translation && (
                        <div key={`translation-kids-fs-${currentIndex}`} className="text-center border-t pt-3 border-gray-200 dark:border-gray-700">
-                         <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} /> {/* Slightly larger font */}
+                         <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} />
                        </div>
                      )}
                   </div>
-                </> // Close the fragment started for Kids Mode Fullscreen
+                </>
+              ) : currentContentInfo?.type === 'alkafi_chapter' ? (
+                // --- AlKafi Chapter View Fullscreen ---
+                // The AlKafiChapterView itself handles scrolling of its content.
+                // We ensure it's placed within a container that allows it to expand.
+                <div className="w-full h-full overflow-y-auto custom-scrollbar"> 
+                   <AlKafiChapterView
+                      chapterFullContent={currentFullContent}
+                      arabicFontSize={arabicFontSize * 1.1} // Slightly increase font for fullscreen
+                      translationFontSize={translationFontSize * 1.05} // Slightly increase font
+                      showTranslation={showTranslation}
+                      // onBack is not needed here as fullscreen exit handles going back
+                    />
+                </div>
               ) : (
-                // --- Normal Mode Fullscreen ---
-                // Removed inner flex container properties (flex-grow, justify-center)
-                // Added mx-auto for horizontal centering and py-4 for vertical padding
+                // --- Normal Mode Fullscreen (Quran/Dua) ---
                 <div className="w-full max-w-5xl mx-auto py-4">
-                  {/* Conditionally display standalone Bismillah only on the first verse */}
-                  {currentFullContent?.displayBismillah && currentIndex === 0 && (
+                  {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
                     <div className="w-full mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
-                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}> {/* Slightly larger for fullscreen */}
+                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}>
                         بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
                       </p>
                     </div>
                   )}
-                  {/* Text Content Block */}
                   <div className="w-full mb-6">
-                    {/* Arabic text */}
                     <div key={`arabic-fs-${currentIndex}`} className="text-center mb-8">
-                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.3}rem` }}> {/* Larger font */}
+                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.3}rem` }}>
                         {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
                       </p>
                     </div>
-                    {/* Transliteration */}
                     {showTransliteration && currentPhraseData.transliteration && (
                       <div key={`transliteration-fs-${currentIndex}`} className="mb-6 border-t pt-6 border-gray-200 dark:border-gray-700">
-                        <p className="text-gray-700 dark:text-dark-text-secondary italic text-center" style={{ fontSize: `${transliterationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} /> {/* Larger font */}
+                        <p className="text-gray-700 dark:text-dark-text-secondary italic text-center" style={{ fontSize: `${transliterationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
                       </div>
                     )}
-                    {/* Translation */}
-                    {showTranslation && currentPhraseData.translation && (
+                    {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
                       <div key={`translation-fs-${currentIndex}`} className="border-t pt-6 border-gray-200 dark:border-gray-700">
-                        <p className="text-gray-800 dark:text-dark-text-primary text-center" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation }} /> {/* Larger font */}
+                        <p className="text-gray-800 dark:text-dark-text-primary text-center" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
                       </div>
                     )}
                   </div>
-                  {/* Navigation Buttons - Show if not in session or if host */}
-                  {(!sessionId || isHost) && (
+                  {(!sessionId || isHost) && currentContentInfo?.type !== 'alkafi' && ( // Hide for AlKafi as viewer has its own
                     <div className="w-full flex justify-center gap-6 mt-8 flex-shrink-0">
-                       <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous Verse"> <ChevronLeft size={32} /> </button>
-                       <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
+                       <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={32} /> </button>
+                       <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={32} /> </button>
                      </div>
                   )}
                 </div>
               )}
             </div>
-             {/* Page number at the bottom */}
-             <div className="text-center text-sm text-gray-500 dark:text-dark-text-muted mt-4 flex-shrink-0">
-               {currentIndex + 1} of {totalPhrases}
-             </div>
+             {/* Page number at the bottom - Not applicable for alkafi_chapter */}
+             {currentContentInfo?.type !== 'alkafi_chapter' && (
+                <div className="text-center text-sm text-gray-500 dark:text-dark-text-muted mt-4 flex-shrink-0">
+                  {`${currentIndex + 1} of ${totalPhrases}`}
+                </div>
+             )}
           </div>
         )}
       </div>
@@ -1075,8 +1180,8 @@ const DuaSyncApp = () => {
                    </div>
                  </div>
                </div>
-               {/* Auto-Advance Settings */}
-               {isHost && connectionStatus === 'connected' && (
+               {/* Auto-Advance Settings - Don't show for alkafi_chapter */}
+               {isHost && connectionStatus === 'connected' && currentContentInfo?.type !== 'alkafi_chapter' && (
                  <div>
                    <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Auto-Advance Settings</label>
                   <div className="flex items-center bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
