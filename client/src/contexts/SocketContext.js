@@ -761,39 +761,51 @@ export const SocketProvider = ({ children }) => {
   }, [isHost, hostSelectedContentInfo, latestHostIndex]);
 
   const updateHostIndex = useCallback((newIndex) => {
-    // Always update local state if the index is valid
-    if (isHost && typeof newIndex === 'number') {
-       const maxIndex = currentFullContent?.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent?.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
-       if (newIndex >= 0 && newIndex <= maxIndex) {
-         console.log(`Host updating local index to: ${newIndex}.`);
-         setCurrentIndex(newIndex); // Update local state immediately
+    if (isHost && typeof newIndex === 'number' && currentFullContent) {
+      let maxIndex;
+      if (currentContentInfo?.type === 'alkafi_chapter') {
+        maxIndex = (currentFullContent.hadithsInChapter?.length ?? 0) - 1;
+      } else {
+        maxIndex = currentFullContent.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
+      }
 
-         // Only emit if connected
-         if (socket && connectionStatus === 'connected' && sessionId) {
-           console.log(`Host emitting index update: ${newIndex}`);
-           socket.emit('host_update_index', { sessionId, newIndex });
-         } else {
-           console.log("Host is offline, only updated local index.");
-         }
-       }
-    } else { console.warn("Cannot update host index: Conditions not met (not host or invalid index)."); }
-  }, [socket, connectionStatus, isHost, sessionId, currentFullContent]); // Added currentFullContent dependency
+      if (newIndex >= 0 && newIndex <= maxIndex) {
+        console.log(`Host updating local index to: ${newIndex}.`);
+        setCurrentIndex(newIndex); 
+
+        if (socket && connectionStatus === 'connected' && sessionId) {
+          console.log(`Host emitting index update: ${newIndex}`);
+          socket.emit('host_update_index', { sessionId, newIndex });
+        } else {
+          console.log("Host is offline, only updated local index.");
+        }
+      } else {
+        console.warn(`Host index update to ${newIndex} out of bounds (0-${maxIndex}).`);
+      }
+    } else { console.warn("Cannot update host index: Conditions not met (not host, invalid index, or no currentFullContent)."); }
+  }, [socket, connectionStatus, isHost, sessionId, currentFullContent, currentContentInfo]);
 
   const updateLocalIndex = useCallback((newIndex) => {
-    // Participant updates their local index
-    if (!isHost && typeof newIndex === 'number') {
-      const maxIndex = currentFullContent?.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent?.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
+    if (!isHost && typeof newIndex === 'number' && currentFullContent) {
+      let maxIndex;
+      if (currentContentInfo?.type === 'alkafi_chapter') {
+        maxIndex = (currentFullContent.hadithsInChapter?.length ?? 0) - 1;
+      } else {
+        maxIndex = currentFullContent.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
+      }
+
       if (newIndex >= 0 && newIndex <= maxIndex) {
         console.log(`Participant updating local index: ${newIndex}.`);
-        setCurrentIndex(newIndex); // Update local state
-        // Unsync only if actually in a session
+        setCurrentIndex(newIndex);
         if (sessionId) {
           console.log("Unsyncing from host due to local navigation.");
           setIsSyncedToHost(false);
         }
+      } else {
+        console.warn(`Local index update to ${newIndex} out of bounds (0-${maxIndex}).`);
       }
-    } else { console.warn("Cannot update local index: Conditions not met (is host or invalid index)."); }
-  }, [isHost, currentFullContent, sessionId]); // Added sessionId dependency
+    } else { console.warn("Cannot update local index: Conditions not met (is host, invalid index, or no currentFullContent)."); }
+  }, [isHost, currentFullContent, sessionId, currentContentInfo]);
 
   // Simplified getQuranMetadata - only fetches if explicitly needed and connected,
   // but primarily relies on the local list.

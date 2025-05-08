@@ -192,7 +192,7 @@ const DuaSyncApp = () => {
   const totalPhrases = useMemo(() => {
     if (currentContentInfo?.type === 'alkafi_chapter') {
       // For AlKafi chapters, totalPhrases is the number of hadiths
-      return currentFullContent?.totalHadiths ?? 0;
+      return currentFullContent?.hadithsInChapter?.length ?? 0;
     }
     // For Quran and Dua
     return currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
@@ -325,24 +325,22 @@ const DuaSyncApp = () => {
      setLocalError(null);
      setIsKidsMode(contentInfo.startInKidsMode || false);
 
-     // If fullData is provided (e.g., for AlKafi initial selection or navigation), use it
-     // The selectContentLocally/AsHost functions in SocketContext should handle this
      const dataToPass = fullData ? [contentInfo, fullData] : [contentInfo];
 
-     if (!sessionId) {
+     if (!sessionId) { // Case 1: No session (offline user)
        selectContentLocally(...dataToPass);
-     } else if (isHost && connectionStatus === 'connected') {
+       setIsBrowsingLocally(true); // User is browsing locally
+     } else if (isHost && connectionStatus === 'connected') { // Case 2: Host in a session
        selectContentAsHost(...dataToPass);
-       if (contentInfo.type !== 'alkafi') setShowShareDialog(true); // Don't show share for AlKafi for now
-     } else if (isBrowsingLocally) {
+       if (contentInfo.type !== 'alkafi') setShowShareDialog(true);
+       // Host is always "browsing locally" in terms of control, but isSyncedToHost handles participant view
+     } else if (!isHost && connectionStatus === 'connected') { // Case 3: Participant in a session, connected
+       // If a participant (connected, not host) selects any content, they are now browsing locally.
        selectContentLocally(...dataToPass);
-       setIsBrowsingLocally(false); // After selecting, assume user wants to follow host if session active
-     } else if (!isHost && !isBrowsingLocally && connectionStatus === 'connected') {
-       // Participant selecting something new, implies browsing locally
+       setIsBrowsingLocally(true); // Set to true, regardless of previous isBrowsingLocally state
+     } else if (!isHost && connectionStatus !== 'connected') { // Case 4: Participant, but disconnected (effectively offline)
        selectContentLocally(...dataToPass);
-       setIsBrowsingLocally(true);
-     } else if (!isHost && connectionStatus !== 'connected') { // Offline participant
-       selectContentLocally(...dataToPass);
+       setIsBrowsingLocally(true); // User is browsing locally
      }
    };
   
@@ -371,6 +369,7 @@ const DuaSyncApp = () => {
         bookName: chapterSelectionInfo.bookName,
         chapterName: chapterSelectionInfo.chapterName,
         volumeName: chapterSelectionInfo.volumeName,
+        totalHadiths: chapterSelectionInfo.hadiths.length, // Ensure totalHadiths is set
         // No individual hadith data here, AlKafiChapterView will iterate through hadithsInChapter
     };
 
@@ -1062,9 +1061,14 @@ const DuaSyncApp = () => {
                 // --- AlKafi Chapter View Fullscreen ---
                 // The AlKafiChapterView itself handles scrolling of its content.
                 // We ensure it's placed within a container that allows it to expand.
-                <div className="w-full h-full overflow-y-auto custom-scrollbar"> 
+                <div className="w-full h-full overflow-y-auto custom-scrollbar">
                    <AlKafiChapterView
                       chapterFullContent={currentFullContent}
+                      currentHadithIndex={currentIndex}
+                      totalHadiths={totalPhrases}
+                      onNavigateHadith={navigate}
+                      isHost={isHost}
+                      isBrowsingLocally={isBrowsingLocally}
                       arabicFontSize={arabicFontSize * 1.1} // Slightly increase font for fullscreen
                       translationFontSize={translationFontSize * 1.05} // Slightly increase font
                       showTranslation={showTranslation}
