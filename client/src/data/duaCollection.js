@@ -110,18 +110,31 @@ const loadAndPopulateAllHadithData = async () => {
     console.error('Failed to load or process Mizan al-Hikmah Vol 2 data for contentMap:', error);
   }
 
-  // try {
-  //   // Load Volume 3
-  //   const responseV3 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol3.json'); // Path relative to public folder
-  //   if (!responseV3.ok) {
-  //     throw new Error(`HTTP error for Vol 3! status: ${responseV3.status}`);
-  //   }
-  //   const MIZAN_AL_HIKMAH_VOL3 = await responseV3.json();
-  //   processMizanVolume(MIZAN_AL_HIKMAH_VOL3, 3, contentMap);
-  //
-  // } catch (error) {
-  //   console.error('Failed to load or process Mizan al-Hikmah Vol 3 data for contentMap:', error);
-  // }
+  try {
+    // Load Volume 3
+    const responseV3 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol3.json'); // Path relative to public folder
+    if (!responseV3.ok) {
+      throw new Error(`HTTP error for Vol 3! status: ${responseV3.status}`);
+    }
+    const MIZAN_AL_HIKMAH_VOL3 = await responseV3.json();
+    processMizanVolume(MIZAN_AL_HIKMAH_VOL3, 3, contentMap);
+
+  } catch (error) {
+    console.error('Failed to load or process Mizan al-Hikmah Vol 3 data for contentMap:', error);
+  }
+
+  try {
+    // Load Volume 4
+    const responseV4 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol4.json'); // Path relative to public folder
+    if (!responseV4.ok) {
+      throw new Error(`HTTP error for Vol 4! status: ${responseV4.status}`);
+    }
+    const MIZAN_AL_HIKMAH_VOL4 = await responseV4.json();
+    processMizanVolume(MIZAN_AL_HIKMAH_VOL4, 4, contentMap);
+
+  } catch (error) {
+    console.error('Failed to load or process Mizan al-Hikmah Vol 4 data for contentMap:', error);
+  }
 };
 
 // Call the function to load Hadith data when this module is initialized.

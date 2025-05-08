@@ -2,12 +2,12 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 const path = require('path');
 
-const htmlFilePath = path.join(__dirname, 'client', 'public', 'data', 'MizanAlHikmah', 'the_scale_of_wisdom_03.htm');
-const jsonOutputPath = path.join(__dirname, 'client', 'public', 'data', 'MizanAlHikmah', 'mizan_al_hikmah_vol3.json');
+const htmlFilePath = path.join(__dirname, 'client', 'public', 'data', 'MizanAlHikmah', 'the_scale_of_wisdom_04.htm'); // Changed to Vol 4 HTML
+const jsonOutputPath = path.join(__dirname, 'client', 'public', 'data', 'MizanAlHikmah', 'mizan_al_hikmah_vol4.json'); // Changed to Vol 4 JSON
 
 // Threshold to differentiate chapter numbers from section numbers
-// Based on samples: chapters are e.g., 210-220, sections are 999+
-const CHAPTER_NUMBER_THRESHOLD = 800;
+// Vol 4 Chapters seem to be < 1000, Sections >= 1000
+const CHAPTER_NUMBER_THRESHOLD = 1000; // Adjusted for Vol 4
 
 console.log(`Reading HTML file from: ${htmlFilePath}`);
 
@@ -80,10 +80,13 @@ try {
         elText = cleanText(elText); // Clean text after initial checks
 
 
-        // --- Chapter/Section Detection (Unified Logic for Heading2Center) ---
-        if (elTag === 'p' && elClass && elClass.includes('Heading2Center')) {
+        // --- Chapter/Section Detection (Using Heading1Center for Chapters, Heading2Center for Sections) ---
+        const isChapterHeading = elTag === 'p' && elClass && elClass.includes('Heading1Center');
+        const isSectionHeading = elTag === 'p' && elClass && elClass.includes('Heading2Center');
+
+        if (isChapterHeading || isSectionHeading) {
             const text = elText; // Already cleaned
-            const matchAr = text.match(/^(\d+)\s*-\s*(.+)/);
+            const matchAr = text.match(/^(\d+)\s*-\s*(.+)/); // Arabic: Number - Title
             // Regex for English: number, optional dot, space, title
             const matchEn = text.match(/^(\d+)\.?\s+(.+)/);
 
@@ -95,7 +98,8 @@ try {
                 const titleAr = pendingArabicTitle.title;
                 const titleEn = matchEn[2];
 
-                if (num < CHAPTER_NUMBER_THRESHOLD) { // Treat as Chapter
+                // Use class to determine if it's a chapter or section
+                if (isChapterHeading) { // Treat as Chapter
                     currentChapter = {
                         chapter_num: num,
                         chapter_title_ar: titleAr,
@@ -106,7 +110,7 @@ try {
                     currentSection = null; // Reset section
                     lastProcessedTitleType = 'chapter';
                     console.log(`\n--- Found Chapter ${num}: ${titleEn} ---`);
-                } else if (currentChapter) { // Treat as Section (and a chapter must be active)
+                } else if (isSectionHeading && currentChapter) { // Treat as Section (and a chapter must be active)
                     currentSection = {
                         section_num: num,
                         section_title_ar: titleAr,

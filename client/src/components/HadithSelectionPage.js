@@ -200,7 +200,7 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
     <div className="space-y-6">
       {/* Volume Selector */}
       <div className="flex justify-center space-x-2 sm:space-x-3 p-1 bg-gray-100 dark:bg-dark-bg rounded-lg">
-        {[1, 2].map((volNum) => (
+        {[1, 2, 3, 4].map((volNum) => (
           <button
             key={volNum}
             onClick={() => setSelectedVolume(volNum)}

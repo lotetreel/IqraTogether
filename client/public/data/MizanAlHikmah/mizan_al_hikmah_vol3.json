@@ -1,7 +1,7 @@
 [
   {
     "chapter_num": 210,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 210]",
+    "chapter_title_ar": "الشَّباب‏",
     "chapter_title_en": "YOUTH",
     "sections": [
       {
@@ -121,15 +121,22 @@
   },
   {
     "chapter_num": 211,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 211]",
+    "chapter_title_ar": "الشُّبهَة",
     "chapter_title_en": "THE OBSCURE MATTER",
-    "sections": []
-  },
-  {
-    "chapter_num": 1004,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 1004]",
-    "chapter_title_en": "MEANING THE OBSCURE MATTER",
     "sections": [
+      {
+        "section_num": 1004,
+        "section_title_ar": "مَعنَى الشُّبهَةِ",
+        "section_title_en": "MEANING THE OBSCURE MATTER",
+        "hadiths": [
+          {
+            "hadith_num": 3203,
+            "arabic": "3203. الإمامُ عليٌّ عليه السلام : إنّما سُمِّيَتِ الشُّبهَةُ شُبهَةً لأ نّها تُشبِهُ الحَقَّ ، فأمّا أولياءُ اللَّهِ فَضِياؤهُم فيها اليَقينُ ودَلِيلُهُم سَمتُ الهُدى‏ ، وأمّا أعداءُ اللَّهِ فَدُعاؤهُم فيها الضَّلالُ ودَليلُهُمُ العَمى‏",
+            "english": "3203. Imam Ali (AS) said, 'The obscure matter has been termed obscure for the very fact that it resembles [and therefore obscures] the truth. The friends of Allah take recourse in conviction as their light therein and the direction of the right path itself as their guide, whereas the enemies of Allah use it to call [others] to deviation and blind following is their guide therein.'",
+            "footnotes": []
+          }
+        ]
+      },
       {
         "section_num": 1005,
         "section_title_ar": "خَطَرُ الشُّبهَةِ",
@@ -185,15 +192,40 @@
   },
   {
     "chapter_num": 212,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 212]",
+    "chapter_title_ar": "الشَّجر",
     "chapter_title_en": "TREES",
-    "sections": []
-  },
-  {
-    "chapter_num": 1008,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 1008]",
-    "chapter_title_en": "THE IMPORTANCE OF PLANTING TREES",
     "sections": [
+      {
+        "section_num": 1008,
+        "section_title_ar": "أهَمِّيَّةُ غَرسِ الشَّجَرِ",
+        "section_title_en": "THE IMPORTANCE OF PLANTING TREES",
+        "hadiths": [
+          {
+            "hadith_num": 3209,
+            "arabic": "3209. رسولُ اللَّهِ صلى اللَّه عليه وآله : إن قامَتِ السَّاعةُ وفي يَدِ أحَدِكُم فَسِيلَةٌ ، فإنِ استَطاعَ أن لا يَقومَ حتّى‏ يَغرِسَها فَلْيَغرِسْها",
+            "english": "3209. The Prophet (SAWA) said, 'When the Last Hour comes, if any of you happens to be holding a seedling in his hand, then if he is able to, let him not stand until he has planted it.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3210,
+            "arabic": "3210. رسولُ اللَّهِ صلى اللَّه عليه وآله : ما مِن مُسلِمٍ يَزرَعُ زَرعاً أو يَغرِسُ غَرساً فَيَأكُلُ مِنهُ طَيرٌ أو إنسانٌ أو بَهِيمَةٌ إلّا كانَت لَهُ بِهِ صَدَقَةٌ",
+            "english": "3210. The Prophet (SAWA) said, 'Every single Muslim that cultivates or plants anything of which humans, animals or birds may eat from is counted as charity towards them on his behalf.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3211,
+            "arabic": "3211. رسولُ اللَّهِ صلى اللَّه عليه وآله : ما مِن رَجُلٍ يَغرِسُ غَرساً إلّا كَتَبَ اللَّهُ لَهُ مِنَ الأجرِ قَدْرَ ما يَخرُجُ مِن ثَمَرِ ذلكَ الغَرسِ",
+            "english": "3211. The Prophet (SAWA) said, 'Every single person that cultivates something, Allah rewards him as much as the fruit produced by that plant.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3212,
+            "arabic": "3212. رسولُ اللَّهِ صلى اللَّه عليه وآله : مَن نَصَبَ شَجرَةً وصَبَرَ على‏ حِفظِها والقِيامِ علَيها حتّى‏ تُثمِرَ ، كانَ لَهُ في كُلِّ شَي‏ءٍ يُصابُ مِن ثَمَرِها صَدَقةٌ عِندَ اللَّهِ",
+            "english": "3212. The Prophet (SAWA) said, 'Whoever plants a tree and patiently maintains it and tends to it until its fruition, every single fruit consumed from that tree is regarded by Allah as charity [on his behalf].'",
+            "footnotes": []
+          }
+        ]
+      },
       {
         "section_num": 1009,
         "section_title_ar": "النَّهْيُ عَنْ قَطعِ الشَّجَرِ",
@@ -217,15 +249,40 @@
   },
   {
     "chapter_num": 213,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 213]",
+    "chapter_title_ar": "الشَّجاعة",
     "chapter_title_en": "COURAGE",
-    "sections": []
-  },
-  {
-    "chapter_num": 1010,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 1010]",
-    "chapter_title_en": "THE VIRTUE O F COURAGE",
     "sections": [
+      {
+        "section_num": 1010,
+        "section_title_ar": "فَضْلُ الشَّجاعَةِ",
+        "section_title_en": "THE VIRTUE O F COURAGE",
+        "hadiths": [
+          {
+            "hadith_num": 3215,
+            "arabic": "3215. الإمامُ عليٌّ عليه السلام : الشَّجاعَةُ عِزٌّ حاضِرٌ",
+            "english": "3215. Imam Ali (AS) said, 'Courage is might at hand.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3216,
+            "arabic": "3216. الإمامُ عليٌّ عليه السلام : الشَّجاعةُ نُصرَةٌ حاضِرَةٌ وفَضيلَةٌ ظاهِرَةٌ",
+            "english": "3216. Imam Ali (AS) said, 'Courage is a ready victory and an obvious virtue.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3217,
+            "arabic": "3217. الإمامُ عليٌّ عليه السلام : لَو تَمَيَّزَتِ الأشياءُ لَكانَ الصِّدقُ مَع الشَّجاعَةِ ، وكانَ الجُبنُ مَع الكَذِبِ",
+            "english": "3217. Imam Ali (AS) said, 'If qualities were to be classified, honesty would be with courage, and cowardice with dishonesty.'",
+            "footnotes": []
+          },
+          {
+            "hadith_num": 3218,
+            "arabic": "3218. الإمامُ الحسنُ عليه السلام - وقد سُئلَ عنِ الشَّجاعةِ - : مُواقَفَةُ الأقرانِ ، والصَّبرُ عِندَ الطِّعانِ",
+            "english": "3218. Imam al-Hasan (AS) was once asked about courage, to which he replied, 'It is to know when to stand up to one's opponents, and when to be patient in the face of criticism and slander.'",
+            "footnotes": []
+          }
+        ]
+      },
       {
         "section_num": 1011,
         "section_title_ar": "ما يورِثُ الشَّجاعَةَ",
@@ -317,7 +374,7 @@
   },
   {
     "chapter_num": 214,
-    "chapter_title_ar": "[ARABIC TITLE PENDING 214]",
+    "chapter_title_ar": "الشَّرّ",
     "chapter_title_en": "EVIL",
     "sections": [
       {
@@ -414,13 +471,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 215,
-        "section_title_ar": "الشِّرك‏",
-        "section_title_en": "POLYTHEISM",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 215,
+    "chapter_title_ar": "الشِّرك‏",
+    "chapter_title_en": "POLYTHEISM",
+    "sections": [
       {
         "section_num": 1019,
         "section_title_ar": "التَّحذيرُ مِنَ الشِّركِ‏",
@@ -502,13 +560,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 216,
-        "section_title_ar": "الشَّيطان‏",
-        "section_title_en": "SATAN",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 216,
+    "chapter_title_ar": "الشَّيطان‏",
+    "chapter_title_en": "SATAN",
+    "sections": [
       {
         "section_num": 1023,
         "section_title_ar": "الاعتِبارُ بِما فَعَلَ اللَّهُ بِإبليسَ‏",
@@ -666,13 +725,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 217,
-        "section_title_ar": "الشِّعر",
-        "section_title_en": "POETRY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 217,
+    "chapter_title_ar": "الشِّعر",
+    "chapter_title_en": "POETRY",
+    "sections": [
       {
         "section_num": 1031,
         "section_title_ar": "تَفسيرُ ما وَرَدَ في ذَمِّ الشُّعَراءِ",
@@ -722,13 +782,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 218,
-        "section_title_ar": "الشِّعار",
-        "section_title_en": "THE BATTLE CRY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 218,
+    "chapter_title_ar": "الشِّعار",
+    "chapter_title_en": "THE BATTLE CRY",
+    "sections": [
       {
         "section_num": 1033,
         "section_title_ar": "الشِّعارُ فِى الحَرْبِ‏",
@@ -784,13 +845,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 219,
-        "section_title_ar": "الشفاعة",
-        "section_title_en": "INTERCESSION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 219,
+    "chapter_title_ar": "الشفاعة",
+    "chapter_title_en": "INTERCESSION",
+    "sections": [
       {
         "section_num": 1035,
         "section_title_ar": "الشَّفاعَةُ فِي الدُّنيا",
@@ -1002,13 +1064,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 220,
-        "section_title_ar": "الشَّقاوة",
-        "section_title_en": "WRETCHEDNESS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 220,
+    "chapter_title_ar": "الشَّقاوة",
+    "chapter_title_en": "WRETCHEDNESS",
+    "sections": [
       {
         "section_num": 1043,
         "section_title_ar": "خَصائِصُ الشَّقِيِ‏",
@@ -1133,13 +1196,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 221,
-        "section_title_ar": "الشُّكر",
-        "section_title_en": "THANKSGIVING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 221,
+    "chapter_title_ar": "الشُّكر",
+    "chapter_title_en": "THANKSGIVING",
+    "sections": [
       {
         "section_num": 1048,
         "section_title_ar": "الحَثُّ عَلَى الشُّكرِ للَّهِ‏ِ",
@@ -1333,13 +1397,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 222,
-        "section_title_ar": "الشَّكّ‏",
-        "section_title_en": "DOUBT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 222,
+    "chapter_title_ar": "الشَّكّ‏",
+    "chapter_title_en": "DOUBT",
+    "sections": [
       {
         "section_num": 1056,
         "section_title_ar": "الشَّكُّ فِي الاُصولِ الإعتِقاديَّةِ",
@@ -1458,13 +1523,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 223,
-        "section_title_ar": "الشَّهادة (1) في القضاء",
-        "section_title_en": "BEARING WITNESS (IN A COURT OF JUSTICE)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 223,
+    "chapter_title_ar": "الشَّهادة (1) في القضاء",
+    "chapter_title_en": "BEARING WITNESS (IN A COURT OF JUSTICE)",
+    "sections": [
       {
         "section_num": 1061,
         "section_title_ar": "الشَّهادَةُ بِالقِسطِ",
@@ -1571,13 +1637,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 224,
-        "section_title_ar": "الشَّهادة (2) القتل في سبيل اللَّه‏",
-        "section_title_en": "MARTYRDOM IN THE WAY OF ALLAH",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 224,
+    "chapter_title_ar": "الشَّهادة (2) القتل في سبيل اللَّه‏",
+    "chapter_title_en": "MARTYRDOM IN THE WAY OF ALLAH",
+    "sections": [
       {
         "section_num": 1066,
         "section_title_ar": "فَضلُ الشَّهادَةِ",
@@ -1683,13 +1750,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 225,
-        "section_title_ar": "الشُّهرة",
-        "section_title_en": "FAME",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 225,
+    "chapter_title_ar": "الشُّهرة",
+    "chapter_title_en": "FAME",
+    "sections": [
       {
         "section_num": 1070,
         "section_title_ar": "الشُّهرَةُ المَحمودَةُ",
@@ -1764,13 +1832,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 226,
-        "section_title_ar": "الشُّورى‏",
-        "section_title_en": "COUNSEL",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 226,
+    "chapter_title_ar": "الشُّورى‏",
+    "chapter_title_en": "COUNSEL",
+    "sections": [
       {
         "section_num": 1073,
         "section_title_ar": "الحَثُّ عَلَى المَشورَةِ",
@@ -1871,13 +1940,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 227,
-        "section_title_ar": "الشَّيب‏",
-        "section_title_en": "OLD AGE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 227,
+    "chapter_title_ar": "الشَّيب‏",
+    "chapter_title_en": "OLD AGE",
+    "sections": [
       {
         "section_num": 1078,
         "section_title_ar": "الشَّيبُ‏",
@@ -1957,13 +2027,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 228,
-        "section_title_ar": "الشِّيعة",
-        "section_title_en": "THE SHIA",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 228,
+    "chapter_title_ar": "الشِّيعة",
+    "chapter_title_en": "THE SHIA",
+    "sections": [
       {
         "section_num": 1080,
         "section_title_ar": "فَضلُ شِيعَةِ أهلِ البَيتِ عليهم السلام‏",
@@ -2132,13 +2203,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 229,
-        "section_title_ar": "الصَّبر",
-        "section_title_en": "PATIENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 229,
+    "chapter_title_ar": "الصَّبر",
+    "chapter_title_en": "PATIENCE",
+    "sections": [
       {
         "section_num": 1087,
         "section_title_ar": "فَضلُ الصَّبرِ",
@@ -2362,13 +2434,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 230,
-        "section_title_ar": "الصِّدق‏",
-        "section_title_en": "TRUTHFULNESS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 230,
+    "chapter_title_ar": "الصِّدق‏",
+    "chapter_title_en": "TRUTHFULNESS",
+    "sections": [
       {
         "section_num": 1095,
         "section_title_ar": "فَضلُ الصِّدقِ وَالصَّادِقِ‏",
@@ -2485,13 +2558,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 231,
-        "section_title_ar": "الصَّدِيق‏",
-        "section_title_en": "THE FRIEND",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 231,
+    "chapter_title_ar": "الصَّدِيق‏",
+    "chapter_title_en": "THE FRIEND",
+    "sections": [
       {
         "section_num": 1098,
         "section_title_ar": "أهَمِّيَّةُ الصَّدِيقِ‏",
@@ -2745,13 +2819,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 232,
-        "section_title_ar": "الصدقة",
-        "section_title_en": "CHARITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 232,
+    "chapter_title_ar": "الصدقة",
+    "chapter_title_en": "CHARITY",
+    "sections": [
       {
         "section_num": 1106,
         "section_title_ar": "فَضلُ الصَّدَقَةِ",
@@ -3079,13 +3154,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 233,
-        "section_title_ar": "الصراط",
-        "section_title_en": "THE PATH",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 233,
+    "chapter_title_ar": "الصراط",
+    "chapter_title_en": "THE PATH",
+    "sections": [
       {
         "section_num": 1116,
         "section_title_ar": "خَطَرُ مَعبَرِ الصِّراطِ",
@@ -3160,13 +3236,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 234,
-        "section_title_ar": "الصِّغَر",
-        "section_title_en": "CHILDHOOD",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 234,
+    "chapter_title_ar": "الصِّغَر",
+    "chapter_title_en": "CHILDHOOD",
+    "sections": [
       {
         "section_num": 1119,
         "section_title_ar": "الصِّغَرُ",
@@ -3209,13 +3286,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 235,
-        "section_title_ar": "المُصافحة",
-        "section_title_en": "SHAKING HANDS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 235,
+    "chapter_title_ar": "المُصافحة",
+    "chapter_title_en": "SHAKING HANDS",
+    "sections": [
       {
         "section_num": 1120,
         "section_title_ar": "التَّرغِيبُ بِالمُصافَحَةِ",
@@ -3277,13 +3355,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 236,
-        "section_title_ar": "الصُّلح 1 (المُسالمةُ في الحربِ )",
-        "section_title_en": "PEACEMAKING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 236,
+    "chapter_title_ar": "الصُّلح 1 (المُسالمةُ في الحربِ )",
+    "chapter_title_en": "PEACEMAKING",
+    "sections": [
       {
         "section_num": 1122,
         "section_title_ar": "الصُّلحُ في الحَربِ‏",
@@ -3365,13 +3444,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 237,
-        "section_title_ar": "الصلاة (1 )",
-        "section_title_en": "THE PRAYER (1)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 237,
+    "chapter_title_ar": "الصلاة (1 )",
+    "chapter_title_en": "THE PRAYER (1)",
+    "sections": [
       {
         "section_num": 1126,
         "section_title_ar": "فَضلُ الصَّلاةِ",
@@ -3872,13 +3952,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 238,
-        "section_title_ar": "الصّلاة (2) «صَلاةُ اللَّيل »",
-        "section_title_en": "THE PRAYER (2)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 238,
+    "chapter_title_ar": "الصّلاة (2) «صَلاةُ اللَّيل »",
+    "chapter_title_en": "THE PRAYER (2)",
+    "sections": [
       {
         "section_num": 1141,
         "section_title_ar": "فَضلُ صَلاةِ اللَّيلِ‏",
@@ -3977,13 +4058,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 239,
-        "section_title_ar": "الصّلاة (3) صلاةُ الجمعةِ",
-        "section_title_en": "THE PRAYER (3)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 239,
+    "chapter_title_ar": "الصّلاة (3) صلاةُ الجمعةِ",
+    "chapter_title_en": "THE PRAYER (3)",
+    "sections": [
       {
         "section_num": 1144,
         "section_title_ar": "« أهَمِّيَّةُ صَلاةِ الجُمُعَةِ »",
@@ -4027,13 +4109,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 240,
-        "section_title_ar": "الصّلاة (4) «الصلاةُ على النبيِّ وآلهِ »",
-        "section_title_en": "PRAYER (4)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 240,
+    "chapter_title_ar": "الصّلاة (4) «الصلاةُ على النبيِّ وآلهِ »",
+    "chapter_title_en": "PRAYER (4)",
+    "sections": [
       {
         "section_num": 1146,
         "section_title_ar": "فَضلُ‏الصَّلاةِ عَلَى النَّبِيِّ وآله‏",
@@ -4089,13 +4172,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 241,
-        "section_title_ar": "الصَّمت‏",
-        "section_title_en": "SILENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 241,
+    "chapter_title_ar": "الصَّمت‏",
+    "chapter_title_en": "SILENCE",
+    "sections": [
       {
         "section_num": 1148,
         "section_title_ar": "فَضْلُ الصَّمتِ‏",
@@ -4182,13 +4266,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 242,
-        "section_title_ar": "المصيبة",
-        "section_title_en": "AFFLICTION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 242,
+    "chapter_title_ar": "المصيبة",
+    "chapter_title_en": "AFFLICTION",
+    "sections": [
       {
         "section_num": 1151,
         "section_title_ar": "أجرُ المَصائِبِ‏",
@@ -4332,13 +4417,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 243,
-        "section_title_ar": "الصوت‏",
-        "section_title_en": "THE VOICE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 243,
+    "chapter_title_ar": "الصوت‏",
+    "chapter_title_en": "THE VOICE",
+    "sections": [
       {
         "section_num": 1157,
         "section_title_ar": "مَدحُ خَفضِ الصَّوتِ وَذَمُّ رَفعِهِ‏",
@@ -4369,13 +4455,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 244,
-        "section_title_ar": "الصَّوم‏",
-        "section_title_en": "FASTING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 244,
+    "chapter_title_ar": "الصَّوم‏",
+    "chapter_title_en": "FASTING",
+    "sections": [
       {
         "section_num": 1158,
         "section_title_ar": "فَضْلُ الصِّيامِ‏",
@@ -4547,13 +4634,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 245,
-        "section_title_ar": "الضِّحك‏",
-        "section_title_en": "LAUGHTER",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 245,
+    "chapter_title_ar": "الضِّحك‏",
+    "chapter_title_en": "LAUGHTER",
+    "sections": [
       {
         "section_num": 1162,
         "section_title_ar": "مَدحُ التَّبسُّمِ‏",
@@ -4627,13 +4715,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 246,
-        "section_title_ar": "المُستضعف‏",
-        "section_title_en": "THE ABASED PEOPLE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 246,
+    "chapter_title_ar": "المُستضعف‏",
+    "chapter_title_en": "THE ABASED PEOPLE",
+    "sections": [
       {
         "section_num": 1164,
         "section_title_ar": "المُستَضعَفون‏",
@@ -4696,13 +4785,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 247,
-        "section_title_ar": "الضَّلالة",
-        "section_title_en": "STRAYING FROM THE STRAIGHT PATH",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 247,
+    "chapter_title_ar": "الضَّلالة",
+    "chapter_title_en": "STRAYING FROM THE STRAIGHT PATH",
+    "sections": [
       {
         "section_num": 1167,
         "section_title_ar": "موجِباتُ الضَّلَالَةِ",
@@ -4777,13 +4867,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 248,
-        "section_title_ar": "الضمان‏",
-        "section_title_en": "LIABILITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 248,
+    "chapter_title_ar": "الضمان‏",
+    "chapter_title_en": "LIABILITY",
+    "sections": [
       {
         "section_num": 1170,
         "section_title_ar": "ثُبوتُ الضَّمانِ بِالإتلافِ‏",
@@ -4846,13 +4937,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 249,
-        "section_title_ar": "الضِّيافة",
-        "section_title_en": "HOSPITALITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 249,
+    "chapter_title_ar": "الضِّيافة",
+    "chapter_title_en": "HOSPITALITY",
+    "sections": [
       {
         "section_num": 1173,
         "section_title_ar": "فَضْلُ الضِّيافَةِ",
@@ -5019,13 +5111,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 250,
-        "section_title_ar": "الطِّبّ‏",
-        "section_title_en": "MEDICINE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 250,
+    "chapter_title_ar": "الطِّبّ‏",
+    "chapter_title_en": "MEDICINE",
+    "sections": [
       {
         "section_num": 1178,
         "section_title_ar": "الطَّبيبُ الحَقيقِيُ‏",
@@ -5076,13 +5169,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 251,
-        "section_title_ar": "الإطعام‏",
-        "section_title_en": "FEEDING OTHERS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 251,
+    "chapter_title_ar": "الإطعام‏",
+    "chapter_title_en": "FEEDING OTHERS",
+    "sections": [
       {
         "section_num": 1181,
         "section_title_ar": "فَضلُ إطعامِ الجائِعِ‏",
@@ -5119,13 +5213,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 252,
-        "section_title_ar": "الطَّلاق‏",
-        "section_title_en": "DIVORCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 252,
+    "chapter_title_ar": "الطَّلاق‏",
+    "chapter_title_en": "DIVORCE",
+    "sections": [
       {
         "section_num": 1182,
         "section_title_ar": "ذَمُّ الطَّلاقِ‏",
@@ -5181,13 +5276,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 253,
-        "section_title_ar": "الطَّمَع‏",
-        "section_title_en": "GREED",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 253,
+    "chapter_title_ar": "الطَّمَع‏",
+    "chapter_title_en": "GREED",
+    "sections": [
       {
         "section_num": 1184,
         "section_title_ar": "ذَمُّ الطَّمَعِ‏",
@@ -5297,13 +5393,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 254,
-        "section_title_ar": "الطَّهارَة",
-        "section_title_en": "PURITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 254,
+    "chapter_title_ar": "الطَّهارَة",
+    "chapter_title_en": "PURITY",
+    "sections": [
       {
         "section_num": 1186,
         "section_title_ar": "الطَّهورُ",
@@ -5384,13 +5481,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 255,
-        "section_title_ar": "الطاعة",
-        "section_title_en": "OBEDIENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 255,
+    "chapter_title_ar": "الطاعة",
+    "chapter_title_en": "OBEDIENCE",
+    "sections": [
       {
         "section_num": 1189,
         "section_title_ar": "طاعَةُ اللَّهِ وآثارُها",
@@ -5495,13 +5593,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 256,
-        "section_title_ar": "الطِّيب‏",
-        "section_title_en": "PERFUME",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 256,
+    "chapter_title_ar": "الطِّيب‏",
+    "chapter_title_en": "PERFUME",
+    "sections": [
       {
         "section_num": 1192,
         "section_title_ar": "فَضْلُ الطِّيبِ‏",
@@ -5581,13 +5680,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 257,
-        "section_title_ar": "الطِّيَرَة",
-        "section_title_en": "THE EVIL OMEN",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 257,
+    "chapter_title_ar": "الطِّيَرَة",
+    "chapter_title_en": "THE EVIL OMEN",
+    "sections": [
       {
         "section_num": 1194,
         "section_title_ar": "التَّطَيُّرُ",
@@ -5642,13 +5742,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 258,
-        "section_title_ar": "الظُّفر",
-        "section_title_en": "NAILS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 258,
+    "chapter_title_ar": "الظُّفر",
+    "chapter_title_en": "NAILS",
+    "sections": [
       {
         "section_num": 1195,
         "section_title_ar": "الحَثُّ عَلى‏ تَقليمِ الأظفارِ",
@@ -5686,13 +5787,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 259,
-        "section_title_ar": "الظُّلْم‏",
-        "section_title_en": "WRONGDOING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 259,
+    "chapter_title_ar": "الظُّلْم‏",
+    "chapter_title_en": "WRONGDOING",
+    "sections": [
       {
         "section_num": 1197,
         "section_title_ar": "التَّحذيرُ مِنَ الظُّلمِ‏",
@@ -5952,13 +6054,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 260,
-        "section_title_ar": "الظَّنّ‏",
-        "section_title_en": "CONJECTURE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 260,
+    "chapter_title_ar": "الظَّنّ‏",
+    "chapter_title_en": "CONJECTURE",
+    "sections": [
       {
         "section_num": 1205,
         "section_title_ar": "ظَنُّ العاقِلِ‏",
@@ -6144,13 +6247,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 261,
-        "section_title_ar": "العِبادة",
-        "section_title_en": "WORSHIP",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 261,
+    "chapter_title_ar": "العِبادة",
+    "chapter_title_en": "WORSHIP",
+    "sections": [
       {
         "section_num": 1211,
         "section_title_ar": "الحَثُّ عَلَى العِبادَةِ",
@@ -6402,13 +6506,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 262,
-        "section_title_ar": "العِبرة",
-        "section_title_en": "THE MORAL LESSON",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 262,
+    "chapter_title_ar": "العِبرة",
+    "chapter_title_en": "THE MORAL LESSON",
+    "sections": [
       {
         "section_num": 1217,
         "section_title_ar": "الحَثُّ عَلَى الاتِّعاظِ بِالعِبَرِ",
@@ -6513,13 +6618,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 263,
-        "section_title_ar": "العُجب‏",
-        "section_title_en": "SELF-ADMIRATION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 263,
+    "chapter_title_ar": "العُجب‏",
+    "chapter_title_en": "SELF-ADMIRATION",
+    "sections": [
       {
         "section_num": 1220,
         "section_title_ar": "ذَمُّ العُجبِ‏",
@@ -6642,13 +6748,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 264,
-        "section_title_ar": "المعجزة",
-        "section_title_en": "THE MIRACLE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 264,
+    "chapter_title_ar": "المعجزة",
+    "chapter_title_en": "THE MIRACLE",
+    "sections": [
       {
         "section_num": 1223,
         "section_title_ar": "المُعجِزَةُ عَلامَةُ مَعرِفَةِ أنبِياءِ اللَّهِ وحُجَجِهِ‏",
@@ -6674,13 +6781,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 265,
-        "section_title_ar": "العجلة",
-        "section_title_en": "HASTE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 265,
+    "chapter_title_ar": "العجلة",
+    "chapter_title_en": "HASTE",
+    "sections": [
       {
         "section_num": 1225,
         "section_title_ar": "ذَمُّ العَجَلَةِ",
@@ -6742,13 +6850,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 266,
-        "section_title_ar": "العدل‏",
-        "section_title_en": "JUSTICE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 266,
+    "chapter_title_ar": "العدل‏",
+    "chapter_title_en": "JUSTICE",
+    "sections": [
       {
         "section_num": 1227,
         "section_title_ar": "قيمَةُ العَدلِ‏",
@@ -6884,13 +6993,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 267,
-        "section_title_ar": "العداوة",
-        "section_title_en": "ENMITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 267,
+    "chapter_title_ar": "العداوة",
+    "chapter_title_en": "ENMITY",
+    "sections": [
       {
         "section_num": 1231,
         "section_title_ar": "النَّهيُ عَنِ المُعاداةِ",
@@ -7054,13 +7164,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 268,
-        "section_title_ar": "الاعتِذار",
-        "section_title_en": "MAKING EXCUSES",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 268,
+    "chapter_title_ar": "الاعتِذار",
+    "chapter_title_en": "MAKING EXCUSES",
+    "sections": [
       {
         "section_num": 1239,
         "section_title_ar": "التَّحذيرُ مِمّا يُعتَذَرُ مِنهُ‏",
@@ -7116,13 +7227,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 269,
-        "section_title_ar": "العِرض‏",
-        "section_title_en": "GOOD REPUTE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 269,
+    "chapter_title_ar": "العِرض‏",
+    "chapter_title_en": "GOOD REPUTE",
+    "sections": [
       {
         "section_num": 1241,
         "section_title_ar": "الحَثُّ عَلى‏ صِيانَةِ العِرضِ‏",
@@ -7185,13 +7297,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 270,
-        "section_title_ar": "المَعرِفَة",
-        "section_title_en": "INNER KNOWLEDGE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 270,
+    "chapter_title_ar": "المَعرِفَة",
+    "chapter_title_en": "INNER KNOWLEDGE",
+    "sections": [
       {
         "section_num": 1244,
         "section_title_ar": "قيمَةُ المَعرِفَةِ",
@@ -7320,50 +7433,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 271,
-        "section_title_ar": "المعرفة (2) «مَعرِفةُ اللَّهِ سبحانه »",
-        "section_title_en": "INNER KNOWLEDGE OF ALLAH",
-        "hadiths": [
-          {
-            "hadith_num": 4071,
-            "arabic": "4071. الإمامُ عليٌّ عليه السلام : مَن عَرَفَ اللَّهَ كَمُلَت مَعرِفتُهُ",
-            "english": "4071. Imam Ali (AS) said, ‘He who attains inner knowledge of Allah has achieved perfection in his knowledge indeed.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4072,
-            "arabic": "4072. الإمامُ عليٌّ عليه السلام : مَعرِفةُ اللَّهِ سُبحانَهُ أعلى‏ المَعارِفِ",
-            "english": "4072. Imam Ali (AS) said, ‘The inner knowledge of Allah, Glory be to Him, is the highest of knowable truths.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4073,
-            "arabic": "4073. الإمامُ عليٌّ عليه السلام : ما يَسُرُّني لَو مِتُّ طِفلاً واُدخِلتُ الجَنَّةَ ولم أكبُرْ فأعرِفَ رَبّي عَزَّوجلَّ",
-            "english": "4073. Imam Ali (AS) said, ‘I would not be pleased to die as a child and be made to enter Paradise without being able to grow up and get to know my Lord, Mighty and Exalted.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4074,
-            "arabic": "4074. الإمامُ عليٌّ عليه السلام : ثَمَرَةُ العِلمِ مَعرِفَةُ اللَّهِ",
-            "english": "4074. Imam Ali (AS) said, ‘The fruit of knowledge is attaining inner knowledge of Allah.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4075,
-            "arabic": "4075. الإمامُ عليٌّ عليه السلام : مَن سَكَنَ قَلبَهُ العِلمُ بِاللَّهِ سَكَنَهُ الغِنى‏ عَن خَلقِ اللَّهِ",
-            "english": "4075. Imam Ali (AS) said, ‘He whose heart finds peace in knowing Allah, finds peace in being needless of Allah’s creatures.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4076,
-            "arabic": "4076. الإمامُ الصّادقُ عليه السلام : لَو يَعلَمُ النّاسُ ما في فَضلِ مَعرِفةِ اللَّهِ عَزَّوجلَّ ما مَدُّوا أعيُنَهُم إلى‏ ما مَتَّعَ اللَّهُ بِهِ الأعداءَ مِن زَهرَةِ الحَياةِ الدّنيا ونَعيمِها ، وكانَت دُنياهُم أقَلَّ عِندَهُم مِمّا يَطَؤونَهُ بِأرجُلِهِم ، ولَنَعِموا بِمَعرِفةِ اللَّهِ جَلَّ وعزَّ ، وتَلَذَّذوا بِها تَلَذُّذَ مَن لَم يَزَلْ في رَوضاتِ الجِنانِ مَعَ أولِياءِ اللَّهِ إنَّ مَعرِفةَ اللَّهِ عَزَّوجلَّ اُنسٌ مِن كُلِّ وَحشَةٍ ، وصاحِبٌ مِن كُلِّ وَحدَةٍ ، ونُورٌ مِن كُلِّ ظُلمَةٍ ، وقُوَّةٌ مِن كُلِّ ضَعفٍ ، وشِفاءٌ مِن كُلِّ سُقمٍ",
-            "english": "4076. Imam al-Sadiq (AS) said, ‘If people knew the virtue of knowing Allah, Mighty and Exalted, they would never extend their gaze to the splendour and bounties of the life of this world that Allah has granted to the enemies. They would then regard such people’s worldly goods to be more insignificant that the dust under their feet, and they would take great pleasure at attaining knowledge of Allah, Mighty and Exalted, and would savour it as if they were tasting the experience of being in the gardens of Paradise with the friends of Allah. Verily the inner knowledge of Allah is an intimate companion in every type of desolation, a friend in every type of loneliness, a light in every darkness, a source of strength from all weakness, and a cure for all ailments.’",
-            "footnotes": []
-          }
-        ]
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 271,
+    "chapter_title_ar": "المعرفة (2) «مَعرِفةُ اللَّهِ سبحانه »",
+    "chapter_title_en": "INNER KNOWLEDGE OF ALLAH",
+    "sections": [
       {
         "section_num": 1248,
         "section_title_ar": "آثارُ مَعرِفَةِ اللَّهِ‏",
@@ -8081,13 +8158,88 @@
             "footnotes": []
           }
         ]
+      }
+    ],
+    "hadiths": [
+      {
+        "hadith_num": 4071,
+        "arabic": "4071. الإمامُ عليٌّ عليه السلام : مَن عَرَفَ اللَّهَ كَمُلَت مَعرِفتُهُ",
+        "english": "4071. Imam Ali (AS) said, ‘He who attains inner knowledge of Allah has achieved perfection in his knowledge indeed.’",
+        "arabicFootnoteNums": [
+          1
+        ],
+        "englishFootnoteNums": [
+          2
+        ],
+        "footnotes": []
       },
       {
-        "section_num": 272,
-        "section_title_ar": "المعروف (1) «فِعلُ المَعروف »",
-        "section_title_en": "ACTS OF COMMON COURTESY(1)",
-        "hadiths": []
+        "hadith_num": 4072,
+        "arabic": "4072. الإمامُ عليٌّ عليه السلام : مَعرِفةُ اللَّهِ سُبحانَهُ أعلى‏ المَعارِفِ",
+        "english": "4072. Imam Ali (AS) said, ‘The inner knowledge of Allah, Glory be to Him, is the highest of knowable truths.’",
+        "arabicFootnoteNums": [
+          3
+        ],
+        "englishFootnoteNums": [
+          4
+        ],
+        "footnotes": []
       },
+      {
+        "hadith_num": 4073,
+        "arabic": "4073. الإمامُ عليٌّ عليه السلام : ما يَسُرُّني لَو مِتُّ طِفلاً واُدخِلتُ الجَنَّةَ ولم أكبُرْ فأعرِفَ رَبّي عَزَّوجلَّ",
+        "english": "4073. Imam Ali (AS) said, ‘I would not be pleased to die as a child and be made to enter Paradise without being able to grow up and get to know my Lord, Mighty and Exalted.’",
+        "arabicFootnoteNums": [
+          5
+        ],
+        "englishFootnoteNums": [
+          6
+        ],
+        "footnotes": []
+      },
+      {
+        "hadith_num": 4074,
+        "arabic": "4074. الإمامُ عليٌّ عليه السلام : ثَمَرَةُ العِلمِ مَعرِفَةُ اللَّهِ",
+        "english": "4074. Imam Ali (AS) said, ‘The fruit of knowledge is attaining inner knowledge of Allah.’",
+        "arabicFootnoteNums": [
+          7
+        ],
+        "englishFootnoteNums": [
+          8
+        ],
+        "footnotes": []
+      },
+      {
+        "hadith_num": 4075,
+        "arabic": "4075. الإمامُ عليٌّ عليه السلام : مَن سَكَنَ قَلبَهُ العِلمُ بِاللَّهِ سَكَنَهُ الغِنى‏ عَن خَلقِ اللَّهِ",
+        "english": "4075. Imam Ali (AS) said, ‘He whose heart finds peace in knowing Allah, finds peace in being needless of Allah’s creatures.’",
+        "arabicFootnoteNums": [
+          9
+        ],
+        "englishFootnoteNums": [
+          10
+        ],
+        "footnotes": []
+      },
+      {
+        "hadith_num": 4076,
+        "arabic": "4076. الإمامُ الصّادقُ عليه السلام : لَو يَعلَمُ النّاسُ ما في فَضلِ مَعرِفةِ اللَّهِ عَزَّوجلَّ ما مَدُّوا أعيُنَهُم إلى‏ ما مَتَّعَ اللَّهُ بِهِ الأعداءَ مِن زَهرَةِ الحَياةِ الدّنيا ونَعيمِها ، وكانَت دُنياهُم أقَلَّ عِندَهُم مِمّا يَطَؤونَهُ بِأرجُلِهِم ، ولَنَعِموا بِمَعرِفةِ اللَّهِ جَلَّ وعزَّ ، وتَلَذَّذوا بِها تَلَذُّذَ مَن لَم يَزَلْ في رَوضاتِ الجِنانِ مَعَ أولِياءِ اللَّهِ إنَّ مَعرِفةَ اللَّهِ عَزَّوجلَّ اُنسٌ مِن كُلِّ وَحشَةٍ ، وصاحِبٌ مِن كُلِّ وَحدَةٍ ، ونُورٌ مِن كُلِّ ظُلمَةٍ ، وقُوَّةٌ مِن كُلِّ ضَعفٍ ، وشِفاءٌ مِن كُلِّ سُقمٍ",
+        "english": "4076. Imam al-Sadiq (AS) said, ‘If people knew the virtue of knowing Allah, Mighty and Exalted, they would never extend their gaze to the splendour and bounties of the life of this world that Allah has granted to the enemies. They would then regard such people’s worldly goods to be more insignificant that the dust under their feet, and they would take great pleasure at attaining knowledge of Allah, Mighty and Exalted, and would savour it as if they were tasting the experience of being in the gardens of Paradise with the friends of Allah. Verily the inner knowledge of Allah is an intimate companion in every type of desolation, a friend in every type of loneliness, a light in every darkness, a source of strength from all weakness, and a cure for all ailments.’",
+        "arabicFootnoteNums": [
+          11
+        ],
+        "englishFootnoteNums": [
+          12
+        ],
+        "footnotes": []
+      }
+    ]
+  },
+  {
+    "chapter_num": 272,
+    "chapter_title_ar": "المعروف (1) «فِعلُ المَعروف »",
+    "chapter_title_en": "ACTS OF COMMON COURTESY(1)",
+    "sections": [
       {
         "section_num": 1276,
         "section_title_ar": "فَضْلُ المَعروفِ‏",
@@ -8293,13 +8445,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 273,
-        "section_title_ar": "المعروف (2) «الأمر بالمعروف والنّهي عن المنكر »",
-        "section_title_en": "ACTS OF COMMON COURTESY (2)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 273,
+    "chapter_title_ar": "المعروف (2) «الأمر بالمعروف والنّهي عن المنكر »",
+    "chapter_title_en": "ACTS OF COMMON COURTESY (2)",
+    "sections": [
       {
         "section_num": 1284,
         "section_title_ar": "أهَمِّيَّةُ الأمرِ بِالمَعروفِ وَالنَّهيِ عَنِ المُنكَرِ",
@@ -8478,13 +8631,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 274,
-        "section_title_ar": "العزّة",
-        "section_title_en": "HONOUR",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 274,
+    "chapter_title_ar": "العزّة",
+    "chapter_title_en": "HONOUR",
+    "sections": [
       {
         "section_num": 1289,
         "section_title_ar": "تَفسيرُ العِزِّ",
@@ -8613,13 +8767,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 275,
-        "section_title_ar": "العزلة",
-        "section_title_en": "SOLITUDE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 275,
+    "chapter_title_ar": "العزلة",
+    "chapter_title_en": "SOLITUDE",
+    "sections": [
       {
         "section_num": 1292,
         "section_title_ar": "فَضلُ العُزلَةِ",
@@ -8694,13 +8849,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 276,
-        "section_title_ar": "التّعزية",
-        "section_title_en": "CONDOLENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 276,
+    "chapter_title_ar": "التّعزية",
+    "chapter_title_en": "CONDOLENCE",
+    "sections": [
       {
         "section_num": 1295,
         "section_title_ar": "تَعزِيَةُ المُصابِ‏",
@@ -8751,13 +8907,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 277,
-        "section_title_ar": "العشرة",
-        "section_title_en": "SOCIAL INTERACTION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 277,
+    "chapter_title_ar": "العشرة",
+    "chapter_title_en": "SOCIAL INTERACTION",
+    "sections": [
       {
         "section_num": 1298,
         "section_title_ar": "أدَبُ العِشرَةِ مَعَ النّاسِ‏",
@@ -8856,13 +9013,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 278,
-        "section_title_ar": "عاشوراء",
-        "section_title_en": "ASH?RA’",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 278,
+    "chapter_title_ar": "عاشوراء",
+    "chapter_title_en": "ASH?RA’",
+    "sections": [
       {
         "section_num": 1301,
         "section_title_ar": "عاشوراءُ والبُكاءُ عَلَى الحُسَينِ عليه السلام وأصحابِهِ‏",
@@ -8899,32 +9057,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 279,
-        "section_title_ar": "العشق‏",
-        "section_title_en": "INFATUATION",
-        "hadiths": [
-          {
-            "hadith_num": 4265,
-            "arabic": "4265. الإمامُ عليٌّ عليه السلام: الهِجرانُ عُقوبَةُ العِشقِ.",
-            "english": "4265. Imam Ali (AS) said, ‘Separation from one’s beloved is the penalty for infatuation.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4266,
-            "arabic": "4266. الإمامُ عليٌّ عليه السلام : ومَن عَشِقَ شَيئاً أعشى‏ (أعمى‏) بَصَرَهُ وأمرَضَ قَلبَهُ ، فَهُوَ يَنظُرُ بِعَينٍ غَيرِ صَحيحَةٍ ، ويَسمَعُ بِاُذُنٍ غَيرِ سَميعَةٍ ، قَد خَرَقَتِ الشَّهَواتُ عَقلَهُ ، وأماتَتِ الدّنيا قَلبَهُ",
-            "english": "4266. Imam Ali (AS) said, ‘The one who is infatuated with something, his eyes become blind and his heart becomes sick, such that he sees with unsound eyes and hears with deaf ears, his base desires having torn apart his reason and [love of] the world having killed his heart.’",
-            "footnotes": []
-          },
-          {
-            "hadith_num": 4267,
-            "arabic": "4267. الإمامُ الصّادقُ عليه السلام - لَمّا سُئلَ عَنِ العِشقِ - : قُلوبٌ خَلَت من ذِكرِاللَّهِ فأذاقَها اللَّهُ حُبَّ غَيرِهِ",
-            "english": "4267. Imam al-Sadiq (AS), when asked about infatuation, replied, ‘Hearts that are empty of the remembrance of Allah are given to taste by Allah the love of other than Him.’",
-            "footnotes": []
-          }
-        ]
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 279,
+    "chapter_title_ar": "العشق‏",
+    "chapter_title_en": "INFATUATION",
+    "sections": [
       {
         "section_num": 1303,
         "section_title_ar": "ثَوابُ مَن عَشِقَ وعَفَ‏",
@@ -8956,13 +9096,52 @@
             "footnotes": []
           }
         ]
+      }
+    ],
+    "hadiths": [
+      {
+        "hadith_num": 4265,
+        "arabic": "4265. الإمامُ عليٌّ عليه السلام: الهِجرانُ عُقوبَةُ العِشقِ.",
+        "english": "4265. Imam Ali (AS) said, ‘Separation from one’s beloved is the penalty for infatuation.’",
+        "arabicFootnoteNums": [
+          1
+        ],
+        "englishFootnoteNums": [
+          2
+        ],
+        "footnotes": []
       },
       {
-        "section_num": 280,
-        "section_title_ar": "التَّعصُّب‏",
-        "section_title_en": "PARTISANSHIP",
-        "hadiths": []
+        "hadith_num": 4266,
+        "arabic": "4266. الإمامُ عليٌّ عليه السلام : ومَن عَشِقَ شَيئاً أعشى‏ (أعمى‏) بَصَرَهُ وأمرَضَ قَلبَهُ ، فَهُوَ يَنظُرُ بِعَينٍ غَيرِ صَحيحَةٍ ، ويَسمَعُ بِاُذُنٍ غَيرِ سَميعَةٍ ، قَد خَرَقَتِ الشَّهَواتُ عَقلَهُ ، وأماتَتِ الدّنيا قَلبَهُ",
+        "english": "4266. Imam Ali (AS) said, ‘The one who is infatuated with something, his eyes become blind and his heart becomes sick, such that he sees with unsound eyes and hears with deaf ears, his base desires having torn apart his reason and [love of] the world having killed his heart.’",
+        "arabicFootnoteNums": [
+          3
+        ],
+        "englishFootnoteNums": [
+          4
+        ],
+        "footnotes": []
       },
+      {
+        "hadith_num": 4267,
+        "arabic": "4267. الإمامُ الصّادقُ عليه السلام - لَمّا سُئلَ عَنِ العِشقِ - : قُلوبٌ خَلَت من ذِكرِاللَّهِ فأذاقَها اللَّهُ حُبَّ غَيرِهِ",
+        "english": "4267. Imam al-Sadiq (AS), when asked about infatuation, replied, ‘Hearts that are empty of the remembrance of Allah are given to taste by Allah the love of other than Him.’",
+        "arabicFootnoteNums": [
+          5
+        ],
+        "englishFootnoteNums": [
+          6
+        ],
+        "footnotes": []
+      }
+    ]
+  },
+  {
+    "chapter_num": 280,
+    "chapter_title_ar": "التَّعصُّب‏",
+    "chapter_title_en": "PARTISANSHIP",
+    "sections": [
       {
         "section_num": 1305,
         "section_title_ar": "ذَمُّ التَّعَصُّبِ‏",
@@ -9018,13 +9197,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 281,
-        "section_title_ar": "العصمة",
-        "section_title_en": "INFALLIBILITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 281,
+    "chapter_title_ar": "العصمة",
+    "chapter_title_en": "INFALLIBILITY",
+    "sections": [
       {
         "section_num": 1307,
         "section_title_ar": "مَعنَى العِصمَةِ",
@@ -9129,13 +9309,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 282,
-        "section_title_ar": "التّعظيم‏",
-        "section_title_en": "VENERATION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 282,
+    "chapter_title_ar": "التّعظيم‏",
+    "chapter_title_en": "VENERATION",
+    "sections": [
       {
         "section_num": 1310,
         "section_title_ar": "تَعظيمُ الاُمَراءِ",
@@ -9191,13 +9372,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 283,
-        "section_title_ar": "العفّة",
-        "section_title_en": "SELF-RESTRAINT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 283,
+    "chapter_title_ar": "العفّة",
+    "chapter_title_en": "SELF-RESTRAINT",
+    "sections": [
       {
         "section_num": 1312,
         "section_title_ar": "الحَثُّ عَلَى العَفافِ‏",
@@ -9345,13 +9527,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 284,
-        "section_title_ar": "العفو",
-        "section_title_en": "PARDON",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 284,
+    "chapter_title_ar": "العفو",
+    "chapter_title_en": "PARDON",
+    "sections": [
       {
         "section_num": 1316,
         "section_title_ar": "فَضيلَةُ العَفوِ",
@@ -9543,13 +9726,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 285,
-        "section_title_ar": "العافية",
-        "section_title_en": "VITALITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 285,
+    "chapter_title_ar": "العافية",
+    "chapter_title_en": "VITALITY",
+    "sections": [
       {
         "section_num": 1322,
         "section_title_ar": "قِيمَةُ العافِيَةِ",
@@ -9668,13 +9852,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 286,
-        "section_title_ar": "العقل‏",
-        "section_title_en": "THE INTELLECT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 286,
+    "chapter_title_ar": "العقل‏",
+    "chapter_title_en": "THE INTELLECT",
+    "sections": [
       {
         "section_num": 1327,
         "section_title_ar": "قِيمَةُ العَقلِ‏",
@@ -10219,13 +10404,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 287,
-        "section_title_ar": "الاعتكاف‏",
-        "section_title_en": "RETREAT IN THE MOSQUE (itikaf)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 287,
+    "chapter_title_ar": "الاعتكاف‏",
+    "chapter_title_en": "RETREAT IN THE MOSQUE (itikaf)",
+    "sections": [
       {
         "section_num": 1338,
         "section_title_ar": "الاعتِكافُ‏",
@@ -10256,13 +10442,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 288,
-        "section_title_ar": "العلم‏",
-        "section_title_en": "KNOWLEDGE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 288,
+    "chapter_title_ar": "العلم‏",
+    "chapter_title_en": "KNOWLEDGE",
+    "sections": [
       {
         "section_num": 1339,
         "section_title_ar": "فَضلُ العِلمِ‏",
@@ -11315,13 +11502,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 289,
-        "section_title_ar": "العُمر",
-        "section_title_en": "LIFESPAN",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 289,
+    "chapter_title_ar": "العُمر",
+    "chapter_title_en": "LIFESPAN",
+    "sections": [
       {
         "section_num": 1366,
         "section_title_ar": "العُمُرُ",
@@ -11500,13 +11688,14 @@
         "section_title_ar": "حِكمَةُ جَهلِ الإنسانِ بِمِقدارِ عُمُرِهِ‏",
         "section_title_en": "THE WISDOM BEHIND MAN’S IGNORANCE OF THE SPAN OF HIS LIFE",
         "hadiths": []
-      },
-      {
-        "section_num": 290,
-        "section_title_ar": "العمل‏",
-        "section_title_en": "ACTION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 290,
+    "chapter_title_ar": "العمل‏",
+    "chapter_title_en": "ACTION",
+    "sections": [
       {
         "section_num": 1372,
         "section_title_ar": "الحَثُّ عَلى العَمَلِ الصّالِحِ‏",
@@ -11792,13 +11981,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 291,
-        "section_title_ar": "العَهد",
-        "section_title_en": "THE COVENANT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 291,
+    "chapter_title_ar": "العَهد",
+    "chapter_title_en": "THE COVENANT",
+    "sections": [
       {
         "section_num": 1382,
         "section_title_ar": "الَحثُّ عَلَى الوَفاءِ بِالعَهدِ",
@@ -11871,13 +12061,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 292,
-        "section_title_ar": "المَعاد",
-        "section_title_en": "RESURRECTION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 292,
+    "chapter_title_ar": "المَعاد",
+    "chapter_title_en": "RESURRECTION",
+    "sections": [
       {
         "section_num": 1383,
         "section_title_ar": "المَعادُ",
@@ -12090,13 +12281,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 293,
-        "section_title_ar": "العادَة",
-        "section_title_en": "THE HABIT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 293,
+    "chapter_title_ar": "العادَة",
+    "chapter_title_en": "THE HABIT",
+    "sections": [
       {
         "section_num": 1394,
         "section_title_ar": "دورُ العادَةِ فِي الحَياةِ",
@@ -12219,13 +12411,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 294,
-        "section_title_ar": "العِيد",
-        "section_title_en": "ID – THE FESTIVAL",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 294,
+    "chapter_title_ar": "العِيد",
+    "chapter_title_en": "ID – THE FESTIVAL",
+    "sections": [
       {
         "section_num": 1397,
         "section_title_ar": "العيدُ الحَقِيقي‏",
@@ -12300,13 +12493,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 295,
-        "section_title_ar": "العَيب‏",
-        "section_title_en": "THE FAULT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 295,
+    "chapter_title_ar": "العَيب‏",
+    "chapter_title_en": "THE FAULT",
+    "sections": [
       {
         "section_num": 1400,
         "section_title_ar": "مَدحُ مَن شَغَلَهُ عَيبُهُ عَن عُيوبِ النّاسِ‏",
@@ -12541,13 +12735,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 296,
-        "section_title_ar": "التَّعيير",
-        "section_title_en": "CONDEMNATION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 296,
+    "chapter_title_ar": "التَّعيير",
+    "chapter_title_en": "CONDEMNATION",
+    "sections": [
       {
         "section_num": 1407,
         "section_title_ar": "ذَمُّ التَّعييرِ",
@@ -12602,13 +12797,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 297,
-        "section_title_ar": "العَيش‏",
-        "section_title_en": "LIFESTYLE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 297,
+    "chapter_title_ar": "العَيش‏",
+    "chapter_title_en": "LIFESTYLE",
+    "sections": [
       {
         "section_num": 1408,
         "section_title_ar": "أهنَأُ العَيشِ‏",
@@ -12658,13 +12854,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 298,
-        "section_title_ar": "الغُرور",
-        "section_title_en": "DELUSION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 298,
+    "chapter_title_ar": "الغُرور",
+    "chapter_title_en": "DELUSION",
+    "sections": [
       {
         "section_num": 1410,
         "section_title_ar": "خَطَرُ الغُرورِ وصِفَةُ المَغرُورِ",
@@ -12776,13 +12973,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 299,
-        "section_title_ar": "الغَزوة",
-        "section_title_en": "THE BATTLES (Fought by the Prophet)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 299,
+    "chapter_title_ar": "الغَزوة",
+    "chapter_title_en": "THE BATTLES (Fought by the Prophet)",
+    "sections": [
       {
         "section_num": 1414,
         "section_title_ar": "غَزوَةُ بَدرٍ",
@@ -12921,13 +13119,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 300,
-        "section_title_ar": "الغِشّ‏",
-        "section_title_en": "SWINDLING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 300,
+    "chapter_title_ar": "الغِشّ‏",
+    "chapter_title_en": "SWINDLING",
+    "sections": [
       {
         "section_num": 1421,
         "section_title_ar": "ذَمُّ الغِشِ‏",
@@ -12976,13 +13175,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 301,
-        "section_title_ar": "الغَصب‏",
-        "section_title_en": "USURPATION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 301,
+    "chapter_title_ar": "الغَصب‏",
+    "chapter_title_en": "USURPATION",
+    "sections": [
       {
         "section_num": 1422,
         "section_title_ar": "حُرمَةُ الغَصبِ‏",
@@ -13025,13 +13225,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 302,
-        "section_title_ar": "الغَضَب‏",
-        "section_title_en": "ANGER",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 302,
+    "chapter_title_ar": "الغَضَب‏",
+    "chapter_title_en": "ANGER",
+    "sections": [
       {
         "section_num": 1423,
         "section_title_ar": "الغَضَبُ مِفتاحُ كُلِّ شَرٍّ",
@@ -13162,13 +13363,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 303,
-        "section_title_ar": "الاستِغفار",
-        "section_title_en": "SEEKING FORGIVENESS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 303,
+    "chapter_title_ar": "الاستِغفار",
+    "chapter_title_en": "SEEKING FORGIVENESS",
+    "sections": [
       {
         "section_num": 1428,
         "section_title_ar": "فَضْلُ الاستِغفارِ",
@@ -13286,13 +13488,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 304,
-        "section_title_ar": "الغَفلة",
-        "section_title_en": "NEGLIGENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 304,
+    "chapter_title_ar": "الغَفلة",
+    "chapter_title_en": "NEGLIGENCE",
+    "sections": [
       {
         "section_num": 1432,
         "section_title_ar": "التَّحذيرُ مِنَ الغَفلَةِ",
@@ -13441,13 +13644,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 305,
-        "section_title_ar": "الغِلّ‏",
-        "section_title_en": "RANCOUR",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 305,
+    "chapter_title_ar": "الغِلّ‏",
+    "chapter_title_en": "RANCOUR",
+    "sections": [
       {
         "section_num": 1437,
         "section_title_ar": "التَّحذيرُ مِنَ الغِلِ‏",
@@ -13522,13 +13726,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 306,
-        "section_title_ar": "الغُلُوّ",
-        "section_title_en": "EXTREMISM (IN RELIGION)",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 306,
+    "chapter_title_ar": "الغُلُوّ",
+    "chapter_title_en": "EXTREMISM (IN RELIGION)",
+    "sections": [
       {
         "section_num": 1440,
         "section_title_ar": "التَّحذيرُ مِن الغُلوِّ فِي الدِّين‏",
@@ -13601,13 +13806,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 307,
-        "section_title_ar": "الغِنى‏",
-        "section_title_en": "RICHES",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 307,
+    "chapter_title_ar": "الغِنى‏",
+    "chapter_title_en": "RICHES",
+    "sections": [
       {
         "section_num": 1441,
         "section_title_ar": "الغِنى‏ وَالطُّغيانُ‏",
@@ -13800,13 +14006,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 308,
-        "section_title_ar": "الغِناء",
-        "section_title_en": "MUSIC",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 308,
+    "chapter_title_ar": "الغِناء",
+    "chapter_title_en": "MUSIC",
+    "sections": [
       {
         "section_num": 1448,
         "section_title_ar": "ذَمُّ الغِناءِ",
@@ -13856,13 +14063,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 309,
-        "section_title_ar": "الغَيب‏",
-        "section_title_en": "THE UNSEEN",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 309,
+    "chapter_title_ar": "الغَيب‏",
+    "chapter_title_en": "THE UNSEEN",
+    "sections": [
       {
         "section_num": 1450,
         "section_title_ar": "النَّبِيُّ يَعلَمُ الغَيبَ بِتَعليمِ اللَّهِ‏",
@@ -13900,13 +14108,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 310,
-        "section_title_ar": "الغِيبة",
-        "section_title_en": "BACKBITING",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 310,
+    "chapter_title_ar": "الغِيبة",
+    "chapter_title_en": "BACKBITING",
+    "sections": [
       {
         "section_num": 1452,
         "section_title_ar": "النَّهيُ عنِ الغِيبَةِ",
@@ -14087,13 +14296,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 311,
-        "section_title_ar": "الغَيرة",
-        "section_title_en": "POSSESSIVENESS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 311,
+    "chapter_title_ar": "الغَيرة",
+    "chapter_title_en": "POSSESSIVENESS",
+    "sections": [
       {
         "section_num": 1459,
         "section_title_ar": "مدحُ الغَيرةِ",
@@ -14185,13 +14395,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 312,
-        "section_title_ar": "الفِتنة",
-        "section_title_en": "TRIAL AND TEMPTATION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 312,
+    "chapter_title_ar": "الفِتنة",
+    "chapter_title_en": "TRIAL AND TEMPTATION",
+    "sections": [
       {
         "section_num": 1461,
         "section_title_ar": "الفِتنَةِ",
@@ -14291,13 +14502,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 313,
-        "section_title_ar": "الفَتوى‏",
-        "section_title_en": "THE VERDICT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 313,
+    "chapter_title_ar": "الفَتوى‏",
+    "chapter_title_en": "THE VERDICT",
+    "sections": [
       {
         "section_num": 1465,
         "section_title_ar": "مَن أفتَى النّاسَ بِرَأيِهِ‏",
@@ -14347,13 +14559,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 314,
-        "section_title_ar": "الفُحش‏",
-        "section_title_en": "OBSCENE LANGUAGE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 314,
+    "chapter_title_ar": "الفُحش‏",
+    "chapter_title_en": "OBSCENE LANGUAGE",
+    "sections": [
       {
         "section_num": 1467,
         "section_title_ar": "التَّحذيرُ مِنَ الفُحشِ‏",
@@ -14414,13 +14627,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 315,
-        "section_title_ar": "الفَخر",
-        "section_title_en": "PRIDE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 315,
+    "chapter_title_ar": "الفَخر",
+    "chapter_title_en": "PRIDE",
+    "sections": [
       {
         "section_num": 1468,
         "section_title_ar": "ذَمُّ التَّفاخُرِ",
@@ -14520,13 +14734,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 316,
-        "section_title_ar": "الفُرس‏",
-        "section_title_en": "THE PERSIANS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 316,
+    "chapter_title_ar": "الفُرس‏",
+    "chapter_title_en": "THE PERSIANS",
+    "sections": [
       {
         "section_num": 1472,
         "section_title_ar": "الفُرسُ وَالإيمانُ‏",
@@ -14569,13 +14784,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 317,
-        "section_title_ar": "الفُرصة",
-        "section_title_en": "OPPORTUNITY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 317,
+    "chapter_title_ar": "الفُرصة",
+    "chapter_title_en": "OPPORTUNITY",
+    "sections": [
       {
         "section_num": 1473,
         "section_title_ar": "إغتنم الفُرصَةَ",
@@ -14636,13 +14852,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 318,
-        "section_title_ar": "الفَرائض‏",
-        "section_title_en": "OBLIGATIONS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 318,
+    "chapter_title_ar": "الفَرائض‏",
+    "chapter_title_en": "OBLIGATIONS",
+    "sections": [
       {
         "section_num": 1474,
         "section_title_ar": "الحَثُّ عَلى‏ أداءِ الفَرائِضِ‏",
@@ -14747,13 +14964,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 319,
-        "section_title_ar": "الفَراغ‏",
-        "section_title_en": "IDLENESS",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 319,
+    "chapter_title_ar": "الفَراغ‏",
+    "chapter_title_en": "IDLENESS",
+    "sections": [
       {
         "section_num": 1477,
         "section_title_ar": "الفَراغُ‏",
@@ -14832,13 +15050,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 320,
-        "section_title_ar": "الفَساد",
-        "section_title_en": "CORRUPTION",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 320,
+    "chapter_title_ar": "الفَساد",
+    "chapter_title_en": "CORRUPTION",
+    "sections": [
       {
         "section_num": 1478,
         "section_title_ar": "مايُفسِدُ العامَّةَ",
@@ -14913,13 +15132,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 321,
-        "section_title_ar": "الفضل‏",
-        "section_title_en": "MERIT",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 321,
+    "chapter_title_ar": "الفضل‏",
+    "chapter_title_en": "MERIT",
+    "sections": [
       {
         "section_num": 1481,
         "section_title_ar": "الفَضائِلُ‏",
@@ -15042,13 +15262,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 322,
-        "section_title_ar": "الفَقر",
-        "section_title_en": "POVERTY",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 322,
+    "chapter_title_ar": "الفَقر",
+    "chapter_title_en": "POVERTY",
+    "sections": [
       {
         "section_num": 1484,
         "section_title_ar": "ذمُّ الفَقرِ",
@@ -15467,13 +15688,14 @@
             "footnotes": []
           }
         ]
-      },
-      {
-        "section_num": 323,
-        "section_title_ar": "الفِقه‏",
-        "section_title_en": "JURISPRUDENCE",
-        "hadiths": []
-      },
+      }
+    ]
+  },
+  {
+    "chapter_num": 323,
+    "chapter_title_ar": "الفِقه‏",
+    "chapter_title_en": "JURISPRUDENCE",
+    "sections": [
       {
         "section_num": 1495,
         "section_title_ar": "الحَثُّ عَلَى التَّفَقُّهِ فِي الدِّينِ‏",
