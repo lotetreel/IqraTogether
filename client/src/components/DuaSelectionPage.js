@@ -14,22 +14,26 @@ import AlAnaamImage from '../assets/images/AlAnaam.png'; // Import Al-An'am imag
 import AlRahmanImage from '../assets/images/AlRahman.png'; // Import Al-Rahman image
 // Removed KidsModeIcon import, as the toggle is now in DuaSyncApp
 import AlKafiSelectionPage from './AlKafiSelectionPage'; // Import the new Al Kafi selection page
+import HadithSelectionPage from './HadithSelectionPage'; // Import the new Hadith selection page
 
-const DuaSelectionPage = ({ 
-  onSelectDua, 
-  onSelectQuran, 
-  onSelectAlKafi, 
-  onBack, 
+const DuaSelectionPage = ({
+  onSelectDua,
+  onSelectQuran,
+  onSelectAlKafi,
+  onSelectHadithChapter, // Add new prop for Hadith selection
+  onBack,
   isKidsMode,
   // Pass through font and display props for AlKafiSelectionPage
   arabicFontSize, 
   translationFontSize, 
-  showTranslation 
+  showTranslation
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'sahifa', 'alkafi', 'game'
+  const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'sahifa', 'alkafi', 'hadith', 'game'
   const [filter, setFilter] = useState('all');
   // Removed isKidsFilterActive state, will use isKidsMode prop
+  const [hadithData, setHadithData] = useState(null); // State to hold loaded hadith data
+  const [isLoadingHadith, setIsLoadingHadith] = useState(false); // Loading state for hadith
 
   // Get Quran list, fetch action, and connectionStatus from context
   const { quranSurahList, getQuranMetadata, error: socketError, connectionStatus } = useSocket(); // Added connectionStatus
@@ -133,6 +137,7 @@ const DuaSelectionPage = ({
           activeTab === 'quran' ? 'Select a Surah' :
           activeTab === 'sahifa' ? 'Select a Sahifa Supplication' :
           activeTab === 'alkafi' ? 'Select from Al-Kafi' :
+          activeTab === 'hadith' ? 'Select a Hadith Collection' : // Added Hadith title
           'Tile Matching Game'}
        </h1>
 
@@ -197,6 +202,20 @@ const DuaSelectionPage = ({
               Al Kafi
             </span>
           </button>
+          {/* Hadith Button */}
+          <button
+            onClick={() => setActiveTab('hadith')}
+            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
+              activeTab === 'hadith'
+                ? 'bg-gradient-primary text-white shadow-md'
+                : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+            }`}
+          >
+            <span className="flex items-center">
+              <LucideIcons.BookOpen size={18} className="mr-2" /> {/* Using BookOpen icon */}
+              Hadith
+            </span>
+          </button>
           {/* Game Button (Conditional) */}
           {isKidsMode && (
             <button
@@ -216,8 +235,8 @@ const DuaSelectionPage = ({
          </div>
        </div>
 
-       {/* Search and filters (Only show if not on Game tab and not AlKafi tab) */}
-       {activeTab !== 'game' && activeTab !== 'alkafi' && (
+       {/* Search and filters (Only show if not on Game, AlKafi, or Hadith tab) */}
+       {activeTab !== 'game' && activeTab !== 'alkafi' && activeTab !== 'hadith' && (
          <div className="mb-8">
           <div className="relative mb-5">
             <LucideIcons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
@@ -299,6 +318,13 @@ const DuaSelectionPage = ({
           translationFontSize={translationFontSize}
           showTranslation={showTranslation}
         />
+      ) : activeTab === 'hadith' ? (
+        // --- Hadith Rendering ---
+        <HadithSelectionPage
+          onSelectHadithChapter={onSelectHadithChapter}
+          // Pass necessary props if HadithSelectionPage needs them
+          // e.g., isKidsMode={isKidsMode}, arabicFontSize={arabicFontSize}, etc.
+        />
       ) : (
         // --- Quran/Dua/Sahifa Grid Rendering ---
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -312,12 +338,15 @@ const DuaSelectionPage = ({
                  className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                >
                 {/* Dua card content... */}
-                <div className="h-40 w-full overflow-hidden relative">
-                   <img
-                     src={dua.image || `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(dua.title)}`}
-                     alt={dua.title}
-                     className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   />
+                 <div className="h-40 w-full overflow-hidden relative">
+                   {dua.image && (
+                     <img
+                       src={dua.image}
+                       alt={dua.title}
+                       className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                       onError={(e) => { e.target.style.display = 'none'; }}
+                     />
+                   )}
                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                      <div className="flex justify-between items-end">
                        <h3 className="text-white font-bold text-lg">{dua.title}</h3>
@@ -361,12 +390,15 @@ const DuaSelectionPage = ({
                  className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                >
                 {/* Sahifa card content (similar to Dua) */}
-                <div className="h-40 w-full overflow-hidden relative">
-                   <img
-                     src={dua.image || `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(dua.title)}`}
-                     alt={dua.title}
-                     className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                   />
+                 <div className="h-40 w-full overflow-hidden relative">
+                   {dua.image && (
+                     <img
+                       src={dua.image}
+                       alt={dua.title}
+                       className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                       onError={(e) => { e.target.style.display = 'none'; }}
+                     />
+                   )}
                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                      <div className="flex justify-between items-end">
                        <h3 className="text-white font-bold text-lg">{dua.title}</h3>
@@ -426,20 +458,26 @@ const DuaSelectionPage = ({
                  >
                   {/* Quran card content... */}
                    <div className="h-40 w-full overflow-hidden relative">
-                      <img
-                        src={
-                          surah.id == 1 ? AlFatihaImage :
-                          surah.id == 2 ? AlBaqaraImage :
-                          surah.id == 3 ? AalImranImage :
-                          surah.id == 4 ? AnNisaImage :
-                          surah.id == 5 ? AlMaidahImage :
-                          surah.id == 6 ? AlAnaamImage :
-                          surah.id == 55 ? AlRahmanImage :
-                          `https://via.placeholder.com/300x200/EFEFEF/AAAAAA?text=${encodeURIComponent(surah.title)}`
-                        }
-                        alt={surah.title}
-                        className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                     />
+                     {(() => { // IIFE to calculate src and conditionally render img
+                       const imageSrc =
+                         surah.id == 1 ? AlFatihaImage :
+                         surah.id == 2 ? AlBaqaraImage :
+                         surah.id == 3 ? AalImranImage :
+                         surah.id == 4 ? AnNisaImage :
+                         surah.id == 5 ? AlMaidahImage :
+                         surah.id == 6 ? AlAnaamImage :
+                         surah.id == 55 ? AlRahmanImage :
+                         null; // No placeholder
+
+                       return imageSrc ? ( // Only render img if src is not null
+                         <img
+                           src={imageSrc}
+                           alt={surah.title}
+                           className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
+                           onError={(e) => { e.target.style.display = 'none'; }}
+                         />
+                       ) : null; // Render nothing if no image src
+                     })()}
                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                        <div className="flex justify-between items-end">
                          <h3 className="text-white font-bold text-lg">
@@ -473,8 +511,8 @@ const DuaSelectionPage = ({
         </div>
       )}
 
-      {/* No results (Only show if not on Game tab and not AlKafi tab) */}
-      {activeTab !== 'game' && activeTab !== 'alkafi' && (
+      {/* No results (Only show if not on Game, AlKafi, or Hadith tab) */}
+      {activeTab !== 'game' && activeTab !== 'alkafi' && activeTab !== 'hadith' && (
         (activeTab === 'duas' && filteredDuas.length === 0) ||
         (activeTab === 'sahifa' && filteredSahifa.length === 0) || // Check Sahifa results
         (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0)

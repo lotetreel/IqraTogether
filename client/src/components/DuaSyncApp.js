@@ -23,6 +23,7 @@ import NetworkInfo from './NetworkInfo';
 import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the custom icon
 import TileMatchingGame from './TileMatchingGame'; // Import the game component
 import AlKafiChapterView from './AlKafiChapterView'; // Import AlKafiChapterView
+import HadithChapterView from './HadithChapterView'; // Import HadithChapterView
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -903,6 +904,15 @@ const DuaSyncApp = () => {
                       translationFontSize={translationFontSize}
                       showTranslation={showTranslation}
                     />
+                  ) : currentContentInfo?.type === 'hadith_chapter' ? (
+                    // --- Hadith Chapter View Rendering ---
+                    <HadithChapterView
+                      chapterFullContent={currentFullContent}
+                      arabicFontSize={arabicFontSize}
+                      translationFontSize={translationFontSize}
+                      showTranslation={showTranslation}
+                      // Pass other necessary props like onBack if needed
+                    />
                   ) : (
                     // --- Normal Mode Layout (Quran/Dua) ---
                     <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
@@ -968,7 +978,8 @@ const DuaSyncApp = () => {
                           "Connection lost. Navigate locally or use Rejoin in header."
                         )
                       ) : 
-                      (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi hadith." : null)
+                      (currentContentInfo?.type === 'alkafi_chapter' ? "Viewing Al-Kafi hadith." : 
+                      (currentContentInfo?.type === 'hadith_chapter' ? "Viewing Mizan al-Hikmah chapter." : null))
                     }
                   </div>
                 </div>
@@ -988,6 +999,7 @@ const DuaSyncApp = () => {
                   onSelectDua={handleContentSelection}
                   onSelectQuran={handleContentSelection}
                   onSelectAlKafi={handleAlKafiChapterSelection} // Updated prop name
+                  onSelectHadithChapter={handleContentSelection} // Use generic handler for now
                   onBack={handleBack}
                   isKidsMode={isKidsMode}
                   arabicFontSize={arabicFontSize}
@@ -1058,7 +1070,18 @@ const DuaSyncApp = () => {
                       showTranslation={showTranslation}
                       // onBack is not needed here as fullscreen exit handles going back
                     />
-                </div>
+                 </div>
+              ) : currentContentInfo?.type === 'hadith_chapter' ? (
+                 // --- Hadith Chapter View Fullscreen ---
+                 <div className="w-full h-full overflow-y-auto custom-scrollbar">
+                   <HadithChapterView
+                      chapterFullContent={currentFullContent}
+                      arabicFontSize={arabicFontSize * 1.1} // Slightly increase font for fullscreen
+                      translationFontSize={translationFontSize * 1.05} // Slightly increase font
+                      showTranslation={showTranslation}
+                      // onBack is not needed here as fullscreen exit handles going back
+                    />
+                 </div>
               ) : (
                 // --- Normal Mode Fullscreen (Quran/Dua) ---
                 <div className="w-full max-w-5xl mx-auto py-4">
@@ -1095,8 +1118,8 @@ const DuaSyncApp = () => {
                 </div>
               )}
             </div>
-             {/* Page number at the bottom - Not applicable for alkafi_chapter */}
-             {currentContentInfo?.type !== 'alkafi_chapter' && (
+             {/* Page number at the bottom - Not applicable for alkafi_chapter or hadith_chapter */}
+             {currentContentInfo?.type !== 'alkafi_chapter' && currentContentInfo?.type !== 'hadith_chapter' && (
                 <div className="text-center text-sm text-gray-500 dark:text-dark-text-muted mt-4 flex-shrink-0">
                   {`${currentIndex + 1} of ${totalPhrases}`}
                 </div>

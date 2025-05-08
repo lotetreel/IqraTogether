@@ -133,6 +133,20 @@ const _performFetch = async (type, id, setIsLoadingContent, setCurrentFullConten
       } else {
         throw new Error(`Quran Surah with ID ${id} not found or failed to merge from preloaded text.`);
       }
+    } else if (type === 'hadith_chapter') {
+      // Load Hadith Chapter directly from imported data
+      console.log(`Attempting to load Hadith Chapter ${id} from local map.`);
+      const hadithData = localContentMap[id];
+      if (hadithData) {
+        // Simulate async loading slightly if needed for UI consistency
+        await new Promise(resolve => setTimeout(resolve, 10));
+        // Assuming hadithData is the full content object.
+        // Adjust if specific structuring (like 'totalHadiths' or nested 'hadiths' array) is needed by components.
+        setCurrentFullContent({ ...hadithData });
+        console.log(`Hadith Chapter ${id} loaded from local map.`);
+      } else {
+        throw new Error(`Hadith Chapter with ID ${id} not found locally.`);
+      }
     } else {
       throw new Error(`Unknown content type: ${type}`);
     }

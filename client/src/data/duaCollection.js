@@ -1,7 +1,8 @@
 // Removed imports from sampleContent as they are no longer needed
-import DUA_KUMAYL from './dua_kumayl.json'; // Import the specific Dua Kumayl data
-import DUA_SIMAAT from './dua_simaat.json'; // Import the specific Dua Simaat data
-import SAHIFA_SAJJADIYA_DUA1 from './sahifa_sajjadiya_dua1.json'; // Import the Sahifa Sajjadiya Dua 1 data
+import DUA_KUMAYL from './dua_kumayl.json';
+import DUA_SIMAAT from './dua_simaat.json';
+import SAHIFA_SAJJADIYA_DUA1 from './sahifa_sajjadiya_dua1.json';
+// Hadith data will be loaded asynchronously
 
 // Basic dua collection for preview/selection
 export const duaCollection = [
@@ -52,8 +53,79 @@ export const quranCollection = [];
 
 // Content lookup map for full content retrieval
 export const contentMap = {
-  'dua-kumayl': DUA_KUMAYL, // Only keep Dua Kumayl entry
+  'dua-kumayl': DUA_KUMAYL,
   'dua-simaat': DUA_SIMAAT,
   'sahifa-sajjadiya-dua1': SAHIFA_SAJJADIYA_DUA1
-  // Removed all other entries
 };
+
+// Helper function to process a single volume of Mizan al-Hikmah
+const processMizanVolume = (volumeData, volumeNum, contentMapInstance) => {
+  if (volumeData && Array.isArray(volumeData)) {
+    volumeData.forEach(chapter => {
+      if (chapter && chapter.chapter_num) {
+        const chapterId = `mizan_v${volumeNum}_ch${chapter.chapter_num}`;
+        contentMapInstance[chapterId] = {
+          id: chapterId,
+          type: 'hadith_chapter',
+          title: `Mizan al-Hikmah Vol ${volumeNum} - Ch ${chapter.chapter_num}: ${chapter.chapter_title_en}`,
+          source: `Mizan al-Hikmah Vol ${volumeNum}`,
+          volume: volumeNum, // Add volume number for easier filtering later
+          ...chapter
+        };
+      }
+    });
+    console.log(`Mizan al-Hikmah Vol ${volumeNum} chapters successfully processed and added to contentMap:`, volumeData.length);
+    return true;
+  } else {
+    console.warn(`Fetched Mizan al-Hikmah Vol ${volumeNum} data is not available or not in expected format. Hadith chapters will not be loaded into contentMap.`);
+    return false;
+  }
+};
+
+// Asynchronously load Hadith data for both volumes and populate contentMap
+const loadAndPopulateAllHadithData = async () => {
+  try {
+    // Load Volume 1
+    const responseV1 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol1.json');
+    if (!responseV1.ok) {
+      throw new Error(`HTTP error for Vol 1! status: ${responseV1.status}`);
+    }
+    const MIZAN_AL_HIKMAH_VOL1 = await responseV1.json();
+    processMizanVolume(MIZAN_AL_HIKMAH_VOL1, 1, contentMap);
+
+  } catch (error) {
+    console.error('Failed to load or process Mizan al-Hikmah Vol 1 data for contentMap:', error);
+  }
+
+  try {
+    // Load Volume 2
+    const responseV2 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol2.json'); // Path relative to public folder
+    if (!responseV2.ok) {
+      throw new Error(`HTTP error for Vol 2! status: ${responseV2.status}`);
+    }
+    const MIZAN_AL_HIKMAH_VOL2 = await responseV2.json();
+    processMizanVolume(MIZAN_AL_HIKMAH_VOL2, 2, contentMap);
+
+  } catch (error) {
+    console.error('Failed to load or process Mizan al-Hikmah Vol 2 data for contentMap:', error);
+  }
+
+  // try {
+  //   // Load Volume 3
+  //   const responseV3 = await fetch('/data/MizanAlHikmah/mizan_al_hikmah_vol3.json'); // Path relative to public folder
+  //   if (!responseV3.ok) {
+  //     throw new Error(`HTTP error for Vol 3! status: ${responseV3.status}`);
+  //   }
+  //   const MIZAN_AL_HIKMAH_VOL3 = await responseV3.json();
+  //   processMizanVolume(MIZAN_AL_HIKMAH_VOL3, 3, contentMap);
+  //
+  // } catch (error) {
+  //   console.error('Failed to load or process Mizan al-Hikmah Vol 3 data for contentMap:', error);
+  // }
+};
+
+// Call the function to load Hadith data when this module is initialized.
+// Export a promise that resolves when the data is ready.
+export const dataReadyPromise = (async () => {
+  await loadAndPopulateAllHadithData();
+})();
