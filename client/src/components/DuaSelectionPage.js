@@ -118,6 +118,25 @@ const DuaSelectionPage = ({
   const filteredQuran = filterContent(quranSurahList, 'quran');
   // --- End Filtering Logic ---
 
+  // Helper function to get a specific icon and color for Sahifa duas
+  const getSahifaDuaIcon = (dua) => {
+    let IconComponent;
+    let colorClass = 'text-teal-500'; // Default color for Sahifa
+
+    switch (dua.id) {
+      case 'sahifa-sajjadiya-dua1': IconComponent = LucideIcons.Sparkles; colorClass = 'text-yellow-400'; break; // Praise
+      case 'sahifa-sajjadiya-dua2': IconComponent = LucideIcons.Gift; colorClass = 'text-green-500'; break;    // Blessing on Prophet
+      case 'sahifa-sajjadiya-dua3': IconComponent = LucideIcons.Users; colorClass = 'text-indigo-500'; break; // Attesters to Messengers (using Users icon as placeholder)
+      case 'sahifa-sajjadiya-dua4': IconComponent = LucideIcons.Landmark; colorClass = 'text-blue-500'; break;   // Bearers of Throne
+      case 'sahifa-sajjadiya-dua5': IconComponent = LucideIcons.UserCheck; colorClass = 'text-lime-600'; break;     // For himself and people (changed to UserCheck)
+      case 'sahifa-sajjadiya-dua6': IconComponent = LucideIcons.Sunrise; colorClass = 'text-orange-500'; break;  // Morning and Evening (changed to Sunrise)
+      case 'sahifa-sajjadiya-dua7': IconComponent = LucideIcons.AlertTriangle; colorClass = 'text-red-500'; break; // Worrisome tasks
+      case 'sahifa-sajjadiya-dua8': IconComponent = LucideIcons.Shield; colorClass = 'text-purple-500'; break; // Seeking Refuge
+      default: IconComponent = LucideIcons.BookOpen; // Default icon
+    }
+    return <IconComponent size={18} className={`inline-block ${colorClass}`} />;
+  };
+
   // Reset to Quran tab if Kids Mode is turned off while Game tab is active
   useEffect(() => {
     if (!isKidsMode && activeTab === 'game') {
@@ -381,56 +400,35 @@ const DuaSelectionPage = ({
               </div>
             ))
           ) : activeTab === 'sahifa' ? (
-             // --- Sahifa Rendering ---
-             filteredSahifa.map(dua => ( // Use filteredSahifa here
-               <div
-                 key={dua.id}
-                 // Pass isKidsMode prop along with selection
-                 onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsMode })} // Still use onSelectDua, type 'dua'
-                 className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-               >
-                {/* Sahifa card content (similar to Dua) */}
-                 <div className="h-40 w-full overflow-hidden relative">
-                   {dua.image && (
-                     <img
-                       src={dua.image}
-                       alt={dua.title}
-                       className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                       onError={(e) => { e.target.style.display = 'none'; }}
-                     />
-                   )}
-                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                     <div className="flex justify-between items-end">
-                       <h3 className="text-white font-bold text-lg">{dua.title}</h3>
-                       {dua.length && (
-                         <div className="badge bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200"> {/* Different color for Sahifa */}
-                           {dua.length}
-                         </div>
-                       )}
-                     </div>
-                     {dua.arabic && <p className="text-white/80 text-sm">{dua.arabic}</p>}
-                   </div>
-                 </div>
-                 <div className="p-4 relative">
-                   {dua.source && <p className="text-sm text-gray-500 dark:text-dark-text-muted mb-2">Source: {dua.source}</p>}
-                   {dua.description && <p className="text-gray-700 dark:text-dark-text-secondary line-clamp-3">{dua.description}</p>}
-                   <div className="mt-3 flex items-center justify-between">
-                     {dua.recitationTime && <span className="text-xs text-gray-500 dark:text-dark-text-muted">{dua.recitationTime}</span>}
-                     {dua.popularity && (
-                       <div className="flex">
-                         {Array.from({ length: dua.popularity }).map((_, i) => (
-                           <LucideIcons.Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                         ))}
-                       </div>
-                     )}
-                   </div>
-                   <div className="absolute inset-0 bg-teal-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-teal-500/10"> {/* Different color */}
-                     <span className="btn-teal py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300"> {/* Different color */}
-                       Select Supplication
-                     </span>
-                   </div>
-                 </div>
-              </div>
+             // --- Sahifa Rendering (Hadith-like style) ---
+             filteredSahifa.map(dua => (
+              <button
+                key={dua.id}
+                onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsMode })}
+                className="card p-4 text-left hover:bg-teal-50 dark:hover:bg-dark-bg-tertiary transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400 w-full flex flex-col justify-between"
+              >
+                <div> {/* Wrapper for top content */}
+                  <div className="flex justify-between items-center mb-1"> {/* Changed items-start to items-center */}
+                    <span className="text-base font-semibold text-teal-700 dark:text-teal-300 pr-2"> {/* Changed text-lg to text-base */}
+                      {dua.title}
+                    </span>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted flex-shrink-0"> {/* Added flex-shrink-0 */}
+                      {getSahifaDuaIcon(dua)}
+                      {dua.length && (
+                        <span className="badge bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 text-xs">
+                          {dua.length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {dua.arabic && (
+                    <p className="text-right text-lg font-uthmani text-gray-600 dark:text-dark-text-secondary mt-1 mb-0" dir="rtl"> 
+                      {dua.arabic}
+                    </p>
+                  )}
+                </div>
+                {/* Description removed */}
+              </button>
              ))
           ) : activeTab === 'quran' ? (
             isLoadingQuranList ? (

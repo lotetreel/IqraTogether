@@ -2,6 +2,15 @@
 import DUA_KUMAYL from './dua_kumayl.json';
 import DUA_SIMAAT from './dua_simaat.json';
 import SAHIFA_SAJJADIYA_DUA1 from './sahifa_sajjadiya_dua1.json';
+import SAHIFA_SAJJADIYA_DUA2 from './sahifa_sajjadiya_dua2_Blessing_Upon_Muhammad_and_his_Household.json';
+// Correcting the import for Dua 3 - Assuming the filename indicates the content
+import SAHIFA_SAJJADIYA_DUA3_ATTESTERS from './sahifa_sajjadiya_dua3_Blessing_Upon_the_Attesters_to_The_Messengers.json'; 
+// Correcting the import for Dua 4 - Assuming the filename indicates the content
+import SAHIFA_SAJJADIYA_DUA4_BEARERS from './sahifa_sajjadiya_dua4_Blessing_Upon_the_Bearers_of_The_Throne.json'; 
+import SAHIFA_SAJJADIYA_DUA5 from './sahifa_sajjadiya_dua5_His Supplication for himself and the People under his Guardianship.json';
+import SAHIFA_SAJJADIYA_DUA6 from './sahifa_sajjadiya_dua6_His_Supplication_in_the_Morning_and_the_Evening.json';
+import SAHIFA_SAJJADIYA_DUA7 from './sahifa_sajjadiya_dua7_His Supplication in Worrisome Tasks.json';
+import SAHIFA_SAJJADIYA_DUA8 from './sahifa_sajjadiya_dua8_His Supplication in Seeking Refuge.json';
 // Hadith data will be loaded asynchronously
 
 // Basic dua collection for preview/selection
@@ -34,15 +43,98 @@ export const duaCollection = [
   },
   {
     id: 'sahifa-sajjadiya-dua1',
-    title: 'Sahifa Sajjadiya - Dua 1',
+    title: 'Dua 1: Praise of God',
     arabic: 'الصحيفة السجادية - الدعاء الأول',
     source: 'Imam Zain al-Abidin (as)',
     category: 'Sahifa Sajjadiya',
     description: 'The first supplication from Sahifa Al-Sajjadiya, focusing on the praise of God.',
     recitationTime: 'Anytime',
     benefits: 'Praising God, Understanding Tawhid, Seeking Forgiveness',
-    image: '/images/sahifa_sajjadiya.png', // Placeholder image path
     length: 'Long',
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua2',
+    title: 'Dua 2: Blessing Upon Muhammad and his Household',
+    arabic: 'الصحيفة السجادية - الدعاء الثاني',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'The second supplication from Sahifa Al-Sajjadiya, a blessing upon Muhammad and his Household.',
+    recitationTime: 'Anytime',
+    benefits: 'Blessings upon Prophet Muhammad (pbuh&hp) and his Progeny (as), Seeking Intercession',
+    length: 'Medium', // Assuming medium length, can be adjusted
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua3',
+    title: 'Dua 3: Blessing Upon the Attesters to The Messengers', // Corrected title
+    arabic: 'الصحيفة السجادية - الدعاء الثالث',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'Blessing Upon the Attesters to The Messengers.', // Corrected description
+    recitationTime: 'Anytime',
+    benefits: 'Seeking blessings for those who confirmed the Messengers.', // Corrected benefits
+    length: 'Medium', 
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua4',
+    title: 'Dua 4: Blessing Upon the Bearers of The Throne', // Corrected title
+    arabic: 'الصحيفة السجادية - الدعاء الرابع',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'Blessing Upon the Bearers of The Throne and every angel brought nigh.', // Corrected description
+    recitationTime: 'Anytime',
+    benefits: 'Seeking blessings for the angels and understanding their role.', // Corrected benefits
+    length: 'Medium',
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua5',
+    title: 'Dua 5: For Himself and People under his Guardianship',
+    arabic: 'الصحيفة السجادية - الدعاء الخامس',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'His Supplication for himself and the People under his Guardianship.',
+    recitationTime: 'Anytime',
+    benefits: 'Seeking well-being for oneself and those under one\'s care.',
+    length: 'Medium', // Assuming medium length, can be adjusted
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua6',
+    title: 'Dua 6: In the Morning and the Evening',
+    arabic: 'الصحيفة السجادية - الدعاء السادس',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'His Supplication in the Morning and the Evening.',
+    recitationTime: 'Morning and Evening',
+    benefits: 'Seeking protection and blessings for the day and night.',
+    length: 'Medium', // Assuming medium length, can be adjusted
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua7',
+    title: 'Dua 7: In Worrisome Tasks',
+    arabic: 'الصحيفة السجادية - الدعاء السابع',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'His Supplication in Worrisome Tasks, when Calamities Descended, and in Distress.',
+    recitationTime: 'Times of difficulty',
+    benefits: 'Seeking relief from distress and calamities.',
+    length: 'Short', 
+    popularity: 5
+  },
+  {
+    id: 'sahifa-sajjadiya-dua8',
+    title: 'Dua 8: In Seeking Refuge',
+    arabic: 'الصحيفة السجادية - الدعاء الثامن',
+    source: 'Imam Zain al-Abidin (as)',
+    category: 'Sahifa Sajjadiya',
+    description: 'His Supplication in Seeking Refuge from Hateful Things, Bad Morals, and Blameworthy Acts.',
+    recitationTime: 'Anytime',
+    benefits: 'Seeking protection from evil and negative traits.',
+    length: 'Medium',
     popularity: 5
   }
   // Removed all other Dua entries
@@ -55,7 +147,14 @@ export const quranCollection = [];
 export const contentMap = {
   'dua-kumayl': DUA_KUMAYL,
   'dua-simaat': DUA_SIMAAT,
-  'sahifa-sajjadiya-dua1': SAHIFA_SAJJADIYA_DUA1
+  'sahifa-sajjadiya-dua1': SAHIFA_SAJJADIYA_DUA1,
+  'sahifa-sajjadiya-dua2': SAHIFA_SAJJADIYA_DUA2,
+  'sahifa-sajjadiya-dua3': SAHIFA_SAJJADIYA_DUA3_ATTESTERS, // Corrected mapping
+  'sahifa-sajjadiya-dua4': SAHIFA_SAJJADIYA_DUA4_BEARERS,   // Corrected mapping
+  'sahifa-sajjadiya-dua5': SAHIFA_SAJJADIYA_DUA5,
+  'sahifa-sajjadiya-dua6': SAHIFA_SAJJADIYA_DUA6,
+  'sahifa-sajjadiya-dua7': SAHIFA_SAJJADIYA_DUA7,
+  'sahifa-sajjadiya-dua8': SAHIFA_SAJJADIYA_DUA8
 };
 
 // Helper function to process a single volume of Mizan al-Hikmah
