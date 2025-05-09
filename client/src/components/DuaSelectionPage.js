@@ -409,7 +409,7 @@ const DuaSelectionPage = ({
               >
                 <div> {/* Wrapper for top content */}
                   <div className="flex justify-between items-center mb-1"> {/* Changed items-start to items-center */}
-                    <span className="text-base font-semibold text-teal-700 dark:text-teal-300 pr-2"> {/* Changed text-lg to text-base */}
+                    <span className="text-lg font-semibold text-teal-700 dark:text-teal-300 pr-2"> {/* Reverted to text-lg */}
                       {dua.title}
                     </span>
                     <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted flex-shrink-0"> {/* Added flex-shrink-0 */}
