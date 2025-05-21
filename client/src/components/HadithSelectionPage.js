@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { contentMap, dataReadyPromise } from '../data/duaCollection'; // Import contentMap and the promise
+import MizanHadithSearchResultItem from './MizanHadithSearchResultItem'; // Import the new component
 
 const HadithSelectionPage = ({ onSelectHadithChapter }) => {
   const [allChapters, setAllChapters] = useState([]); // Store all chapters from both volumes
   const [selectedVolume, setSelectedVolume] = useState(1); // Default to Volume 1
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false); // Can be used to explicitly trigger search display
 
   useEffect(() => {
     const loadHadithData = async () => {
@@ -37,6 +41,52 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
 
     loadHadithData();
   }, []);
+
+  // useEffect for handling search logic
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const queryLower = searchQuery.toLowerCase();
+    const filteredHadiths = [];
+
+    allChapters.forEach(chapter => {
+      if (chapter.sections && Array.isArray(chapter.sections)) {
+        chapter.sections.forEach(section => {
+          if (section.hadiths && Array.isArray(section.hadiths)) {
+            section.hadiths.forEach(hadith => {
+              const arabicMatch = hadith.arabic && hadith.arabic.toLowerCase().includes(queryLower);
+              const englishMatch = hadith.english && hadith.english.toLowerCase().includes(queryLower);
+
+              if (arabicMatch || englishMatch) {
+                filteredHadiths.push({
+                  ...hadith, // Spread the original hadith object
+                  // Source information
+                  volumeNumber: chapter.volume,
+                  chapterNumber: chapter.chapter_num,
+                  chapterTitleEn: chapter.chapter_title_en,
+                  chapterTitleAr: chapter.chapter_title_ar,
+                  sectionNumber: section.section_num, // Assuming section_num exists
+                  sectionTitleEn: section.section_title_en, // Assuming section_title_en exists
+                  sectionTitleAr: section.section_title_ar, // Assuming section_title_ar exists
+                  hadithNumberInChapter: hadith.hadith_num, // Assuming hadith_num is within chapter/section context
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+
+    setSearchResults(filteredHadiths);
+    // setIsSearching(false); // Setting isSearching to false here would hide results immediately if they are shown based on isSearching
+    // Instead, isSearching should reflect that a search operation *has been performed* and results *are available* (or not, if empty)
+    // The display logic will use `searchQuery` to determine if search UI should be shown, and `searchResults.length` for "no results"
+  }, [searchQuery, allChapters]);
 
   const handleChapterSelect = (chapter) => {
     // The chapter object from contentMap already has id, title, source, etc.
@@ -198,58 +248,98 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
 
   return (
     <div className="space-y-6">
-      {/* Volume Selector */}
-      <div className="flex justify-center space-x-2 sm:space-x-3 p-1 bg-gray-100 dark:bg-dark-bg rounded-lg">
-        {[1, 2, 3, 4].map((volNum) => (
-          <button
-            key={volNum}
-            onClick={() => setSelectedVolume(volNum)}
-            className={`px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-medium rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400
-              ${selectedVolume === volNum 
-                ? 'bg-primary-500 text-white shadow-md dark:bg-primary-400 dark:text-dark-bg-alt' 
-                : 'text-gray-600 hover:bg-gray-200 dark:text-gray-700 dark:hover:bg-gray-200'}`}
-          >
-            Volume {volNum}
-          </button>
-        ))}
+      {/* Search Input */}
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search Hadith (e.g., knowledge, prayer, family)..."
+          className="w-full px-4 py-3 text-base text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text dark:border-gray-600 dark:focus:ring-primary-400"
+        />
       </div>
 
-      <h2 className="text-xl font-semibold text-center text-gray-700 dark:text-dark-text-secondary">
-        Mizan al-Hikmah - Volume {selectedVolume}
-      </h2>
-
-      {displayedChapters.length === 0 && !isLoading && (
-        <div className="text-center py-10 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl">
-          <LucideIcons.ArchiveX size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <p className="text-gray-500 dark:text-dark-text-muted">No chapters found for Volume {selectedVolume}.</p>
-          { allChapters.length > 0 && <p className="text-sm text-gray-400 dark:text-dark-text-muted">Other volumes may have content.</p> }
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayedChapters.map((chapter) => (
-          <button
-            key={chapter.id} // Use chapter.id from contentMap which is unique
-            onClick={() => handleChapterSelect(chapter)}
-            className="card p-4 text-left hover:bg-primary-50 dark:hover:bg-dark-bg-tertiary transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
-          >
-            <div className="flex justify-between items-start mb-1">
-              <span className="text-lg font-semibold text-primary-700 dark:text-primary-300">
-                {chapter.chapter_num}. {chapter.chapter_title_en}
-              </span>
-              <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted">
-                {getChapterIcon(chapter)}
-                <span>
-                  {chapter.sections?.length || 0} Sections
-                </span>
-              </div>
+      {searchQuery ? (
+        <div>
+          {isSearching && searchResults.length === 0 && (
+            <div className="text-center py-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+              <LucideIcons.SearchX size={48} className="mx-auto text-yellow-400 dark:text-yellow-500 mb-4" />
+              <p className="text-yellow-600 dark:text-yellow-300 mb-2 font-medium">No Results Found</p>
+              <p className="text-sm text-yellow-500 dark:text-yellow-400 px-4">
+                No hadiths found for your query: "{searchQuery}". Try different keywords.
+              </p>
             </div>
-            <p className="text-right text-lg font-uthmani text-gray-600 dark:text-dark-text-secondary mt-1" dir="rtl">
-              {chapter.chapter_title_ar}
-            </p>
-          </button>
-        ))}
-      </div>
+          )}
+
+          {searchResults.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-dark-text mb-4">
+                Search Results ({searchResults.length})
+              </h2>
+              {searchResults.map((item) => (
+                // Use item.id as key if available and unique, otherwise fallback to index if necessary
+                // Assuming item.id is the unique ID of the hadith from contentMap
+                <MizanHadithSearchResultItem key={item.id || item.arabic} resultItem={item} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Volume Selector */}
+          <div className="flex justify-center space-x-2 sm:space-x-3 p-1 bg-gray-100 dark:bg-dark-bg rounded-lg">
+            {[1, 2, 3, 4].map((volNum) => (
+              <button
+                key={volNum}
+                onClick={() => setSelectedVolume(volNum)}
+                className={`px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-medium rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400
+                  ${selectedVolume === volNum 
+                    ? 'bg-primary-500 text-white shadow-md dark:bg-primary-400 dark:text-dark-bg-alt' 
+                    : 'text-gray-600 hover:bg-gray-200 dark:text-dark-text-secondary dark:hover:bg-dark-bg-tertiary'}`}
+              >
+                Volume {volNum}
+              </button>
+            ))}
+          </div>
+
+          <h2 className="text-xl font-semibold text-center text-gray-700 dark:text-dark-text-secondary">
+            Mizan al-Hikmah - Volume {selectedVolume}
+          </h2>
+
+          {displayedChapters.length === 0 && !isLoading && (
+            <div className="text-center py-10 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl">
+              <LucideIcons.ArchiveX size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+              <p className="text-gray-500 dark:text-dark-text-muted">No chapters found for Volume {selectedVolume}.</p>
+              { allChapters.length > 0 && <p className="text-sm text-gray-400 dark:text-dark-text-muted">Other volumes may have content.</p> }
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayedChapters.map((chapter) => (
+              <button
+                key={chapter.id} // Use chapter.id from contentMap which is unique
+                onClick={() => handleChapterSelect(chapter)}
+                className="card p-4 text-left hover:bg-primary-50 dark:hover:bg-dark-bg-tertiary transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-lg font-semibold text-primary-700 dark:text-primary-300">
+                    {chapter.chapter_num}. {chapter.chapter_title_en}
+                  </span>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-dark-text-muted">
+                    {getChapterIcon(chapter)}
+                    <span>
+                      {chapter.sections?.length || 0} Sections
+                    </span>
+                  </div>
+                </div>
+                <p className="text-right text-lg font-uthmani text-gray-600 dark:text-dark-text-secondary mt-1" dir="rtl">
+                  {chapter.chapter_title_ar}
+                </p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
