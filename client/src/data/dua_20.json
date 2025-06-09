@@ -1,0 +1,871 @@
+{
+  "arabic_title": "دُعَاؤُهُ فِي مَكَارِمِ الْأَخْلَاقِ",
+  "english_title": "20.Makaeremul Akhlaq- Noble Traits",
+  "source_url": "https://www.duas.org/mobile/sahifasajjadia-dua20-makarem-akhlaq-noble-traits.html",
+  "phrases": [
+    {
+      "arabic": "بِسْمِ اللَّهِ   الرَّحْمَنِ الرَّحِيمِ",
+      "english": "In the Name of Allah, the All-merciful, the All-compassionate"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَبَلِّغْ بِإِيمَانِي أَكْمَلَ الإِيمَانِ",
+      "english": "cause my faith to reach the most perfect faith,"
+    },
+    {
+      "arabic": "وَاجْعَلْ يَقِينِي أَفْضَلَ الْيَقِينِ",
+      "english": "make my certainty the most excellent certainty,"
+    },
+    {
+      "arabic": "وَانتَهِ بِنِيَّتِي إِلَى أَحْسَنِ النِّيَّاتِ، وَبِعَمَلِي إِلَى أَحْسَنِ الأَعْمَاِل",
+      "english": "and take my intention to the best of intentions, and my works to the best of works!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "وَفِّرْ بِلُطْفِكَ نِيَّتِي",
+      "english": "complete my intention through Your gentleness,"
+    },
+    {
+      "arabic": "وَصَحِّحْ بِمَا عِندَكَ يَقِينِي",
+      "english": "rectify my certainty through what is with You,"
+    },
+    {
+      "arabic": "وَاسْتَصْلِحْ بِقُدْرَتِكَ مَا فَسَدَ مِنِّي",
+      "english": "And set right what is corrupt in me through Your power!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَاكْفِنِي مَا يَشْغَلُنِي الإِهْتِمَامُ بِهِ",
+      "english": "spare me the concerns which distract me,"
+    },
+    {
+      "arabic": "وَاسْتَعْمِلْنِي بِمَا تَسْألُنِي غَداً عَنْهُ",
+      "english": "employ me in that about which You will ask me tomorrow,"
+    },
+    {
+      "arabic": "وَاسْتَفْرِغْ أَيَّامِي فِيمَا خَلَقْتَنِي لَهُ",
+      "english": "And let me pass my days in that for which You hast created me!"
+    },
+    {
+      "arabic": "وَاغْنِنِي وَأَوْسِعْ عَلَيَّ فِي رِزْقِكَ",
+      "english": "Free me from need, and expand Your provision toward me,"
+    },
+    {
+      "arabic": "وَلا تَفْتِنِّي بِالنَّظَرِ",
+      "english": "And tempt me not with ingratitude!"
+    },
+    {
+      "arabic": "وَأَعِزَّنِي وَلا تَبْتَلِيَنِّي بِالْكِبْرِ",
+      "english": "Exalt me and afflict me not with pride!"
+    },
+    {
+      "arabic": "وَعَبِّدْنِي لَكَ وَلا تُفْسِدْ عِبِادَتِي بِالعُجْبِ",
+      "english": "Make me worship You and corrupt not my worship with self-admiration!"
+    },
+    {
+      "arabic": "وَأَجْرِ لِلنَّاسِ عَلَى يَدَيَّ الْخَيْرَ وَلا تَمْحَقْهُ بِالْمَنِّ",
+      "english": "Let good flow out from my hands upon the people and efface it not by my making them feel obliged!"
+    },
+    {
+      "arabic": "وَهَبْ لِي مَعَاِلي الأَخْلاَقِ",
+      "english": "Give me the highest moral traits"
+    },
+    {
+      "arabic": "وَاعْصِمْنِي مِنَ الْفَخْرِ",
+      "english": "And preserve me from vainglory!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَلا تَرْفَعْنِي فِي النَّاسِ دَرَجَةً إِلا حَطَطْتَنِي عِندَ نَفْسِي مِثْلَهَا",
+      "english": "raise me not a single degree before the people without lowering me its like in myself"
+    },
+    {
+      "arabic": "وَلا تُحْدِثْ لِي عِزّاً ظَاهِراً إِلاَّ أَحْدَثْتَ لِي ذِلَّةً بَاطِنَةً عِندَ نَفْسِي بِقَدَرِهَا",
+      "english": "And bring about no outward exaltation for me without an inward abasement in myself to the same measure!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلى مُحَمَّدٍ وَّآلِ مُحَمَّدٍ",
+      "english": "O Allah, bless Muhammad and Muhammad's Household,"
+    },
+    {
+      "arabic": "وَمَتِّعْنِي بِهُدَىً صَاِلحٍ لا أَسْتَبْدِلُ بِهِ،",
+      "english": "give me to enjoy a sound guidance which I seek not to replace,"
+    },
+    {
+      "arabic": "وَطَرِيقَةِ حَقٍّ لا أَزِيغُ عَنْهَا،",
+      "english": "a path of truth from which I swerve not,"
+    },
+    {
+      "arabic": "وَنِيَّةِ رَشْدٍ لا أَشُكُّ فِيهَا",
+      "english": "And an intention of right conduct in which I have no doubts!"
+    },
+    {
+      "arabic": "وَعَمِّرْنِي مَا كَانَ عُمْرِي بِذْلَةً فِي طَاعَتِكَ، فَإِذَا كَانَ عُمْرِي مَرْتَعاً لِلشَّيْطَانِ فَاقْبِضْنِي إِلَيْكَ، قَبْلَ أَن يَّسْبِقَ مَقْتُكَ إِلَيَّ، أَوْ يَسْتَحْكِمَ غَضَبُكَ عَلَيَّ",
+      "english": "Let me live as long as my life is a free gift in obeying You, but if my life should become a pasture for Satan, seize me to Yourself before Your hatred overtakes me or Your wrath against be becomes firm!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "لا تَدَعْ خِصْلَةً تُعَابُ مِنِّي إِلاَّ أَصْلَحْتَهَا",
+      "english": "deposit in me no quality for which I will be faulted, unless You settest it right,"
+    },
+    {
+      "arabic": "وَلا عَائِبَةً أُؤَنَّبُ بِهَا إِلاَّ حَسَّنتَهَا،",
+      "english": "no flaw for which I will be blamed, unless You makest it beautiful,"
+    },
+    {
+      "arabic": "وَلا أُكْرُومَةً فِيَّ نَاقِصَةً إِلاَّ أَتْمَمْتَهَا",
+      "english": "And no deficient noble trait, unless You completest it!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِ مُحَمَّدٍ",
+      "english": "O Allah, bless Muhammad and Muhammad's Household,"
+    },
+    {
+      "arabic": "وَأَبْدِلْنِي مِنْ بُغْضَةِ أَهْلِ الشَّنَانَ الْمَحَبَّةَ",
+      "english": "and replace for me the animosity of the people of hatred with love,"
+    },
+    {
+      "arabic": "وَمِنْ حَسَدِ أَهْلِ الْبَغْيِ الْمَوَدَّةَ،",
+      "english": "the envy of the people of insolence with affection,"
+    },
+    {
+      "arabic": "وَمِن ظِنَّةِ أَهْلِ الصَّلاَحِ الثِّقَةَ،",
+      "english": "the suspicion of the people of righteousness with trust,"
+    },
+    {
+      "arabic": "وَمِنْ عَدَاوَةِ الأَدْنَيْنَ الْوَلايَةَ،",
+      "english": "the enmity of those close with friendship,"
+    },
+    {
+      "arabic": "وَمِنْ عُقُوقِ ذَوِي الأَرْحَامِ الْمَبَرَّةَ،",
+      "english": "the disrespect of womb relatives with devotion,"
+    },
+    {
+      "arabic": "وَمِنْ خِذْلانِ الأَقْرَبِينَ النُّصْرَةَ،",
+      "english": "the abandonment of relatives with help,"
+    },
+    {
+      "arabic": "وَمِنْ حُبِّ الْمُدَارِينَ تَصْحِيحَ الْمِقَةِ،",
+      "english": "the attachment of flatterers with love set right,"
+    },
+    {
+      "arabic": "وَمِن رَّدِّ الْمُلاَبِسِينَ كَرَمَ الْعِشْرَةِ،",
+      "english": "the rejection of fellows with generous friendliness,"
+    },
+    {
+      "arabic": "وَمِن مَّرَارَةِ خَوْفِ الظَّالِمِينَ حَلاَوَةَ الأَمنَةَ",
+      "english": "And the bitterness of the fear of wrongdoers with the sweetness of security!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَاجْعَل لِّي يَداً عَلى مَن ظَلَمَنِي،",
+      "english": "appoint for me a hand against him who wrongs me,"
+    },
+    {
+      "arabic": "وَلِسَاناً عَلَى مَنْ خَاصَمَنِي،",
+      "english": "a tongue against him who disputes with me,"
+    },
+    {
+      "arabic": "وَظَفَراً بِمَنْ عَانَدَنِي",
+      "english": "And a victory over him who stubbornly resists me!"
+    },
+    {
+      "arabic": "وَهَبْ لِي مَكْراً عَلَى مَن كَايَدَنِي،",
+      "english": "Give me guile against him who schemes against me,"
+    },
+    {
+      "arabic": "وَقُدْرَةً عَلَى مَنِ اضْطَهَدَنِي،",
+      "english": "power over him who oppresses me,"
+    },
+    {
+      "arabic": "وَتَكْذِيباً لِمَن قَصَبَنِي،",
+      "english": "refutation of him who reviles me,"
+    },
+    {
+      "arabic": "وَسَلاَمَةً مِّمَّن تَوَعَّدَنِي",
+      "english": "And safety from him who threatens me!"
+    },
+    {
+      "arabic": "وَوَفِّقْنِي لِطَاعَةِ مَن سَدَّدَنِي،",
+      "english": "Grant me success to obey him who points me straight"
+    },
+    {
+      "arabic": "وَمُتَابَعَةِ مَنْ أَرْشَدَنِي",
+      "english": "And follow him who guides me right!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household"
+    },
+    {
+      "arabic": "وَسَدِّدْنِي لأَنْ",
+      "english": "and point me straight to"
+    },
+    {
+      "arabic": "أُعَارِضَ مَنْ غَشَّنِي بِالنُّصْحِ،",
+      "english": "resist him who is dishonest toward me without counsel,"
+    },
+    {
+      "arabic": "وَأَجْزِي مَنْ هَجَرَنِي بِالْبِرِّ،",
+      "english": "repay him who separates from me with gentle devotion,"
+    },
+    {
+      "arabic": "وَأُثِيبَ مَنْ حَرَمَنِي بِالْبَذْلِ،",
+      "english": "reward him who deprives me with free giving,"
+    },
+    {
+      "arabic": "وَأُكَافِئَ مَن قَطَعَنِي بِالصِّلَةِ،",
+      "english": "recompense him who cuts me off with joining,"
+    },
+    {
+      "arabic": "وَأُخَاِلفَ مَنْ اغْتَابَنِي إِلَى حُسْنِ الذِّكْرِ،",
+      "english": "oppose him who slanders me with excellent mention,"
+    },
+    {
+      "arabic": "وَأَنْ أَشْكُرَ الْحَسَنَةَ،",
+      "english": "give thanks for good,"
+    },
+    {
+      "arabic": "وَأُغْضِي عَنِ السَّيِّئَةِ",
+      "english": "And shut my eyes to evil!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَحَلِّنِي بِحِلْيَةِ الصَّاِلحِينَ",
+      "english": "adorn me with the adornment of the righteous,"
+    },
+    {
+      "arabic": "وَأَلْبِسْنِي زِينَةَ المُتَّقِينَ فِي",
+      "english": "And clothe me in the ornaments of the god-fearing, through:"
+    },
+    {
+      "arabic": "بَسْطِ الْعَدْلِ",
+      "english": "spreading justice,"
+    },
+    {
+      "arabic": "وَكَظْمِ الْغَيْظِ",
+      "english": "restraining rage,"
+    },
+    {
+      "arabic": "وَإِطْفَاءِ النَّائِرَةِ",
+      "english": "quenching the flame of hate,"
+    },
+    {
+      "arabic": "وَضَمِّ أَهْلِ الْفُرْقَةِ",
+      "english": "bringing together the people of separation,"
+    },
+    {
+      "arabic": "وَإِصْلاَحِ ذَاتِ الْبَيْنِ",
+      "english": "correcting discord,"
+    },
+    {
+      "arabic": "وَإِفْشِاءِ الْعَارِفَةِ",
+      "english": "spreading about good behavior,"
+    },
+    {
+      "arabic": "وَسَتْرِ الْعَائِبَةِ",
+      "english": "covering faults,"
+    },
+    {
+      "arabic": "وَلِينِ الْعَرِيكَةِ",
+      "english": "mildness of temper,"
+    },
+    {
+      "arabic": "وَخَفْضِ الْجَنَاحِ",
+      "english": "lowering the wing,"
+    },
+    {
+      "arabic": "وَحُسْنِ السِّيرَةِ",
+      "english": "beauty of conduct,"
+    },
+    {
+      "arabic": "وَسُكُونِ الرِّيحِ",
+      "english": "gravity of bearing,"
+    },
+    {
+      "arabic": "وَطِيبِ الْمُخَالَفَةِ",
+      "english": "agreeableness in comportment,"
+    },
+    {
+      "arabic": "وَالسَّبْقِ إِلَى الْفَضِيلَةِ",
+      "english": "precedence in reaching excellence,"
+    },
+    {
+      "arabic": "وَإِيثَارِ التَّفَضُّلِ",
+      "english": "preferring bounteousness,"
+    },
+    {
+      "arabic": "وَتَرْكِ التَّعْيِيرِ",
+      "english": "refraining from condemnation,"
+    },
+    {
+      "arabic": "وَالإِفْضَاِل عَلَى غَيْرِ الْمُسْتَحِقِّ",
+      "english": "bestowing bounty on the undeserving,"
+    },
+    {
+      "arabic": "وَالْقَوْلِ بِالْحَقِّ وَإِنْ عَزَّ",
+      "english": "speaking the truth, though it be painful,"
+    },
+    {
+      "arabic": "وَاسْتِقْلاَلِ الْخَيْرِ وَإِن كَثُرَ مِن قَوْلِي وَفِعْلِي",
+      "english": "making little of the good in my words and deeds, though it be much,"
+    },
+    {
+      "arabic": "وَاسْتِكْثَارِ الْشَّرِ وَإِن قلَّ مِن قَوْلِي وَفِعْلِي",
+      "english": "And making much of the evil in my words and deeds, though it be little!"
+    },
+    {
+      "arabic": "وَأَكْمِلْ ذَلِكَ لِي",
+      "english": "Perfect this for me through"
+    },
+    {
+      "arabic": "بِدَوَامِ الطَّاعَةِ،",
+      "english": "lasting obedience,"
+    },
+    {
+      "arabic": "وَلُزُومِ الْجَمَاعَةِ،",
+      "english": "holding fast to the community,"
+    },
+    {
+      "arabic": "وَرَفْضِ أَهْلِ الْبِدَعِ، وَمُسْتَعْمِلِي الرَّأْيِ الْمُخْتَرَعِ",
+      "english": "And rejecting the people of innovation and those who act in accordance with original opinions."
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَاجْعَلْ أَوْسَعَ رِزْقِكَ عَلَيَّ إِذَا كَبِرْتُ،",
+      "english": "appoint for me Your widest provision in my old age"
+    },
+    {
+      "arabic": "وَأَقْوَى قُوَّتِكَ فِيَّ إِذَا نَصِبْتُ",
+      "english": "And Your strongest strength when I am exhausted,"
+    },
+    {
+      "arabic": "وَلا تَبْتَلِيَنِي بِالْكَسَلِ عَنْ عِبَادَتِكَ،",
+      "english": "And try me not with laziness in worship of You,"
+    },
+    {
+      "arabic": "وَلا الْعَمى عَن سَبِيلِكَ،",
+      "english": "blindness toward Your path,"
+    },
+    {
+      "arabic": "وَلا بِالتَّعَرُّضِ لِخِلاَفِ مَحَبَّتِكَ،",
+      "english": "undertaking what opposes love for You,"
+    },
+    {
+      "arabic": "وَلا مُجَامَعَةِ مَن تَفَرَّقَ عَنْكَ،",
+      "english": "joining with him who has separated himself from You,"
+    },
+    {
+      "arabic": "وَلا مُفَارَقَةِ مَنِ اجْتَمَعَ إِلَيْكَ",
+      "english": "And separating from him who has joined himself to You!"
+    },
+    {
+      "arabic": "اللَّهُمَّ اجْعَلْنِي أَصُولُ بِكَ عِندَ الضَّرُورَةِ،",
+      "english": "O Allah, make me leap to You in times of distress,"
+    },
+    {
+      "arabic": "وَأَسْألُكَ عِندَ الْحَاجَةِ،",
+      "english": "ask from You in needs,"
+    },
+    {
+      "arabic": "وَأَتَضَرَّعُ إِلَيْكَ عِندَ الْمَسْكَنَةِ",
+      "english": "And plead to You in misery!"
+    },
+    {
+      "arabic": "وَلا تَفْتِنِّي بِالإِسْتِعَانَةِ بِغَيْرِكَ إِذَا اضْطُرِرْتُ،",
+      "english": "Tempt me not to seek help from other than You when I am distressed,"
+    },
+    {
+      "arabic": "وَلا بِالْخُضُوعِ لِسُؤَاِل غَيْرِكَ إِذَا افْتَقَرْتُ،",
+      "english": "to humble myself in asking from someone else when I am poor,"
+    },
+    {
+      "arabic": "وَلا بِالتَّضَرُّعِ إِلَى مَن دُونِكَ إِذَارَهِبْتُ",
+      "english": "or to plead with someone less than You when I fear,"
+    },
+    {
+      "arabic": "فَأَسْتَحِقُّ بِذَلِكَ خِذْلانَكَ وَمَنْعَكَ وَإِعْرَاضَكَ",
+      "english": "for then I would deserve Your abandonment, Your withholding, and Your turning away,"
+    },
+    {
+      "arabic": "يَا أَرْحَمَ الرَّاحَمِينَ",
+      "english": "O Most Merciful of the merciful!"
+    },
+    {
+      "arabic": "اللَّهُمَّ اجْعَلْ مَا يُلْقِي الشَّيْطَانُ فِي رَوْعِي منِ التَّمَنِّي وَالتَّظَنِّي وَالْحَسَدِذِكْراً لِعَظَمَتِكَ، وَتَفَكُّراً فِي قُدْرَتِكَ، وَتَدْبِيراً عَلَى عَدُوِّكَ،",
+      "english": "O Allah, make the wishing, the doubt, and the envy which Satan throws into my heart a remembrance of Your mightiness, a reflection upon Your power, and a devising against Your enemy!"
+    },
+    {
+      "arabic": "وَمَا أَجْرَى عَلَى لِسَانِى مِن لَّفْظَةِ فُحْشٍ أَوْ هَجْرٍ أَوْ شَتْمِ عِرْضٍ أَوْ شَهَادَةِ بَاطِلٍ أَوِ اغْتِيَابِ مُؤْمِنٍ غَائِبٍ أَوْ سَبِّ حَاضِرٍ أَوْ مَا أَشْبَهَ ذَلِكَ،",
+      "english": "Make everything he causes to pass over my tongue - the indecent or ugly words, the maligning of good repute, the false witness, the speaking ill of an absent man of faith, or the reviling of one present, and all things similar—"
+    },
+    {
+      "arabic": "نُطْقاً بِالْحَمْدِ لَكَ،",
+      "english": "a speech in praise of You,"
+    },
+    {
+      "arabic": "وَإِغْرَاقاً فِي الثَّنَاءِ عَلَيْكَ",
+      "english": "a pursual of eulogizing You,"
+    },
+    {
+      "arabic": "وَذَهَاباً فِي تَمْجِيدِكَ",
+      "english": "an excursion in magnifying You,"
+    },
+    {
+      "arabic": "وَشُكْراً لِّنِعْمَتِكَ",
+      "english": "a thanksgiving for Your favour,"
+    },
+    {
+      "arabic": "وَاعْتِرَافاً بِإِحْسَانِكَ",
+      "english": "an acknowledgment of Your beneficence,"
+    },
+    {
+      "arabic": "وَإِحْصَاءاً لِّمِنَنِكَ",
+      "english": "And an enumeration of Your kindness!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَلا أُظْلَمَنَّ وَأَنتَ مُطِيقٌ لِّلدَّفْعِ عَنِّي",
+      "english": "let me not be wronged, while You canst repel from me,"
+    },
+    {
+      "arabic": "وَلا أَظْلِمَنَّ وَأَنتَ الْقَادِرُ عَلى الْقَبْضِ مِنِّي",
+      "english": "let me not do wrong, while You are powerful over holding me back,"
+    },
+    {
+      "arabic": "وَلا أَضِلَّنَّ وَقَدْ أَمْكَنَتْكَ هِدَايَتِي",
+      "english": "let me not be misguided, while You are able to guide me,"
+    },
+    {
+      "arabic": "وَلا أَفْتَقِرَنَّ وَمِنْ عِندِكَ وُسْعِي",
+      "english": "let me not be poor, while with You is my plenty,"
+    },
+    {
+      "arabic": "وَلا أَطْغَيَنَّ وَمِنْ عِندِكَ وُجْدِي",
+      "english": "let me not be insolent, while from You comes my wealth!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "إِلَى مَغْفِرَتِكَ وَفَدتُّ",
+      "english": "I come to Your forgiveness,"
+    },
+    {
+      "arabic": "وَإِلَى عَفْوِكَ قَصَدتُّ",
+      "english": "I go straight to Your pardon,"
+    },
+    {
+      "arabic": "وَإِلَى تَجَاوُزِكَ اشْتَقْتُ",
+      "english": "I yearn for Your forbearance,"
+    },
+    {
+      "arabic": "وَبِفَضْلِكَ وَثِقْتُ",
+      "english": "And I trust in Your bounty,"
+    },
+    {
+      "arabic": "وَلَيْسَ عِندِي مَا يُوجِبُ لِي مَغْفِرَتَكَ",
+      "english": "but there is nothing with me to make me warrant but Your forgiveness,"
+    },
+    {
+      "arabic": "وَلا فِي عَمَلِي مَا أَسْتَحِقُّ بِهِ عَفْوَكَ",
+      "english": "nothing in my works to make me merit but Your pardon,"
+    },
+    {
+      "arabic": "وَمَا لِي بَعْدَ أَنْ حَكَمْتُ عَلَى نَفْسِي إلاَّ فَضْلُكَ",
+      "english": "And nothing on my behalf after I judge my soul but Your bounty,"
+    },
+    {
+      "arabic": "فَصَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household"
+    },
+    {
+      "arabic": "وَتَفَضَّلْ عَلَيَّ اللَّهُمَّ",
+      "english": "O Allah, bestow Your bounty upon me!"
+    },
+    {
+      "arabic": "وَأَنطِقْنِي بِالْهُدَى",
+      "english": "make my speech be guidance,"
+    },
+    {
+      "arabic": "وَأَلْهِمْنِي التِّقْوَى",
+      "english": "inspire me with reverential fear,"
+    },
+    {
+      "arabic": "وَوَفِّقْنِي للَّتِي هِي أَزْكَى",
+      "english": "give me success in that which is most pure,"
+    },
+    {
+      "arabic": "وَاسْتَعْمِلْنِي بِمَا هُوَ أَرْضَى",
+      "english": "And employ me in what is most pleasing to You!"
+    },
+    {
+      "arabic": "اللَّهُمَّ اسْلُكْ بِي الطَّرِيقَةَ الْمُثْلَى",
+      "english": "O Allah, let me tread the most exemplary path"
+    },
+    {
+      "arabic": "وَاجْعَلْنِي عَلَى مِلَّتِكَ أَمُوتُ وَأَحْيَا",
+      "english": "And make me live and die in Your creed!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَمَتِّعْنِي بِالإقْتِصَادِ",
+      "english": "give me to enjoy moderation,"
+    },
+    {
+      "arabic": "وَاجْعَلْنِي مِنْ أَهْلِ السَّدَادِ،",
+      "english": "make me into one of the people of right behavior,"
+    },
+    {
+      "arabic": "وَمِنْ أَدِلَّةِ الرَّشَادِ،",
+      "english": "the proofs of right conduct,"
+    },
+    {
+      "arabic": "وَمِن صَاِلحِي الْعِبَادِ",
+      "english": "And the servants of righteousness,"
+    },
+    {
+      "arabic": "وَارْزُقْنِي فَوْزَ الْمَعَادِ،",
+      "english": "And provide me with triumph at the place of Return"
+    },
+    {
+      "arabic": "وَسَلاَمَةَ الْمِرْصَادِ",
+      "english": "And safety from the Ambush!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "خُذْ لِنَفْسِكَ مِن نَّفْسِي مَا يُخَلِّصُهَا",
+      "english": "take to Yourself from my soul what will purify it"
+    },
+    {
+      "arabic": "وَأَبْقِ لِنَفْسِي مِن نَّفْسِي مَا يُصْلِحُهَا،",
+      "english": "And leave for my soul that of my soul that will set it right,"
+    },
+    {
+      "arabic": "فَإِنَّ نَفْسِي هَاِلكَةً أَوْ تَعْصِمَهَا",
+      "english": "for my soul will perish unless You preservest it!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "أَنتَ عُدَّتِي إِنْ حَزِنتُ",
+      "english": "You are my stores when I sorrow,"
+    },
+    {
+      "arabic": "وَأَنتَ مُنتَجَعِي إِنْ حُرِمْتُ",
+      "english": "You are my recourse when I am deprived,"
+    },
+    {
+      "arabic": "وَبِكَ اسْتِغَاثَتِي إِن كُرِثْتُ",
+      "english": "from You I seek aid when troubled"
+    },
+    {
+      "arabic": "وَعِندَكَ مِمَّا فَاتَ خَلَفٌ،",
+      "english": "and with You is a substitute for everything gone by,"
+    },
+    {
+      "arabic": "وَلِمَا فَسَدَ صَلاَحٌ،",
+      "english": "a correction for everything corrupted,"
+    },
+    {
+      "arabic": "وَفِيمَا أَنكَرْتَ تَغْيِيرٌ",
+      "english": "a change from everything You is approvest."
+    },
+    {
+      "arabic": "فَامْنُنْ عَلَيَّ قَبْلَ الْبَلاءِ بِالْعَافِيَةِ،",
+      "english": "So show kindness to me with well-being before affliction,"
+    },
+    {
+      "arabic": "وَقَبْلَ الطَّلَبِ بِالْجِدَةِ،",
+      "english": "wealth before asking,"
+    },
+    {
+      "arabic": "وَقَبْلَ الضَّلاَلِ بِالرَّشَادِ",
+      "english": "right conduct before misguidance;"
+    },
+    {
+      "arabic": "وَاكْفِنِي مَؤُونَةَ مَعَرَّةِ الْعِبَادِ",
+      "english": "suffice me against the burden of shame toward the servants,"
+    },
+    {
+      "arabic": "وَهَبْ لِي أَمْنَ يَوْمِ الْمَعَادِ",
+      "english": "give me security on the Day of Return,"
+    },
+    {
+      "arabic": "وَامْنَحْنِي حُسْنَ الإِرْشَادِ",
+      "english": "And grant me excellent right guidance!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَادْرَأْْ عَنِّي بِلُطْفِكَ",
+      "english": "repel from me through Your gentleness,"
+    },
+    {
+      "arabic": "وَاغْذُنِي بِنِعْمَتِكَ",
+      "english": "feed me through Your favour,"
+    },
+    {
+      "arabic": "وَأَصْلِحْنِي بِكَرَمِكَ",
+      "english": "set me right through Your generosity,"
+    },
+    {
+      "arabic": "وَدَاوِنِي بِصُنعِكَ",
+      "english": "heal me through Your benefaction,"
+    },
+    {
+      "arabic": "وَأَظِلَّنِي فِي ذَرَاكَ",
+      "english": "shade me in Your shelter,"
+    },
+    {
+      "arabic": "وَجَلِّلْنِي رِضَاكَ",
+      "english": "wrap me in Your good pleasure,"
+    },
+    {
+      "arabic": "وَوَفِّقْنِي إِذَا اشْتَكَلَتْ عَلَيَّ الأُمُورُ لأَهْدَاهَا،",
+      "english": "And give me success to reach the most guided of affairs when affairs confuse me,"
+    },
+    {
+      "arabic": "وَإِذَا تَشَابَهَتِ الأَعْمَالُ لأَزْكَاهَا",
+      "english": "the purest of works when works seem similar,"
+    },
+    {
+      "arabic": "وَإِذَا تَنَاقَضَتِ المِلَلُ لأَرْضَاهَا",
+      "english": "and the most pleasing to You of creeds when creeds conflict!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَتَوِّجْنِي بِالْكِفَايَةِ",
+      "english": "crown me with sufficiency,"
+    },
+    {
+      "arabic": "وَسُمْنِي حُسْنَ الْوِلاَيةِ",
+      "english": "place in me excellent guardianship"
+    },
+    {
+      "arabic": "وَهَبْ لِي صِدْقَ الْهِدَايَةِ",
+      "english": "give me to guide correctly ,"
+    },
+    {
+      "arabic": "وَلا تَفْتِنِّي بِالسَّعَةِ",
+      "english": "tempt me not with plenty,"
+    },
+    {
+      "arabic": "وَامْنَحْنِي حُسْنَ الدَّعَةِ",
+      "english": "grant me excellent ease,"
+    },
+    {
+      "arabic": "وَلا تَجْعَلْ عَيْشِي كَداًّ كَداًّ",
+      "english": "make not my life toil and trouble,"
+    },
+    {
+      "arabic": "وَلا تَرُدَّ دُعَائِي عَلَيَّ رَدّاً",
+      "english": "And refuse not my supplication in rejection,"
+    },
+    {
+      "arabic": "فَإِنِّي لا أَجْعَلُ لَكَ ضِدّاً",
+      "english": "for I make none rival to You"
+    },
+    {
+      "arabic": "وَلا أَدْعُو مَعَكَ نِدّاً",
+      "english": "And I supplicate none with You as equal!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَامْنَعْنِي مِنَ السَّرَفِ",
+      "english": "hold me back from prodigality,"
+    },
+    {
+      "arabic": "وَحَصِّن رِّزْقِي مِنَ التَّلَفِ",
+      "english": "fortify my provision against ruin,"
+    },
+    {
+      "arabic": "وَوَفِّرْ مَلَكَتِي بِالْبَرَكَةِ فِيهِ",
+      "english": "increase my possessions through blessing them,"
+    },
+    {
+      "arabic": "وَأَصِبْ بِي سَبِيلَ الْهِدَايَةِ لِلْبِرِّ فِيمَا أُنفِقُ مِنْهُ",
+      "english": "And set me upon the path of guidance through piety in what I spend!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَاكْفِنِي مَؤُونَةَ الإكْتِسَابِ،",
+      "english": "And spare me the burden of earning,"
+    },
+    {
+      "arabic": "وَارْزُقْنِي مِنْ غَيْرِ احْتِسَابٍ",
+      "english": "provide for me without reckoning,"
+    },
+    {
+      "arabic": "فَلا أَشْتَغِلَ عَنْ عِبَادَتِكَ بِالطَّلَبِ،",
+      "english": "lest I be distracted from Your worship through seeking"
+    },
+    {
+      "arabic": "وَلا أَحْتَمِلَ إِصْرَ تَبِعَاتِ الْمَكْسَبِ",
+      "english": "And carry the load of earning's ill results!"
+    },
+    {
+      "arabic": "اللَّهُمَّ",
+      "english": "O Allah,"
+    },
+    {
+      "arabic": "فَأَطْلِبْنِي بِقُدْرَتِكَ مَا أَطْلُبُ",
+      "english": "bestow upon me what I seek through Your power"
+    },
+    {
+      "arabic": "وَأَجِرْنِي بِعِزَّتِكَ مِمَّا أَرْهَبُ",
+      "english": "And grant me sanctuary from what I fear through Your might!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَصُن وَّجْهِي بِالْيَسَارِ،",
+      "english": "save my face through ease,"
+    },
+    {
+      "arabic": "وَلا تَبْتَذِلْ جَاهِي بِالإِقْتَارِ",
+      "english": "And demean not my dignity through neediness,"
+    },
+    {
+      "arabic": "فَأَسْتَرْزِقَ أَهْلَ رِزْقِكَ،",
+      "english": "lest I seek provision from those whom You hast provided"
+    },
+    {
+      "arabic": "وَأَسْتَعْطِي شِرَارَ خَلْقِكَ",
+      "english": "And ask for bestowal from the worst of Your creatures!"
+    },
+    {
+      "arabic": "فَأَفْتَتِنَ بِحَمْدِ مَنْ أَعْطَانِي،",
+      "english": "And Then I would be tried by praising him who gave to me"
+    },
+    {
+      "arabic": "وَأُبْتَلي بِذَمِّ مَن مَّنَعَنِي",
+      "english": "afflicted with blaming him who held back from me,"
+    },
+    {
+      "arabic": "وَأَنتَ مِن دُونِهِمْ وَلِيُّ الإِعْطَاءِ وَالْمَنْعِ",
+      "english": "While You— not they— art patron of giving and holding back"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household"
+    },
+    {
+      "arabic": "وَارْزُقْنِي صِحَّةً فِي عِبَادَةٍ،",
+      "english": "And provide me with soundness in worship,"
+    },
+    {
+      "arabic": "وَفَرَاغاً فِي زَهَادَةٍ،",
+      "english": "detachment in renunciation,"
+    },
+    {
+      "arabic": "وَعِلْماً فِي اسْتِعْمَالٍ،",
+      "english": "knowledge put into action,"
+    },
+    {
+      "arabic": "وَوَرَعاً فِي إِجْمَالٍ",
+      "english": "And abstinence in measure!"
+    },
+    {
+      "arabic": "اللَّهُمَّ اخْتِم بِعَفْوِكَ أَجَلِي",
+      "english": "O Allah, seal my term with Your pardon,"
+    },
+    {
+      "arabic": "وَحَقِّقْ فِي رَجَاءِ رَحْمَتِكَ أَمَلِي",
+      "english": "verify my expectation in hoping for thy mercy,"
+    },
+    {
+      "arabic": "وَسَهِّلْ إِلَى بُلُوغِ رِضَاكَ سُبُلِي",
+      "english": "smooth my paths to reach Your good pleasure,"
+    },
+    {
+      "arabic": "وَحَسِّن فِي جَمِيعِ أَحْوَاِلي عَمَلِي",
+      "english": "And make my works good in all my states!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ",
+      "english": "O Allah, bless Muhammad and his Household,"
+    },
+    {
+      "arabic": "وَنَبِّهْنِي لِذِكْرِكَ فِي أَوْقَاتِ الْغَفْلَةِ",
+      "english": "Incite me to remember You in times of heedlessness,"
+    },
+    {
+      "arabic": "وَاسْتَعْمِلْنِي بِطَاعَتِكَ في أَيَّامِ الْمُهْلَةِ",
+      "english": "employ me in Your obedience in days of disregard,"
+    },
+    {
+      "arabic": "وَانْهَجْ لِي إِلَى مَحَبَّتِكَ سَبِيلاً سَهْلَةً",
+      "english": "open a smooth road for me to Your love,"
+    },
+    {
+      "arabic": "أَكْمِلْ لِي بِهَا خَيْرَ الدُّنيَا وَالآخِرَةِ",
+      "english": "And complete for me thereby the good of this world and the next!"
+    },
+    {
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَّآلِهِ كَأَفْضَلِ مَا صَلَّيْتَ عَلَى أَحَدٍ مِّنْ خَلْقِكَ قَبْلَهُ وَأَنتَ مُصَلٍّ عَلى أَحَدٍ بَعْدَهُ",
+      "english": "O Allah, and bless Muhammad and his Household the best You hast blessed any of Your creatures before him and wilt bless any of them after him,"
+    },
+    {
+      "arabic": "وَآتِنَا فِي الدُّنْيَا حَسَنَةً وَّفِي الآخِرَةِ حَسَنَةً",
+      "english": "And give to us in this world good, and in the next world good,"
+    },
+    {
+      "arabic": "وَقِنِي بِرَحْمَتِكَ عَذَابَ النَّارِ",
+      "english": "And protect me through Your mercy from the chastisement of the Fire!"
+    },
+    {
+      "arabic": "إِنَّكَ عَلَى كُلِّ شَيٍْء قَدِيرٌ، وَهُوَ عَلَيْكَ يَسِيرٌ",
+      "english": "You are powerful over everything, and that is easy for You!"
+    }
+  ]
+}

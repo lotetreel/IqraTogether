@@ -89,6 +89,7 @@ const DuaSyncApp = () => {
   const [isFullScreen, setIsFullScreen] = useState(false); // State for fullscreen mode
   const [pendingGoToIndex, setPendingGoToIndex] = useState(null); // State to manage index after content load
   const urlCheckPerformed = useRef(false); // Ref to track if URL check has run
+  const [localFullContent, setLocalFullContent] = useState(null); // Local state for full content
 
   // Go To Modal State
   const [showGoToModal, setShowGoToModal] = useState(false);
@@ -189,19 +190,47 @@ const DuaSyncApp = () => {
     }
   }, [connectionStatus, pendingAction, isAttemptingRejoin, sessionId, username]);
 
+  useEffect(() => {
+    if (currentContentInfo && currentContentInfo.id) {
+      if (currentContentInfo.type === 'dua') {
+        const dataFromMap = contentMap[currentContentInfo.id];
+        if (dataFromMap) {
+          setLocalFullContent(dataFromMap);
+        } else {
+          console.warn("DuaSyncApp: DUA ID from context not found in local contentMap:", currentContentInfo.id);
+          setLocalFullContent(null); // Or fallback to currentFullContent from context if preferred
+        }
+      } else {
+        // For 'quran', 'alkafi_chapter', 'hadith_chapter', rely on context's currentFullContent
+        setLocalFullContent(currentFullContent);
+      }
+    } else {
+      setLocalFullContent(null); // No content selected
+    }
+  }, [currentContentInfo, currentFullContent]); // currentFullContent dependency is for non-dua types
+
   const totalPhrases = useMemo(() => {
     if (currentContentInfo?.type === 'alkafi_chapter') {
-      // For AlKafi chapters, totalPhrases is the number of hadiths
-      return currentFullContent?.hadithsInChapter?.length ?? 0;
+      return localFullContent?.hadithsInChapter?.length ?? 0;
     }
-    // For Quran and Dua
-    return currentFullContent?.totalAyahs ?? (currentFullContent?.verses?.arabic?.length ?? 0);
-  }, [currentContentInfo, currentFullContent]);
+    if (currentContentInfo?.type === 'quran') {
+      return localFullContent?.totalAyahs ?? (localFullContent?.verses?.arabic?.length ?? 0);
+    }
+    if (currentContentInfo?.type === 'dua') {
+      if (localFullContent?.phrases && Array.isArray(localFullContent.phrases)) {
+        return localFullContent.phrases.length; // For Sahifa duas
+      } else if (localFullContent?.verses?.arabic) {
+        return localFullContent.verses.arabic.length; // For other duas
+      }
+      return 0;
+    }
+    return 0; // Default
+  }, [currentContentInfo, localFullContent]);
 
   // Auto-advance effect
   useEffect(() => {
     let interval;
-    if (autoAdvance && isHost && sessionId && currentFullContent && totalPhrases > 0) {
+    if (autoAdvance && isHost && sessionId && localFullContent && totalPhrases > 0) {
       interval = setInterval(() => {
         if (currentIndex < totalPhrases - 1) {
           updateHostIndex(currentIndex + 1);
@@ -211,11 +240,11 @@ const DuaSyncApp = () => {
       }, autoAdvanceInterval * 1000);
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [autoAdvance, autoAdvanceInterval, currentFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases]);
+  }, [autoAdvance, autoAdvanceInterval, localFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases]);
 
   // --- Navigation Actions ---
   const navigate = useCallback((direction) => {
-    if (!currentFullContent || totalPhrases === 0) return;
+    if (!localFullContent || totalPhrases === 0) return;
     
     const newIndex = currentIndex + direction;
 
@@ -443,32 +472,44 @@ const DuaSyncApp = () => {
   // For AlKafi chapter, source might be derived from volume/book name
   const contentSource = currentContentInfo?.type === 'alkafi_chapter' 
     ? currentContentInfo?.volumeName 
-    : (currentFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : ''));
+    : (localFullContent?.source || (currentContentInfo?.type === 'quran' ? 'Quran' : ''));
   // totalPhrases is memoized earlier, not applicable to alkafi_chapter
 
   const currentPhraseData = useMemo(() => {
     // This function is for single phrase display, not applicable to alkafi_chapter view
-    if (currentContentInfo?.type === 'alkafi_chapter' || !currentFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
+    if (currentContentInfo?.type === 'alkafi_chapter' || !localFullContent || totalPhrases === 0 || currentIndex >= totalPhrases) {
       return { arabic: '', transliteration: '', translation: '', english: '' };
     }
 
     if (currentContentInfo?.type === 'quran') {
-      const verse = currentFullContent.verses[currentIndex];
+      const verse = localFullContent.verses[currentIndex];
       return {
         arabic: verse?.arabic || '',
         transliteration: verse?.transliteration || '',
         translation: verse?.translation || '',
       };
     } else if (currentContentInfo?.type === 'dua') {
-      return {
-        arabic: currentFullContent.verses?.arabic?.[currentIndex] || '',
-        transliteration: currentFullContent.verses?.transliteration?.[currentIndex] || '',
-        translation: currentFullContent.verses?.translation?.[currentIndex] || '',
-      };
+      if (localFullContent.phrases && Array.isArray(localFullContent.phrases)) {
+        // Sahifa Sajjadiya structure (and potentially other duas using 'phrases')
+        const phrase = localFullContent.phrases[currentIndex];
+        return {
+          arabic: phrase?.arabic || '',
+          // Assuming Sahifa JSONs might not have transliteration, default to empty
+          transliteration: phrase?.transliteration || '', 
+          translation: phrase?.english || phrase?.translation || '', // Use 'english' or 'translation'
+        };
+      } else if (localFullContent.verses) {
+        // Existing structure for other duas (e.g., Kumayl, Simaat if they use 'verses')
+        return {
+          arabic: localFullContent.verses?.arabic?.[currentIndex] || '',
+          transliteration: localFullContent.verses?.transliteration?.[currentIndex] || '',
+          translation: localFullContent.verses?.translation?.[currentIndex] || '',
+        };
+      }
     }
     // 'alkafi' single hadith view logic removed as it's now chapter based
     return { arabic: '', transliteration: '', translation: '', english: '' };
-  }, [currentFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
+  }, [localFullContent, currentIndex, totalPhrases, currentContentInfo?.type]);
 
   // Download Handlers
   const checkDownloadStatus = useCallback(async (key, type, id, filenameForCheck) => {
@@ -682,9 +723,9 @@ const DuaSyncApp = () => {
 
   // Effect to apply pending Go To index after content loads
   useEffect(() => {
-    console.log(`Go To Effect Check: pending=${pendingGoToIndex}, currentId=${currentContentInfo?.id}, targetId=${goToItemId}, hasContent=${!!currentFullContent}`); // More detailed log
+    console.log(`Go To Effect Check: pending=${pendingGoToIndex}, currentId=${currentContentInfo?.id}, targetId=${goToItemId}, hasContent=${!!localFullContent}`); // More detailed log
     // Check if there's a pending index, content is loaded, and the loaded content matches the target ID
-    if (pendingGoToIndex !== null && currentFullContent && currentContentInfo?.id === goToItemId) {
+    if (pendingGoToIndex !== null && localFullContent && currentContentInfo?.id === goToItemId) {
       console.log(`Applying pending Go To index: ${pendingGoToIndex} for content ID: ${currentContentInfo.id}`); // Debug log
       if (isHost) {
         updateHostIndex(pendingGoToIndex);
@@ -694,12 +735,12 @@ const DuaSyncApp = () => {
       setPendingGoToIndex(null); // Reset after applying
     }
   // Ensure dependencies cover the conditions checked inside
-  }, [currentFullContent, currentContentInfo, pendingGoToIndex, isHost, updateHostIndex, updateLocalIndex, goToItemId]);
+  }, [localFullContent, currentContentInfo, pendingGoToIndex, isHost, updateHostIndex, updateLocalIndex, goToItemId]);
 
 
   // Debug logs
   if (isDev) {
-    console.log('Rendering DuaSyncApp:', { sessionId: !!sessionId, currentContentInfo: !!currentContentInfo, currentFullContent: !!currentFullContent, isLoadingContent, isBrowsingLocally, isHost, connectionStatus });
+    console.log('Rendering DuaSyncApp:', { sessionId: !!sessionId, currentContentInfo: !!currentContentInfo, localFullContent: !!localFullContent, isLoadingContent, isBrowsingLocally, isHost, connectionStatus });
     if (!sessionId && !currentContentInfo) {
       console.log("Render Check: Condition met for initial DuaSelectionPage (!sessionId && !currentContentInfo).");
     } else {
@@ -813,13 +854,13 @@ const DuaSyncApp = () => {
               </div>
             )}
             {/* Content Rendering Logic (Normal View) */}
-            { isLoadingContent ? (
+            { isLoadingContent && !localFullContent ? ( // Show loading if context is loading AND localFullContent isn't set yet
                 <div className="flex flex-col items-center justify-center h-full py-20">
                   <Loader size={48} className="animate-spin text-primary-500 dark:text-primary-400 mb-6" />
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary mb-3">Loading Content...</h2>
                   <p className="text-gray-600 dark:text-dark-text-secondary">Please wait while we fetch the {currentContentInfo?.type || 'content'}.</p>
                 </div>
-              ) : currentContentInfo && currentFullContent && (!sessionId || isHost || !isBrowsingLocally) ? (
+              ) : currentContentInfo && localFullContent && (!sessionId || isHost || !isBrowsingLocally) ? (
                 <div className="space-y-6 animate-fade-in">
                   {/* Top Bar: Back Button, Page Number, Fullscreen Button */}
                   <div className="flex items-center justify-between">
@@ -1010,7 +1051,7 @@ const DuaSyncApp = () => {
         )}
 
         {/* Fullscreen View Container */}
-        {isFullScreen && currentContentInfo && currentFullContent && (
+        {isFullScreen && currentContentInfo && localFullContent && (
           <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto flex flex-col p-4 md:p-8 animate-fade-in">
             {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">

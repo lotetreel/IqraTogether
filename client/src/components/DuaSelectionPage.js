@@ -119,21 +119,9 @@ const DuaSelectionPage = ({
   // --- End Filtering Logic ---
 
   // Helper function to get a specific icon and color for Sahifa duas
-  const getSahifaDuaIcon = (dua) => {
-    let IconComponent;
-    let colorClass = 'text-teal-500'; // Default color for Sahifa
-
-    switch (dua.id) {
-      case 'sahifa-sajjadiya-dua1': IconComponent = LucideIcons.Sparkles; colorClass = 'text-yellow-400'; break; // Praise
-      case 'sahifa-sajjadiya-dua2': IconComponent = LucideIcons.Gift; colorClass = 'text-green-500'; break;    // Blessing on Prophet
-      case 'sahifa-sajjadiya-dua3': IconComponent = LucideIcons.Users; colorClass = 'text-indigo-500'; break; // Attesters to Messengers (using Users icon as placeholder)
-      case 'sahifa-sajjadiya-dua4': IconComponent = LucideIcons.Landmark; colorClass = 'text-blue-500'; break;   // Bearers of Throne
-      case 'sahifa-sajjadiya-dua5': IconComponent = LucideIcons.UserCheck; colorClass = 'text-lime-600'; break;     // For himself and people (changed to UserCheck)
-      case 'sahifa-sajjadiya-dua6': IconComponent = LucideIcons.Sunrise; colorClass = 'text-orange-500'; break;  // Morning and Evening (changed to Sunrise)
-      case 'sahifa-sajjadiya-dua7': IconComponent = LucideIcons.AlertTriangle; colorClass = 'text-red-500'; break; // Worrisome tasks
-      case 'sahifa-sajjadiya-dua8': IconComponent = LucideIcons.Shield; colorClass = 'text-purple-500'; break; // Seeking Refuge
-      default: IconComponent = LucideIcons.BookOpen; // Default icon
-    }
+  const getSahifaDuaIcon = () => { // Removed 'dua' parameter as it's no longer used for specific cases
+    const IconComponent = LucideIcons.BookOpen;
+    const colorClass = 'text-teal-500'; // Default color for Sahifa
     return <IconComponent size={18} className={`inline-block ${colorClass}`} />;
   };
 

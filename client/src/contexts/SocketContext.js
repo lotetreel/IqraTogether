@@ -765,6 +765,8 @@ export const SocketProvider = ({ children }) => {
       let maxIndex;
       if (currentContentInfo?.type === 'alkafi_chapter') {
         maxIndex = (currentFullContent.hadithsInChapter?.length ?? 0) - 1;
+      } else if (currentContentInfo?.type === 'dua' && currentFullContent?.phrases?.length) {
+        maxIndex = currentFullContent.phrases.length - 1;
       } else {
         maxIndex = currentFullContent.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
       }
@@ -790,6 +792,8 @@ export const SocketProvider = ({ children }) => {
       let maxIndex;
       if (currentContentInfo?.type === 'alkafi_chapter') {
         maxIndex = (currentFullContent.hadithsInChapter?.length ?? 0) - 1;
+      } else if (currentContentInfo?.type === 'dua' && currentFullContent?.phrases?.length) {
+        maxIndex = currentFullContent.phrases.length - 1;
       } else {
         maxIndex = currentFullContent.totalAyahs ? currentFullContent.totalAyahs - 1 : (currentFullContent.verses?.arabic?.length ? currentFullContent.verses.arabic.length - 1 : 0);
       }
