@@ -111,7 +111,13 @@
   { "id": "110", "title": "An-Nasr", "arabic": "النصر", "totalAyahs": 3 },
   { "id": "111", "title": "Al-Masad", "arabic": "المسد", "totalAyahs": 5 },
   { "id": "112", "title": "Al-Ikhlas", "arabic": "الإخلاص", "totalAyahs": 4 },
-  { "id": "113", "title": "Al-Falaq", "arabic": "الفلق", "totalAyahs": 5 },
+  { "id": "113", "title": "Al-Falaq", "arabic": "الفلق", "totalAyahs": 5, "images": [
+    "SurahImages/AlFalaq/AlFalaqVerse1.png",
+    "SurahImages/AlFalaq/AlFalaqVerse2.png",
+    "SurahImages/AlFalaq/AlFalaqVerse3.png",
+    "SurahImages/AlFalaq/AlFalaqVerse4.png",
+    "SurahImages/AlFalaq/AlFalaqVerse5.png"
+  ] },
   { "id": "114", "title": "An-Nas", "arabic": "الناس", "totalAyahs": 6, "images": [
     "SurahImages/AlNas/AlNasVerse1.png",
     "SurahImages/AlNas/AlNasVerse2.png",

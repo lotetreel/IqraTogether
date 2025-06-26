@@ -100,6 +100,7 @@ const DuaSyncApp = () => {
   const [goToVerseOrSegment, setGoToVerseOrSegment] = useState('');
   const [goToMaxVerseOrSegment, setGoToMaxVerseOrSegment] = useState(0);
   const [goToSearchTerm, setGoToSearchTerm] = useState(''); // For filtering Surahs/Duas
+  const [activeHadithVolumeIdOnBack, setActiveHadithVolumeIdOnBack] = useState(null); // For Hadith back navigation
 
   // REMOVED Swipe detection state
 
@@ -352,7 +353,15 @@ const DuaSyncApp = () => {
    const handleContentSelection = (contentInfo, fullData = null) => {
      if (!contentInfo) return;
      setLocalError(null);
-     setIsKidsMode(contentInfo.startInKidsMode || false);
+     
+     const newIsKidsMode = contentInfo.startInKidsMode || false;
+     setIsKidsMode(newIsKidsMode); // Set the app's kids mode state
+
+     // Automatically go fullscreen if Kids Mode is active for a Quran Surah with images
+     const isQuranWithImagesForFullscreen = contentInfo.type === 'quran' && ['55', '113', '114'].includes(contentInfo.id);
+     if (newIsKidsMode && isQuranWithImagesForFullscreen) {
+       setIsFullScreen(true);
+     }
 
      const dataToPass = fullData ? [contentInfo, fullData] : [contentInfo];
 
@@ -411,27 +420,77 @@ const DuaSyncApp = () => {
   // Back button logic
   const handleBack = () => {
     setLocalError(null);
-    // If viewing AlKafi chapter content, go back to DuaSelectionPage (AlKafi tab will be active by default if no other content was selected prior)
+
+    if (currentContentInfo?.type === 'hadith_chapter') {
+      // Store the volume ID of the current hadith chapter
+      // This assumes currentContentInfo for hadith_chapter has a volumeId property
+      if (currentContentInfo.volumeId) {
+        setActiveHadithVolumeIdOnBack(currentContentInfo.volumeId);
+        console.log(`Hadith back: Storing volumeId ${currentContentInfo.volumeId} for return.`);
+      } else {
+        console.warn("HadithChapterView: currentContentInfo.volumeId is missing. Cannot set active volume for back navigation.");
+        setActiveHadithVolumeIdOnBack(null);
+      }
+      // Then proceed to clear the content, which will show DuaSelectionPage
+      // The logic for clearing content depends on session status, host status, etc.
+      // This part mimics the original logic for clearing content when currentContentInfo is present.
+      if (!sessionId) { // Offline
+          selectContentLocally(null);
+      } else if (isHost && connectionStatus === 'connected') { // Host online
+          selectContentAsHost(null);
+      } else if (isBrowsingLocally) { // Participant browsing locally (online or offline)
+          setIsBrowsingLocally(false); // Stop local browsing
+          if (connectionStatus === 'connected') {
+            // If online, after clearing local, they might sync to host or see selection page
+            // For now, let's clear local content. If host has content, syncToHost might be better.
+            // However, the goal is to go to selection page with specific tab.
+            selectContentLocally(null); // This will show selection page.
+            // syncToHost(); // This would take them to host's content, not selection page.
+          } else { // Participant browsing locally, offline
+            selectContentLocally(null);
+          }
+      } else if (!isHost && connectionStatus === 'connected' && !isBrowsingLocally) { // Participant synced to host
+        // When a synced participant hits back, they should go to selection page to browse locally.
+        setIsBrowsingLocally(true);
+        // Don't clear content immediately, let them see selection page with host content in background.
+        // setActiveHadithVolumeIdOnBack is already set, DuaSelectionPage will handle it.
+        // No need to call selectContentLocally(null) here as it would clear host's content from view.
+      } else { // Participant offline, not browsing locally (shouldn't happen if content is viewed)
+          selectContentLocally(null);
+      }
+      return;
+    } else {
+      // If backing out from something else (not a hadith chapter), clear any pending hadith volume.
+      // This ensures that if user navigates elsewhere and then back to selection page,
+      // it doesn't try to force a hadith volume tab.
+      setActiveHadithVolumeIdOnBack(null);
+    }
+
+    // If viewing AlKafi chapter content, go back to DuaSelectionPage
     if (currentContentInfo?.type === 'alkafi_chapter') {
         selectContentLocally(null); 
+        // TODO: Consider if AlKafi also needs tab persistence similar to Hadith.
+        // If so, setActiveAlKafiBookIdOnBack(currentContentInfo.bookId) or similar.
         return;
     }
 
-    if (!sessionId && currentContentInfo) {
+    // Original logic for other cases:
+    if (!sessionId && currentContentInfo) { // Offline, viewing some content
         selectContentLocally(null);
         return;
     }
+    // This block handles general back from content when in a session
     if (sessionId && currentContentInfo) {
       if (isHost && connectionStatus === 'connected') {
         selectContentAsHost(null);
-      } else if (isBrowsingLocally) {
+      } else if (isBrowsingLocally) { // Participant browsing locally
          setIsBrowsingLocally(false);
          if (connectionStatus === 'connected') {
-           syncToHost();
+           syncToHost(); // Sync back to host if they were browsing locally
          } else {
-           selectContentLocally(null);
+           selectContentLocally(null); // Offline, clear local content
          }
-      } else if (!isHost && connectionStatus === 'connected') {
+      } else if (!isHost && connectionStatus === 'connected') { // Participant synced to host
         // Participant was following, now wants to browse locally from selection page
         setIsBrowsingLocally(true); 
         // Don't clear content, let them see selection page with host content still in background
@@ -440,17 +499,21 @@ const DuaSyncApp = () => {
       }
       return;
     }
+    // Back from selection page when host
     else if (sessionId && isHost && !currentContentInfo && connectionStatus === 'connected') {
        if (socket) {
-         socket.emit('leave_session', { sessionId });
+         // Consider if host should leave session or just go to a "no content selected" state.
+         // Original: socket.emit('leave_session', { sessionId });
+         // For now, let's assume host stays in session but with no content.
+         // If leaving session is desired, uncomment the emit.
        }
        return;
     }
-    // If a participant is browsing locally and hits back from selection page, sync to host
+    // Back from selection page when participant browsing locally
     else if (sessionId && !isHost && isBrowsingLocally && !currentContentInfo) {
        setIsBrowsingLocally(false);
        if (connectionStatus === 'connected') {
-         syncToHost();
+         syncToHost(); // Sync back to host
        }
        return;
     }
@@ -634,7 +697,20 @@ const DuaSyncApp = () => {
   // Toggle Kids Mode Handler
   // Simplified Toggle Kids Mode Handler (no activeTab logic needed here)
   const toggleKidsMode = () => {
-    setIsKidsMode(!isKidsMode);
+    const newKidsModeState = !isKidsMode;
+    setIsKidsMode(newKidsModeState);
+
+    if (newKidsModeState) {
+      // If turning ON kids mode
+      if (currentContentInfo?.type === 'quran' && ['55', '113', '114'].includes(currentContentInfo.id)) {
+        setIsFullScreen(true);
+      }
+    } else {
+      // If turning OFF kids mode, exit fullscreen if it was on.
+      if (isFullScreen) {
+        setIsFullScreen(false);
+      }
+    }
   };
 
   // Toggle Fullscreen Handler
@@ -903,7 +979,7 @@ const DuaSyncApp = () => {
                   )}
 
                   {/* Kids Mode Toggle (Only if current Surah supports Kids Mode images) - Not applicable to alkafi_chapter */}
-                  {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') && (
+                  {currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') && (
                     <div className="flex items-center justify-center mb-6">
                        <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
                          <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" />
@@ -912,7 +988,7 @@ const DuaSyncApp = () => {
                   )}
 
                   {/* Main content display (Normal View) */}
-                  {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') ? (
+                  {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') ? (
                     // --- Kids Mode Layout (Normal View) ---
                      <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
                        <div className="relative w-full flex items-center justify-center mb-4" style={{ minHeight: '300px' }}>
@@ -925,7 +1001,8 @@ const DuaSyncApp = () => {
                         <img 
                           src={localKidsImagePath ? localKidsImagePath : 
                                 (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` : 
-                                (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png'))
+                                (currentContentInfo.id === '113' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` :
+                                (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png')))
                               } 
                           alt={`Verse ${currentIndex + 1} - Kids Illustration`} 
                           className="max-w-full max-h-[40vh] object-contain rounded-lg" 
@@ -1054,6 +1131,11 @@ const DuaSyncApp = () => {
                   onSelectAlKafi={handleAlKafiChapterSelection} // Updated prop name
                   onSelectHadithChapter={handleContentSelection} // Use generic handler for now
                   onBack={handleBack}
+                  activeHadithVolumeIdOnBack={activeHadithVolumeIdOnBack}
+                  onHadithVolumeTabFocused={() => {
+                    console.log("DuaSelectionPage focused on Hadith volume tab, resetting activeHadithVolumeIdOnBack.");
+                    setActiveHadithVolumeIdOnBack(null);
+                  }}
                   isKidsMode={isKidsMode}
                   arabicFontSize={arabicFontSize}
                   translationFontSize={translationFontSize}
@@ -1068,7 +1150,25 @@ const DuaSyncApp = () => {
           <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto flex flex-col p-4 md:p-8 animate-fade-in">
             {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary">{contentTitle}</h2>
+              {/* Back Button for Fullscreen - only if not in session or is host */}
+              {(!sessionId || isHost) && (
+                <button 
+                  onClick={() => {
+                    handleBack(); // Existing back logic
+                    if (isFullScreen) { // Ensure we exit fullscreen if back is pressed from here
+                      setIsFullScreen(false);
+                    }
+                  }} 
+                  className="btn-icon tooltip-wrapper group mr-2" // Added margin-right
+                  aria-label="Back"
+                >
+                  <ChevronLeft size={24} />
+                  <span className="tooltip">Back</span>
+                </button>
+              )}
+              <h2 className={`text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary ${(!sessionId || isHost) ? '' : 'flex-1 text-center'}`}> {/* Adjust title alignment */}
+                {contentTitle}
+              </h2>
               {/* Action Buttons Group */}
               <div className="flex items-center space-x-2">
                 {/* Settings Button (Opens modal without exiting fullscreen) */}
@@ -1087,7 +1187,7 @@ const DuaSyncApp = () => {
 
             {/* Fullscreen Content Area (Scrollable) */}
             <div className="flex-1 min-h-0"> {/* Let outer container handle scrolling and flex */}
-              {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') ? (
+              {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') ? (
                 // Kids mode Quran fullscreen rendering
                  <> 
                   <div className="relative w-full max-w-4xl mx-auto flex items-center justify-center mb-4 px-4">
@@ -1100,7 +1200,8 @@ const DuaSyncApp = () => {
                     <img 
                       src={localKidsImagePath ? localKidsImagePath : 
                             (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` : 
-                            (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png'))
+                            (currentContentInfo.id === '113' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` :
+                            (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png')))
                           } 
                       alt={`Verse ${currentIndex + 1} - Kids Illustration`} 
                       className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg" 

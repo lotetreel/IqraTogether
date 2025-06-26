@@ -23,6 +23,8 @@ const DuaSelectionPage = ({
   onSelectHadithChapter, // Add new prop for Hadith selection
   onBack,
   isKidsMode,
+  activeHadithVolumeIdOnBack, // New prop for returning to a specific Hadith volume
+  onHadithVolumeTabFocused,   // New callback prop
   // Pass through font and display props for AlKafiSelectionPage
   arabicFontSize, 
   translationFontSize, 
@@ -30,6 +32,7 @@ const DuaSelectionPage = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('quran'); // 'quran', 'dua', 'sahifa', 'alkafi', 'hadith', 'game'
+  const [initialHadithVolumeForChild, setInitialHadithVolumeForChild] = useState(null);
   const [filter, setFilter] = useState('all');
   // Removed isKidsFilterActive state, will use isKidsMode prop
   const [hadithData, setHadithData] = useState(null); // State to hold loaded hadith data
@@ -65,8 +68,8 @@ const DuaSelectionPage = ({
   // --- Filtering Logic ---
   const filterContent = (items, type) => {
     // Define the Surah IDs that have images and are suitable for Kids Mode
-    // Only include Surahs confirmed to have kids images (Al-Rahman, An-Nas)
-    const kidsModeSurahIds = ['55', '114']; 
+    // Only include Surahs confirmed to have kids images (Al-Rahman, An-Nas, Al-Falaq)
+    const kidsModeSurahIds = ['55', '113', '114'];
 
     return items.filter(item => {
       // --- Kids Mode Filter (Applied first for Quran) ---
@@ -134,6 +137,32 @@ const DuaSelectionPage = ({
     setSearchTerm('');
     setFilter('all');
   }, [isKidsMode, activeTab]);
+
+  useEffect(() => {
+    if (activeHadithVolumeIdOnBack) {
+      console.log(`DuaSelectionPage: Received activeHadithVolumeIdOnBack: ${activeHadithVolumeIdOnBack}`);
+      setActiveTab('hadith');
+      const volumeMatch = activeHadithVolumeIdOnBack.match(/volume-(\d+)/);
+      if (volumeMatch && volumeMatch[1]) {
+        const volumeNumber = parseInt(volumeMatch[1], 10);
+        console.log(`DuaSelectionPage: Setting initialHadithVolumeForChild to ${volumeNumber}`);
+        setInitialHadithVolumeForChild(volumeNumber);
+      } else {
+        console.warn(`DuaSelectionPage: Could not parse volume number from ${activeHadithVolumeIdOnBack}`);
+        setInitialHadithVolumeForChild(null);
+      }
+      // Important: Call the callback to reset the state in the parent (DuaSyncApp)
+      // This should ideally be called after HadithSelectionPage has consumed the initialVolume
+      // For now, we call it here. If HadithSelectionPage needs to signal back, we might adjust.
+      if (onHadithVolumeTabFocused) {
+        onHadithVolumeTabFocused();
+      }
+    } else {
+      // If activeHadithVolumeIdOnBack is cleared (e.g., user navigates away from Hadith tab),
+      // reset initialHadithVolumeForChild so it doesn't persist.
+      setInitialHadithVolumeForChild(null);
+    }
+  }, [activeHadithVolumeIdOnBack, onHadithVolumeTabFocused]);
 
 
   return (
@@ -314,6 +343,7 @@ const DuaSelectionPage = ({
         // --- Hadith Rendering ---
         <HadithSelectionPage
           onSelectHadithChapter={onSelectHadithChapter}
+          initialSelectedVolume={initialHadithVolumeForChild} // Pass the initial volume
           // Pass necessary props if HadithSelectionPage needs them
           // e.g., isKidsMode={isKidsMode}, arabicFontSize={arabicFontSize}, etc.
         />
@@ -386,6 +416,10 @@ const DuaSelectionPage = ({
                        else if (surah.id == 5) imageSrc = AlMaidahImage;
                        else if (surah.id == 6) imageSrc = AlAnaamImage;
                        else if (surah.id == 55) imageSrc = AlRahmanImage;
+                       // Add Al-Falaq (ID 113)
+                       else if (surah.id == 113 && surah.images && surah.images.length > 0) {
+                        imageSrc = `/${surah.images[0]}`;
+                       }
                        else if (surah.id == 114 && surah.images && surah.images.length > 0) {
                          // Paths in quran-data.js are relative to public, so prepend /
                          imageSrc = `/${surah.images[0]}`;
@@ -403,7 +437,7 @@ const DuaSelectionPage = ({
                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                        <div className="flex justify-between items-end">
                          <h3 className="text-white font-bold text-lg">
-                           {surah.id == 55 ? 'The Merciful' : (surah.id == 114 ? 'Mankind' : surah.title)}
+                           {surah.id == 55 ? 'The Merciful' : (surah.id == 113 ? 'The Dawn' : (surah.id == 114 ? 'Mankind' : surah.title))}
                          </h3>
                          {surah.totalAyahs > 0 && (
                            <div className="badge bg-accent-100 text-accent-800 dark:bg-accent-900/50 dark:text-accent-200">

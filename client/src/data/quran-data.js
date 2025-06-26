@@ -123,7 +123,13 @@ QuranData.Sura = [
 	[6213, 3, 114, 1, 'النصر', "An-Nasr", 'Divine Support', 'Medinan'],
 	[6216, 5, 6, 1, 'المسد', "Al-Masad", 'The Palm Fibre', 'Meccan'],
 	[6221, 4, 22, 1, 'الإخلاص', "Al-Ikhlaas", 'Sincerity', 'Meccan'],
-	[6225, 5, 20, 1, 'الفلق', "Al-Falaq", 'The Dawn', 'Meccan'],
+	[6225, 5, 20, 1, 'الفلق', "Al-Falaq", 'The Dawn', 'Meccan', [
+		"SurahImages/AlFalaq/AlFalaqVerse1.png",
+		"SurahImages/AlFalaq/AlFalaqVerse2.png",
+		"SurahImages/AlFalaq/AlFalaqVerse3.png",
+		"SurahImages/AlFalaq/AlFalaqVerse4.png",
+		"SurahImages/AlFalaq/AlFalaqVerse5.png"
+	]],
 	[6230, 6, 21, 1, 'الناس', "An-Naas", 'Mankind', 'Meccan', [
 		"SurahImages/AlNas/AlNasVerse1.png",
 		"SurahImages/AlNas/AlNasVerse2.png",

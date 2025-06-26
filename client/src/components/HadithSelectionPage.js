@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { contentMap, dataReadyPromise } from '../data/duaCollection'; // Import contentMap and the promise
 
-const HadithSelectionPage = ({ onSelectHadithChapter }) => {
+const HadithSelectionPage = ({ onSelectHadithChapter, initialSelectedVolume }) => {
   const [allChapters, setAllChapters] = useState([]); // Store all chapters from all volumes
-  const [selectedVolume, setSelectedVolume] = useState(1); // Default to Volume 1
+  const [selectedVolume, setSelectedVolume] = useState(initialSelectedVolume || 1); // Default to Volume 1 or initial prop
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,14 +39,25 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
     loadHadithData();
   }, []);
 
+  useEffect(() => {
+    if (initialSelectedVolume && initialSelectedVolume !== selectedVolume) {
+      console.log(`HadithSelectionPage: Received initialSelectedVolume: ${initialSelectedVolume}, setting selectedVolume.`);
+      setSelectedVolume(initialSelectedVolume);
+    }
+    // We don't want this effect to re-run if selectedVolume changes due to user interaction,
+    // only when initialSelectedVolume prop changes from parent.
+  }, [initialSelectedVolume]);
+
   const handleChapterSelect = (chapter) => {
-    // The chapter object from contentMap already has id, title, source, etc.
-    // Ensure the 'type' is correctly set if not already in the chapter object from contentMap
+    // The chapter object from contentMap already has id, title, source, volume, etc.
+    // Ensure the 'type' is correctly set and add 'volumeId' in the expected format.
     const selectionInfo = {
       ...chapter, // Spread all properties from the chapter object
       type: 'hadith_chapter', // Ensure type is set
+      volumeId: `volume-${chapter.volume}` // Add volumeId like "volume-1", "volume-2"
     };
-    onSelectHadithChapter(selectionInfo, chapter); // Pass the full chapter object as both arguments
+    // Pass the enhanced selectionInfo and the original chapter data
+    onSelectHadithChapter(selectionInfo, chapter); 
   };
   
   const displayedChapters = useMemo(() => {
