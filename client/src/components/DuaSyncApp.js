@@ -655,7 +655,12 @@ const DuaSyncApp = () => {
 
   // Load local Kids Mode image path
   useEffect(() => {
-    if (!isKidsMode || !currentContentInfo || currentContentInfo.type !== 'quran' || !['55', '113', '114'].includes(currentContentInfo.id)) {
+    const shouldLoadKidsImage = isKidsMode &&
+                               currentContentInfo &&
+                               currentContentInfo.type === 'quran' &&
+                               ['55', '113', '114'].includes(currentContentInfo.id);
+
+    if (!shouldLoadKidsImage) {
       setIsImageLoading(false);
       setLocalKidsImagePath(null);
       return;
@@ -678,21 +683,21 @@ const DuaSyncApp = () => {
           const fileExists = await offlineStorage.checkFileExists(relativePath);
           if (fileExists) {
             const fileUriResult = await Filesystem.getUri({ directory: Directory.Documents, path: relativePath });
-            const webPath = Capacitor.convertFileSrc(fileUriResult.uri);
-            setLocalKidsImagePath(webPath);
+            setLocalKidsImagePath(Capacitor.convertFileSrc(fileUriResult.uri));
           } else {
-            setLocalKidsImagePath(null); // Fallback to public path if local not found
+            setLocalKidsImagePath(null); // Fallback to public path
           }
         } catch (error) {
           console.error('Error checking/getting local image URI:', error);
-          setLocalKidsImagePath(null);
+          setLocalKidsImagePath(null); // Fallback
+          setIsImageLoading(false); // Ensure loading stops on error
         }
-        // Image loading will be set to false by img onLoad/onError
+        // setIsImageLoading(false) will be called by onLoad/onError of the img tag
       };
       checkLocalImage();
     } else {
       setLocalKidsImagePath(null);
-      // setIsImageLoading(false); // Should be handled by img tag if no valid folderName leads to no img src change
+      setIsImageLoading(false); // No valid folder, so not loading
     }
   }, [isKidsMode, currentContentInfo, currentIndex]);
 
@@ -1000,29 +1005,28 @@ const DuaSyncApp = () => {
                             <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
                           </>
                         )}
-                        {isImageLoading ? (
-                          <div className="flex flex-col items-center justify-center text-center w-full h-full min-h-[200px]"> {/* Adjusted min-h */}
+                        <img
+                          key={`kids-image-normal-${currentContentInfo?.id}-${currentIndex}-img`}
+                          src={localKidsImagePath ? localKidsImagePath :
+                                (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` :
+                                (currentContentInfo.id === '113' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` :
+                                (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png')))
+                              }
+                          alt={`Verse ${currentIndex + 1} - Kids Illustration`}
+                          className={`max-w-full max-h-[40vh] object-contain rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-30' : 'opacity-100'}`}
+                          onLoad={() => setIsImageLoading(false)}
+                          onError={(e) => {
+                            setIsImageLoading(false);
+                            e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
+                          }}
+                        />
+                        {isImageLoading && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-lg">
                             <Loader size={48} className="animate-spin text-pink-500 dark:text-pink-400 mb-4" />
                             <p className="text-lg font-medium text-gray-700 dark:text-dark-text-secondary">
                               Loading picture...
                             </p>
                           </div>
-                        ) : (
-                          <img
-                            key={`kids-image-normal-${currentContentInfo?.id}-${currentIndex}`}
-                            src={localKidsImagePath ? localKidsImagePath :
-                                  (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` :
-                                  (currentContentInfo.id === '113' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` :
-                                  (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png')))
-                                }
-                            alt={`Verse ${currentIndex + 1} - Kids Illustration`}
-                            className="max-w-full max-h-[40vh] object-contain rounded-lg"
-                            onLoad={() => setIsImageLoading(false)}
-                            onError={(e) => {
-                              setIsImageLoading(false);
-                              e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
-                            }}
-                          />
                         )}
                       </div>
                       <div className="w-full max-w-3xl px-4 flex-shrink-0">
@@ -1213,30 +1217,29 @@ const DuaSyncApp = () => {
                         <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={40} /> </button>
                       </>
                     )}
-                    {isImageLoading ? (
-                      <div className="flex flex-col items-center justify-center text-center w-full h-full min-h-[50vh]"> {/* Ensure it takes space */}
-                        <Loader size={64} className="animate-spin text-pink-500 dark:text-pink-400 mb-4" />
-                        <p className="text-xl font-semibold text-gray-700 dark:text-dark-text-primary">
-                          Loading a beautiful picture...
-                        </p>
-                      </div>
-                    ) : (
                     <img 
-                      key={`kids-image-fullscreen-${currentContentInfo?.id}-${currentIndex}`}
+                      key={`kids-image-fullscreen-${currentContentInfo?.id}-${currentIndex}-img`}
                       src={localKidsImagePath ? localKidsImagePath : 
                             (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` : 
                             (currentContentInfo.id === '113' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` :
                             (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png')))
                           }
                       alt={`Verse ${currentIndex + 1} - Kids Illustration`}
-                      className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                      className={`max-w-full h-auto max-h-[75vh] object-contain rounded-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-30' : 'opacity-100'}`}
                       onLoad={() => setIsImageLoading(false)}
                       onError={(e) => {
                         setIsImageLoading(false);
                         e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
                       }}
                     />
-                  )}
+                    {isImageLoading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-lg">
+                        <Loader size={64} className="animate-spin text-pink-500 dark:text-pink-400 mb-4" />
+                        <p className="text-xl font-semibold text-gray-700 dark:text-dark-text-primary">
+                          Loading a beautiful picture...
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="w-full max-w-4xl mx-auto px-4 flex-shrink-0">
                      <p className="text-center mb-2 text-base text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1} of {totalPhrases}</p>
