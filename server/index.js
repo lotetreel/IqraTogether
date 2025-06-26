@@ -24,9 +24,10 @@ try {
   console.log(`Attempting to load Quran data from: ${dataPath}`);
 
   // --- MODIFICATION START: Read quran.json instead of arabic.json ---
-  console.log('Reading quran.json...');
-  const arabicRaw = fs.readFileSync(path.join(dataPath, 'quran.json'), 'utf8');
-  console.log('Parsing quran.json...');
+  // Reverted to arabic.json as quran.json is missing in the remote repository
+  console.log('Reading arabic.json...');
+  const arabicRaw = fs.readFileSync(path.join(dataPath, 'arabic.json'), 'utf8');
+  console.log('Parsing arabic.json...');
   // --- MODIFICATION END ---
   quranArabicArray = JSON.parse(arabicRaw);
   console.log(`Parsed quran.json. Root Type: ${Array.isArray(quranArabicArray) ? 'array' : typeof quranArabicArray}, Length: ${quranArabicArray.length}`);
