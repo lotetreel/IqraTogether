@@ -60,32 +60,7 @@ import SAHIFA_DUA_55 from './dua_55.json';
 
 // Basic dua collection for preview/selection
 export const duaCollection = [
-  {
-    id: 'dua-kumayl',
-    title: 'Dua Kumayl',
-    arabic: 'دعاء كميل',
-    source: 'Imam Ali (as)',
-    category: 'Thursday Night',
-    description: 'A supplication taught by Imam Ali (as) to his close companion Kumayl ibn Ziyad. It is recited for forgiveness of sins and protection from evil.',
-    recitationTime: 'Thursday nights',
-    benefits: 'Forgiveness of sins, fulfillment of needs, protection from enemies',
-    image: '/images/dua_kumayl.png',
-    length: 'Long',
-    popularity: 5
-  },
-  {
-    id: 'dua-simaat',
-    title: 'Dua Simaat',
-    arabic: 'دعاء السمات',
-    source: 'Imams Baqir & Sadiq (as)',
-    category: 'Friday Afternoon',
-    description: 'Also known as Dua Shubbur. A famous supplication recommended to be recited in the last hour of Friday.',
-    recitationTime: 'Last hour of Friday afternoon',
-    benefits: 'Seeking divine assistance, relief from hardship, forgiveness',
-    image: '/images/Dua_Simaat.png',
-    length: 'Long',
-    popularity: 4
-  },
+  // Dua Kumayl and Dua Simaat removed as per request.
   // New Sahifa Sajjadiya Duas
   {
     id: 'sahifa-sajjadiya-dua1',
@@ -754,8 +729,8 @@ export const quranCollection = [];
 
 // Content lookup map for full content retrieval
 export const contentMap = {
-  'dua-kumayl': DUA_KUMAYL,
-  'dua-simaat': DUA_SIMAAT,
+  // 'dua-kumayl': DUA_KUMAYL, // Removed
+  // 'dua-simaat': DUA_SIMAAT, // Removed
   'sahifa-sajjadiya-dua1': SAHIFA_DUA_1,
   'sahifa-sajjadiya-dua2': SAHIFA_DUA_2,
   'sahifa-sajjadiya-dua3': SAHIFA_DUA_3,

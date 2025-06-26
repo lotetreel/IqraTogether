@@ -591,11 +591,25 @@ const DuaSyncApp = () => {
 
   // Load local Kids Mode image path
   useEffect(() => {
-    if (isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55') {
+    let folderName = null;
+    let filenamePrefix = ''; // For Surahs like An-Nas that have the Surah name in the image filename
+
+    if (currentContentInfo?.type === 'quran') {
+      if (currentContentInfo.id === '55') { // Ar-Rahman
+        folderName = 'AlRahman';
+        // filenamePrefix remains empty as images are Verse1.png, Verse2.png etc.
+      } else if (currentContentInfo.id === '114') { // An-Nas
+        folderName = 'AlNas';
+        filenamePrefix = 'AlNas'; // Images are AlNasVerse1.png, AlNasVerse2.png etc.
+      }
+    }
+
+    if (isKidsMode && folderName) {
       const checkLocalImage = async () => {
         try {
-          const filename = `Verse${currentIndex + 1}.png`;
-          const relativePath = offlineStorage.getFilePath('images', 'AlRahman', filename);
+          // Construct filename with prefix if needed
+          const filename = `${filenamePrefix}Verse${currentIndex + 1}.png`;
+          const relativePath = offlineStorage.getFilePath('images', folderName, filename);
           const fileExists = await offlineStorage.checkFileExists(relativePath);
           if (fileExists) {
             const fileUriResult = await Filesystem.getUri({ directory: Directory.Documents, path: relativePath });
@@ -888,16 +902,8 @@ const DuaSyncApp = () => {
                     </div>
                   )}
 
-                  {/* Kids Mode Toggle (Only if Al-Rahman) - Not applicable to alkafi_chapter */}
-                  {currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' && (
-                    <div className="flex items-center justify-center mb-6">
-                       <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
-                         <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" />
-                       </button>
-                    </div>
-                  )}
-
-                  {currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' && (
+                  {/* Kids Mode Toggle (Only if current Surah supports Kids Mode images) - Not applicable to alkafi_chapter */}
+                  {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') && (
                     <div className="flex items-center justify-center mb-6">
                        <button onClick={toggleKidsMode} className={`btn btn-icon p-1 ${isKidsMode ? 'btn-accent ring-2 ring-offset-1 ring-accent-focus dark:ring-offset-dark-bg-primary' : 'btn-ghost'}`} aria-label={isKidsMode ? "Kids Mode Active - Click to Deactivate" : "Kids Mode Inactive - Click to Activate"}>
                          <img src={KidsModeIcon} alt="Kids Mode Toggle" className="w-16 h-16" />
@@ -906,9 +912,8 @@ const DuaSyncApp = () => {
                   )}
 
                   {/* Main content display (Normal View) */}
-                  {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
+                  {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') ? (
                     // --- Kids Mode Layout (Normal View) ---
-                    // ... (Kids mode rendering - unchanged) ...
                      <div key={`kids-mode-view-${currentIndex}`} className="animate-fade-in w-full flex flex-col items-center">
                        <div className="relative w-full flex items-center justify-center mb-4" style={{ minHeight: '300px' }}>
                         {(!sessionId || isHost) && (
@@ -917,7 +922,15 @@ const DuaSyncApp = () => {
                             <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={32} /> </button>
                           </>
                         )}
-                        <img src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`} alt={`Verse ${currentIndex + 1} - Kids Illustration`} className="max-w-full max-h-[40vh] object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} />
+                        <img 
+                          src={localKidsImagePath ? localKidsImagePath : 
+                                (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` : 
+                                (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png'))
+                              } 
+                          alt={`Verse ${currentIndex + 1} - Kids Illustration`} 
+                          className="max-w-full max-h-[40vh] object-contain rounded-lg" 
+                          onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} 
+                        />
                       </div>
                       <div className="w-full max-w-3xl px-4 flex-shrink-0">
                          <p className="text-center mb-2 text-sm text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1}</p>
@@ -1074,7 +1087,7 @@ const DuaSyncApp = () => {
 
             {/* Fullscreen Content Area (Scrollable) */}
             <div className="flex-1 min-h-0"> {/* Let outer container handle scrolling and flex */}
-              {isKidsMode && currentContentInfo?.type === 'quran' && currentContentInfo?.id === '55' ? (
+              {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '114') ? (
                 // Kids mode Quran fullscreen rendering
                  <> 
                   <div className="relative w-full max-w-4xl mx-auto flex items-center justify-center mb-4 px-4">
@@ -1084,7 +1097,15 @@ const DuaSyncApp = () => {
                         <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-30 cursor-not-allowed' : 'opacity-70 hover:opacity-100'}`} aria-label="Next Verse"> <ChevronRight size={40} /> </button>
                       </>
                     )}
-                    <img src={localKidsImagePath ? localKidsImagePath : `/SurahImages/AlRahman/Verse${currentIndex + 1}.png`} alt={`Verse ${currentIndex + 1} - Kids Illustration`} className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} />
+                    <img 
+                      src={localKidsImagePath ? localKidsImagePath : 
+                            (currentContentInfo.id === '55' ? `/SurahImages/AlRahman/Verse${currentIndex + 1}.png` : 
+                            (currentContentInfo.id === '114' && localFullContent?.images && localFullContent.images[currentIndex] ? `/${localFullContent.images[currentIndex]}` : '/SurahImages/image_not_found.png'))
+                          } 
+                      alt={`Verse ${currentIndex + 1} - Kids Illustration`} 
+                      className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg" 
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`; }} 
+                    />
                   </div>
                   <div className="w-full max-w-4xl mx-auto px-4 flex-shrink-0">
                      <p className="text-center mb-2 text-base text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1} of {totalPhrases}</p>

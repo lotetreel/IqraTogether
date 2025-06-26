@@ -112,5 +112,12 @@
   { "id": "111", "title": "Al-Masad", "arabic": "المسد", "totalAyahs": 5 },
   { "id": "112", "title": "Al-Ikhlas", "arabic": "الإخلاص", "totalAyahs": 4 },
   { "id": "113", "title": "Al-Falaq", "arabic": "الفلق", "totalAyahs": 5 },
-  { "id": "114", "title": "An-Nas", "arabic": "الناس", "totalAyahs": 6 }
+  { "id": "114", "title": "An-Nas", "arabic": "الناس", "totalAyahs": 6, "images": [
+    "SurahImages/AlNas/AlNasVerse1.png",
+    "SurahImages/AlNas/AlNasVerse2.png",
+    "SurahImages/AlNas/AlNasVerse3.png",
+    "SurahImages/AlNas/AlNasVerse4.png",
+    "SurahImages/AlNas/AlNasVerse5.png",
+    "SurahImages/AlNas/AlNasVerse6.png"
+  ]}
 ]

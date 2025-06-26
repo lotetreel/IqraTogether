@@ -82,7 +82,7 @@ const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, 
       });
   }
 
-  return {
+  const mergedData = {
     id: meta.id,
     title: meta.title,
     arabicTitle: meta.arabic,
@@ -90,6 +90,13 @@ const getMergedSurahDataLocally = (surahId, parsedUthmaniData, parsedQaraiData, 
     verses: mergedVerses,
     displayBismillah: displayBismillahFlag // Add the flag to the returned object
   };
+
+  // Include images array if it exists in the metadata
+  if (meta.images) {
+    mergedData.images = meta.images;
+  }
+
+  return mergedData;
 };
 // --- End Helper Function ---
 

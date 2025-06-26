@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { contentMap, dataReadyPromise } from '../data/duaCollection'; // Import contentMap and the promise
 
 const HadithSelectionPage = ({ onSelectHadithChapter }) => {
-  const [allChapters, setAllChapters] = useState([]); // Store all chapters from both volumes
+  const [allChapters, setAllChapters] = useState([]); // Store all chapters from all volumes
   const [selectedVolume, setSelectedVolume] = useState(1); // Default to Volume 1
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,7 +49,15 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
     onSelectHadithChapter(selectionInfo, chapter); // Pass the full chapter object as both arguments
   };
   
-  const displayedChapters = allChapters.filter(ch => ch.volume === selectedVolume);
+  const displayedChapters = useMemo(() => {
+    if (searchTerm.trim() !== '') {
+      return allChapters.filter(chapter =>
+        chapter.chapter_title_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        chapter.chapter_title_ar.includes(searchTerm) // Direct match for Arabic
+      );
+    }
+    return allChapters.filter(ch => ch.volume === selectedVolume);
+  }, [allChapters, selectedVolume, searchTerm]);
 
   if (isLoading) {
     return (
@@ -198,31 +207,58 @@ const HadithSelectionPage = ({ onSelectHadithChapter }) => {
 
   return (
     <div className="space-y-6">
-      {/* Volume Selector */}
-      <div className="flex justify-center space-x-2 sm:space-x-3 p-1 bg-gray-100 dark:bg-dark-bg rounded-lg">
-        {[1, 2, 3, 4].map((volNum) => (
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <input
+          type="text"
+          placeholder="Search Hadith titles (Eng/Ar)..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-bg-secondary dark:border-gray-600 dark:text-dark-text dark:placeholder-gray-500"
+        />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <LucideIcons.Search size={20} className="text-gray-400 dark:text-gray-500" />
+        </div>
+        {searchTerm && (
           <button
-            key={volNum}
-            onClick={() => setSelectedVolume(volNum)}
-            className={`px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-medium rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400
-              ${selectedVolume === volNum 
-                ? 'bg-primary-500 text-white shadow-md dark:bg-primary-400 dark:text-dark-bg-alt' 
-                : 'text-gray-600 hover:bg-gray-200 dark:text-gray-700 dark:hover:bg-gray-200'}`}
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            aria-label="Clear search"
           >
-            Volume {volNum}
+            <LucideIcons.X size={20} />
           </button>
-        ))}
+        )}
       </div>
 
+      {/* Volume Selector - Conditionally shown if no search term */}
+      {!searchTerm && (
+        <div className="flex justify-center space-x-2 sm:space-x-3 p-1 bg-gray-100 dark:bg-dark-bg rounded-lg">
+          {[1, 2, 3, 4].map((volNum) => (
+            <button
+              key={volNum}
+              onClick={() => setSelectedVolume(volNum)}
+              className={`px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-medium rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400
+                ${selectedVolume === volNum 
+                  ? 'bg-primary-500 text-white shadow-md dark:bg-primary-400 dark:text-dark-bg-alt' 
+                  : 'text-gray-600 hover:bg-gray-200 dark:text-gray-700 dark:hover:bg-gray-200'}`}
+            >
+              Volume {volNum}
+            </button>
+          ))}
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold text-center text-gray-700 dark:text-dark-text-secondary">
-        Mizan al-Hikmah - Volume {selectedVolume}
+        {searchTerm ? `Search Results for "${searchTerm}"` : `Mizan al-Hikmah - Volume ${selectedVolume}`}
       </h2>
 
       {displayedChapters.length === 0 && !isLoading && (
         <div className="text-center py-10 bg-gray-50 dark:bg-dark-bg-secondary rounded-xl">
           <LucideIcons.ArchiveX size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <p className="text-gray-500 dark:text-dark-text-muted">No chapters found for Volume {selectedVolume}.</p>
-          { allChapters.length > 0 && <p className="text-sm text-gray-400 dark:text-dark-text-muted">Other volumes may have content.</p> }
+          <p className="text-gray-500 dark:text-dark-text-muted">
+            {searchTerm ? 'No chapters found matching your search.' : `No chapters found for Volume ${selectedVolume}.`}
+          </p>
+          { !searchTerm && allChapters.length > 0 && <p className="text-sm text-gray-400 dark:text-dark-text-muted">Other volumes may have content.</p> }
         </div>
       )}
 

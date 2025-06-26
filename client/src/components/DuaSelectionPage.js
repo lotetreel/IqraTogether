@@ -65,8 +65,8 @@ const DuaSelectionPage = ({
   // --- Filtering Logic ---
   const filterContent = (items, type) => {
     // Define the Surah IDs that have images and are suitable for Kids Mode
-    // Only include Surahs confirmed to have kids images (currently just Al-Rahman)
-    const kidsModeSurahIds = ['55']; 
+    // Only include Surahs confirmed to have kids images (Al-Rahman, An-Nas)
+    const kidsModeSurahIds = ['55', '114']; 
 
     return items.filter(item => {
       // --- Kids Mode Filter (Applied first for Quran) ---
@@ -139,9 +139,8 @@ const DuaSelectionPage = ({
   return (
     <div className="animate-fade-in">
 
-      <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 dark:text-dark-text-primary mb-4">
-         {activeTab === 'duas' ? 'Select a Dua' :
-          activeTab === 'quran' ? 'Select a Surah' :
+       <h1 className="text-2xl md:text-3xl font-bold text-center text-gray-800 dark:text-dark-text-primary mb-4">
+         {activeTab === 'quran' ? 'Select a Surah' :
           activeTab === 'sahifa' ? 'Select a Sahifa Supplication' :
           activeTab === 'alkafi' ? 'Select from Al-Kafi' :
           activeTab === 'hadith' ? 'Select a Hadith Collection' : // Added Hadith title
@@ -165,20 +164,6 @@ const DuaSelectionPage = ({
             <span className="flex items-center">
               <LucideIcons.Book size={18} className="mr-2" />
               Quran
-            </span>
-          </button>
-          {/* Duas Button */}
-          <button
-            onClick={() => setActiveTab('duas')}
-            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-300 ${
-              activeTab === 'duas'
-                ? 'bg-gradient-primary text-white shadow-md'
-                : 'text-gray-700 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
-            }`}
-          >
-            <span className="flex items-center">
-              <LucideIcons.Heart size={18} className="mr-2" />
-              Duas
             </span>
           </button>
           {/* Sahifa Sajjadiya Button */}
@@ -249,7 +234,7 @@ const DuaSelectionPage = ({
             <LucideIcons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
             <input
             type="text"
-              placeholder={`Search ${activeTab === 'duas' ? 'duas' : activeTab === 'sahifa' ? 'sahifa supplications' : 'surahs'}...`}
+              placeholder={`Search ${activeTab === 'sahifa' ? 'sahifa supplications' : 'surahs'}...`}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="input w-full pl-10"
@@ -335,59 +320,7 @@ const DuaSelectionPage = ({
       ) : (
         // --- Quran/Dua/Sahifa Grid Rendering ---
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeTab === 'duas' ? (
-            // --- Dua Rendering ---
-            filteredDuas.map(dua => (
-               <div
-                 key={dua.id}
-                 // Pass isKidsMode prop along with selection
-                 onClick={() => onSelectDua({ id: dua.id, title: dua.title, type: 'dua', startInKidsMode: isKidsMode })} // Keep type as 'dua' for selection
-                 className="card group cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-               >
-                {/* Dua card content... */}
-                 <div className="h-40 w-full overflow-hidden relative">
-                   {dua.image && (
-                     <img
-                       src={dua.image}
-                       alt={dua.title}
-                       className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
-                       onError={(e) => { e.target.style.display = 'none'; }}
-                     />
-                   )}
-                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                     <div className="flex justify-between items-end">
-                       <h3 className="text-white font-bold text-lg">{dua.title}</h3>
-                       {dua.length && (
-                         <div className="badge bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                           {dua.length}
-                         </div>
-                       )}
-                     </div>
-                     {dua.arabic && <p className="text-white/80 text-sm">{dua.arabic}</p>}
-                   </div>
-                 </div>
-                 <div className="p-4 relative">
-                   {dua.source && <p className="text-sm text-gray-500 dark:text-dark-text-muted mb-2">Source: {dua.source}</p>}
-                   {dua.description && <p className="text-gray-700 dark:text-dark-text-secondary line-clamp-3">{dua.description}</p>}
-                   <div className="mt-3 flex items-center justify-between">
-                     {dua.recitationTime && <span className="text-xs text-gray-500 dark:text-dark-text-muted">{dua.recitationTime}</span>}
-                     {dua.popularity && (
-                       <div className="flex">
-                         {Array.from({ length: dua.popularity }).map((_, i) => (
-                           <LucideIcons.Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                         ))}
-                       </div>
-                     )}
-                   </div>
-                   <div className="absolute inset-0 bg-primary-500/0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-primary-500/10">
-                     <span className="btn-primary py-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                       Select Dua
-                     </span>
-                   </div>
-                 </div>
-              </div>
-            ))
-          ) : activeTab === 'sahifa' ? (
+          {activeTab === 'sahifa' ? (
              // --- Sahifa Rendering (Hadith-like style) ---
              filteredSahifa.map(dua => (
               <button
@@ -445,29 +378,32 @@ const DuaSelectionPage = ({
                   {/* Quran card content... */}
                    <div className="h-40 w-full overflow-hidden relative">
                      {(() => { // IIFE to calculate src and conditionally render img
-                       const imageSrc =
-                         surah.id == 1 ? AlFatihaImage :
-                         surah.id == 2 ? AlBaqaraImage :
-                         surah.id == 3 ? AalImranImage :
-                         surah.id == 4 ? AnNisaImage :
-                         surah.id == 5 ? AlMaidahImage :
-                         surah.id == 6 ? AlAnaamImage :
-                         surah.id == 55 ? AlRahmanImage :
-                         null; // No placeholder
+                       let imageSrc = null;
+                       if (surah.id == 1) imageSrc = AlFatihaImage;
+                       else if (surah.id == 2) imageSrc = AlBaqaraImage;
+                       else if (surah.id == 3) imageSrc = AalImranImage;
+                       else if (surah.id == 4) imageSrc = AnNisaImage;
+                       else if (surah.id == 5) imageSrc = AlMaidahImage;
+                       else if (surah.id == 6) imageSrc = AlAnaamImage;
+                       else if (surah.id == 55) imageSrc = AlRahmanImage;
+                       else if (surah.id == 114 && surah.images && surah.images.length > 0) {
+                         // Paths in quran-data.js are relative to public, so prepend /
+                         imageSrc = `/${surah.images[0]}`;
+                       }
 
-                       return imageSrc ? ( // Only render img if src is not null
+                       return imageSrc ? (
                          <img
                            src={imageSrc}
                            alt={surah.title}
                            className="w-full h-full object-cover transition-transform duration-700 transform group-hover:scale-110"
                            onError={(e) => { e.target.style.display = 'none'; }}
                          />
-                       ) : null; // Render nothing if no image src
+                       ) : null;
                      })()}
                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                        <div className="flex justify-between items-end">
                          <h3 className="text-white font-bold text-lg">
-                           {surah.id == 55 ? 'The Merciful' : surah.title}
+                           {surah.id == 55 ? 'The Merciful' : (surah.id == 114 ? 'Mankind' : surah.title)}
                          </h3>
                          {surah.totalAyahs > 0 && (
                            <div className="badge bg-accent-100 text-accent-800 dark:bg-accent-900/50 dark:text-accent-200">
@@ -499,7 +435,6 @@ const DuaSelectionPage = ({
 
       {/* No results (Only show if not on Game, AlKafi, or Hadith tab) */}
       {activeTab !== 'game' && activeTab !== 'alkafi' && activeTab !== 'hadith' && (
-        (activeTab === 'duas' && filteredDuas.length === 0) ||
         (activeTab === 'sahifa' && filteredSahifa.length === 0) || // Check Sahifa results
         (activeTab === 'quran' && !isLoadingQuranList && !socketError && filteredQuran.length === 0)
       ) ? (

@@ -124,7 +124,14 @@ QuranData.Sura = [
 	[6216, 5, 6, 1, 'المسد', "Al-Masad", 'The Palm Fibre', 'Meccan'],
 	[6221, 4, 22, 1, 'الإخلاص', "Al-Ikhlaas", 'Sincerity', 'Meccan'],
 	[6225, 5, 20, 1, 'الفلق', "Al-Falaq", 'The Dawn', 'Meccan'],
-	[6230, 6, 21, 1, 'الناس', "An-Naas", 'Mankind', 'Meccan'],
+	[6230, 6, 21, 1, 'الناس', "An-Naas", 'Mankind', 'Meccan', [
+		"SurahImages/AlNas/AlNasVerse1.png",
+		"SurahImages/AlNas/AlNasVerse2.png",
+		"SurahImages/AlNas/AlNasVerse3.png",
+		"SurahImages/AlNas/AlNasVerse4.png",
+		"SurahImages/AlNas/AlNasVerse5.png",
+		"SurahImages/AlNas/AlNasVerse6.png"
+	]],
 	[6236, 1]
 ];
 
@@ -491,6 +498,3 @@ QuranData.Sajda = [
 	[84, 21, 'recommended'],
 	[96, 19, 'obligatory'],
 ];
-
-
-
