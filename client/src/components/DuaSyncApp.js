@@ -1206,7 +1206,7 @@ const DuaSyncApp = () => {
             </div>
 
             {/* Fullscreen Content Area (Scrollable) */}
-            <div className="flex-1 min-h-0"> {/* Let outer container handle scrolling and flex */}
+            <div className="flex-1 min-h-0 overscroll-behavior-y-contain"> {/* Let outer container handle scrolling and flex */}
               {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') ? (
                 // Kids mode Quran fullscreen rendering
                  <> 
@@ -1336,7 +1336,7 @@ const DuaSyncApp = () => {
               <h3 className="text-xl font-bold dark:text-dark-text-primary">Settings</h3>
               <button onClick={() => setShowSettings(false)} className="btn-icon"> <X size={24} /> </button>
             </div>
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto overscroll-behavior-y-contain">
               {/* Fullscreen Session Actions (Create/Join) */}
               {isFullScreen && !sessionId && (
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
