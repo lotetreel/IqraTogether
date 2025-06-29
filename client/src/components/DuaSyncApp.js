@@ -156,7 +156,6 @@ const DuaSyncApp = () => {
     const sessionIdFromUrl = searchParams.get('session');
     const typeFromUrl = searchParams.get('type');
     const idFromUrl = searchParams.get('id');
-    const indexFromUrl = searchParams.get('index');
 
     if (typeFromUrl && idFromUrl) {
       const contentInfo = {
@@ -164,12 +163,6 @@ const DuaSyncApp = () => {
         id: idFromUrl,
       };
       selectContentLocally(contentInfo);
-      if (indexFromUrl) {
-        const index = parseInt(indexFromUrl, 10);
-        if (!isNaN(index)) {
-          setTimeout(() => updateLocalIndex(index), 500); // Keep timeout for now
-        }
-      }
     }
 
     if (sessionIdFromUrl && !sessionId) {
@@ -180,7 +173,18 @@ const DuaSyncApp = () => {
         connectToServer();
       }
     }
-  }, [searchParams, selectContentLocally, updateLocalIndex, connectToServer, sessionId, connectionStatus]);
+  }, [searchParams, selectContentLocally, connectToServer, sessionId, connectionStatus]);
+
+  // Effect to set index from URL after content has loaded
+  useEffect(() => {
+    const indexFromUrl = searchParams.get('index');
+    if (indexFromUrl && currentFullContent) {
+      const index = parseInt(indexFromUrl, 10);
+      if (!isNaN(index)) {
+        updateLocalIndex(index);
+      }
+    }
+  }, [currentFullContent, searchParams, updateLocalIndex]);
 
   // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
   // AND we are not currently in the middle of an automatic rejoin attempt.
