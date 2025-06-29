@@ -1209,7 +1209,7 @@ const DuaSyncApp = () => {
             <div className="flex-1 min-h-0 overscroll-behavior-y-contain"> {/* Let outer container handle scrolling and flex */}
               {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') ? (
                 // Kids mode Quran fullscreen rendering
-                 <> 
+                 <>
                   <div className="relative w-full max-w-4xl mx-auto flex items-center justify-center mb-4 px-4">
                     {(!sessionId || isHost) && (
                       <>
@@ -1284,7 +1284,7 @@ const DuaSyncApp = () => {
                  </div>
               ) : (
                 // --- Normal Mode Fullscreen (Quran/Dua) ---
-                <div className="w-full max-w-5xl mx-auto py-4">
+                <div className="w-full max-w-5xl mx-auto py-4 overscroll-behavior-y-contain">
                   {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
                     <div className="w-full mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
                       <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}>
@@ -1474,7 +1474,7 @@ const DuaSyncApp = () => {
               <h3 className="text-xl font-bold dark:text-dark-text-primary">Go To...</h3>
               <button onClick={() => setShowGoToModal(false)} className="btn-icon"> <X size={24} /> </button>
             </div>
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto overscroll-behavior-y-contain">
               {/* Step 1: Type Selection */}
               {goToStep === 1 && (
                 <div className="space-y-4"> {/* Increased spacing */}
