@@ -849,7 +849,7 @@ const DuaSyncApp = () => {
    return (
      // Apply overflow-hidden when in fullscreen to prevent scrolling of the underlying body
      <div className={`flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary transition-colors duration-300 ${isFullScreen ? 'overflow-hidden' : ''}`}>
-      <RefreshBanner />
+      {!isFullScreen && <RefreshBanner />}
       {/* Header - Conditionally render based on fullscreen state */}
       {!isFullScreen && (
         <header className="page-header relative z-10">
@@ -1170,6 +1170,7 @@ const DuaSyncApp = () => {
         {/* Fullscreen View Container */}
         {isFullScreen && currentContentInfo && localFullContent && (
           <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto no-pull-refresh flex flex-col p-4 md:p-8 animate-fade-in">
+            <RefreshBanner />
             {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
               {/* Back Button for Fullscreen - only if not in session or is host */}
