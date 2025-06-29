@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 // Removed Smile icon import, added custom icon import below
 // Added Maximize, Minimize, Locate, BookOpen, FileText icons
 import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize, Locate, BookOpen, FileText } from 'lucide-react';
@@ -30,6 +31,9 @@ import RefreshBanner from './RefreshBanner';
 const isDev = process.env.NODE_ENV === 'development';
 
 const DuaSyncApp = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Use state and actions from SocketContext
   const {
     socket,
@@ -128,49 +132,44 @@ const DuaSyncApp = () => {
   useEffect(() => { if (!isNaN(transliterationFontSize)) localStorage.setItem('transliterationFontSize', transliterationFontSize); }, [transliterationFontSize]);
   useEffect(() => { if (!isNaN(translationFontSize)) localStorage.setItem('translationFontSize', translationFontSize); }, [translationFontSize]);
 
-  // Update session URL and push state to history
+  // Update URL with current state
   useEffect(() => {
-    const params = new URLSearchParams();
+    const params = {};
     if (sessionId) {
-      params.set('session', sessionId);
+      params.session = sessionId;
     }
     if (currentContentInfo) {
-      params.set('type', currentContentInfo.type);
-      params.set('id', currentContentInfo.id);
+      params.type = currentContentInfo.type;
+      params.id = currentContentInfo.id;
       if (currentIndex > 0) {
-        params.set('index', currentIndex);
+        params.index = currentIndex;
       }
     }
+    setSearchParams(params, { replace: true });
+  }, [sessionId, currentContentInfo, currentIndex, setSearchParams]);
 
-    const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${params.toString()}`;
-    
-    // Update the sessionUrl state for the ShareDialog
-    setSessionUrl(newUrl);
-
-    // Update the browser's URL without reloading the page
-    if (window.history.pushState) {
-      window.history.pushState({ path: newUrl }, '', newUrl);
-    }
-  }, [sessionId, currentContentInfo, currentIndex]);
-
-  // Check URL for session ID and content on initial load
+  // Restore state from URL on initial load
   useEffect(() => {
     if (urlCheckPerformed.current) return;
     urlCheckPerformed.current = true;
 
-    const params = new URLSearchParams(window.location.search);
-    const sessionIdFromUrl = params.get('session');
-    const typeFromUrl = params.get('type');
-    const idFromUrl = params.get('id');
-    const indexFromUrl = params.get('index');
+    const sessionIdFromUrl = searchParams.get('session');
+    const typeFromUrl = searchParams.get('type');
+    const idFromUrl = searchParams.get('id');
+    const indexFromUrl = searchParams.get('index');
 
     if (typeFromUrl && idFromUrl) {
       const contentInfo = {
         type: typeFromUrl,
         id: idFromUrl,
-        // We might need to fetch title etc. later if not available here
       };
       selectContentLocally(contentInfo);
+      if (indexFromUrl) {
+        const index = parseInt(indexFromUrl, 10);
+        if (!isNaN(index)) {
+          setTimeout(() => updateLocalIndex(index), 500); // Keep timeout for now
+        }
+      }
     }
 
     if (sessionIdFromUrl && !sessionId) {
@@ -181,19 +180,7 @@ const DuaSyncApp = () => {
         connectToServer();
       }
     }
-  }, [connectToServer, sessionId, connectionStatus, selectContentLocally]);
-
-  // Effect to set index from URL after content has loaded
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const indexFromUrl = params.get('index');
-    if (indexFromUrl && currentFullContent) {
-      const index = parseInt(indexFromUrl, 10);
-      if (!isNaN(index)) {
-        updateLocalIndex(index);
-      }
-    }
-  }, [currentFullContent, updateLocalIndex]);
+  }, [searchParams, selectContentLocally, updateLocalIndex, connectToServer, sessionId, connectionStatus]);
 
   // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
   // AND we are not currently in the middle of an automatic rejoin attempt.
@@ -263,7 +250,7 @@ const DuaSyncApp = () => {
   }, [autoAdvance, autoAdvanceInterval, localFullContent, currentIndex, isHost, sessionId, updateHostIndex, totalPhrases]);
 
   // --- Navigation Actions ---
-  const navigate = useCallback((direction) => {
+  const performNavigation = useCallback((direction) => {
     if (!localFullContent || totalPhrases === 0) return;
     
     const newIndex = currentIndex + direction;
@@ -275,10 +262,10 @@ const DuaSyncApp = () => {
         updateLocalIndex(newIndex); // This will also set isBrowsingLocally if participant navigates
       }
     }
-  }, [currentFullContent, currentIndex, isHost, totalPhrases, updateHostIndex, updateLocalIndex]);
+  }, [localFullContent, totalPhrases, currentIndex, isHost, updateHostIndex, updateLocalIndex]);
 
-  const nextPhrase = useCallback(() => navigate(1), [navigate]);
-  const prevPhrase = useCallback(() => navigate(-1), [navigate]);
+  const nextPhrase = useCallback(() => performNavigation(1), [performNavigation]);
+  const prevPhrase = useCallback(() => performNavigation(-1), [performNavigation]);
   // --- End Navigation Actions ---
 
   // REMOVED Swipe Handlers
@@ -1066,7 +1053,7 @@ const DuaSyncApp = () => {
                       chapterFullContent={currentFullContent} 
                       currentHadithIndex={currentIndex}
                       totalHadiths={totalPhrases} // totalPhrases is correctly calculated for alkafi_chapter now
-                      onNavigateHadith={navigate} // Use the generic navigate function
+                      onNavigateHadith={performNavigation} // Use the generic navigate function
                       isHost={isHost}
                       isBrowsingLocally={isBrowsingLocally}
                       arabicFontSize={arabicFontSize}
@@ -1282,7 +1269,7 @@ const DuaSyncApp = () => {
                       chapterFullContent={currentFullContent}
                       currentHadithIndex={currentIndex}
                       totalHadiths={totalPhrases}
-                      onNavigateHadith={navigate}
+                      onNavigateHadith={performNavigation}
                       isHost={isHost}
                       isBrowsingLocally={isBrowsingLocally}
                       arabicFontSize={arabicFontSize * 1.1} // Slightly increase font for fullscreen

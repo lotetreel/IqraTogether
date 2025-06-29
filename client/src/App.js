@@ -1,11 +1,16 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DuaSyncApp from './components/DuaSyncApp';
 import { SocketProvider } from './contexts/SocketContext';
 
 function App() {
   return (
     <SocketProvider>
-      <DuaSyncApp />
+      <Router>
+        <Routes>
+          <Route path="/" element={<DuaSyncApp />} />
+        </Routes>
+      </Router>
     </SocketProvider>
   );
 }
