@@ -24,6 +24,7 @@ import KidsModeIcon from '../assets/images/KidsModeIcon.png'; // Import the cust
 import TileMatchingGame from './TileMatchingGame'; // Import the game component
 import AlKafiChapterView from './AlKafiChapterView'; // Import AlKafiChapterView
 import HadithChapterView from './HadithChapterView'; // Import HadithChapterView
+import RefreshBanner from './RefreshBanner';
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -848,6 +849,7 @@ const DuaSyncApp = () => {
    return (
      // Apply overflow-hidden when in fullscreen to prevent scrolling of the underlying body
      <div className={`flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary transition-colors duration-300 ${isFullScreen ? 'overflow-hidden' : ''}`}>
+      <RefreshBanner />
       {/* Header - Conditionally render based on fullscreen state */}
       {!isFullScreen && (
         <header className="page-header relative z-10">
@@ -938,7 +940,7 @@ const DuaSyncApp = () => {
       )}
 
       {/* Main content area */}
-      <div className={`flex-1 ${isFullScreen ? '' : 'overflow-y-auto overscroll-behavior-y-contain'}`}>
+      <div className={`flex-1 ${isFullScreen ? '' : 'overflow-y-auto no-pull-refresh'}`}>
         {/* Normal View Container */}
         {!isFullScreen && (
           <div className="container-narrow py-6">
@@ -1167,7 +1169,7 @@ const DuaSyncApp = () => {
 
         {/* Fullscreen View Container */}
         {isFullScreen && currentContentInfo && localFullContent && (
-          <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto overscroll-behavior-y-contain flex flex-col p-4 md:p-8 animate-fade-in">
+          <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto no-pull-refresh flex flex-col p-4 md:p-8 animate-fade-in">
             {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
               {/* Back Button for Fullscreen - only if not in session or is host */}
