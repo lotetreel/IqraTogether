@@ -128,55 +128,67 @@ const DuaSyncApp = () => {
   useEffect(() => { if (!isNaN(transliterationFontSize)) localStorage.setItem('transliterationFontSize', transliterationFontSize); }, [transliterationFontSize]);
   useEffect(() => { if (!isNaN(translationFontSize)) localStorage.setItem('translationFontSize', translationFontSize); }, [translationFontSize]);
 
-  // Update session URL
+  // Update session URL and push state to history
   useEffect(() => {
-      if (sessionId) {
-          const protocol = window.location.protocol;
-          const hostname = window.location.hostname;
-          const port = window.location.port ? `:${window.location.port}` : '';
-          const url = `${protocol}//${hostname}${port}?session=${sessionId}`;
-          setSessionUrl(url);
-      } else {
-          setSessionUrl('');
-      }
-  }, [sessionId]);
-
-  // Check URL for session ID (Revised)
-  useEffect(() => {
-    // Only run this check once on initial mount if not already in a session
-    if (sessionId || urlCheckPerformed.current) {
-      return;
+    const params = new URLSearchParams();
+    if (sessionId) {
+      params.set('session', sessionId);
     }
+    if (currentContentInfo) {
+      params.set('type', currentContentInfo.type);
+      params.set('id', currentContentInfo.id);
+      if (currentIndex > 0) {
+        params.set('index', currentIndex);
+      }
+    }
+
+    const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${params.toString()}`;
+    
+    // Update the sessionUrl state for the ShareDialog
+    setSessionUrl(newUrl);
+
+    // Update the browser's URL without reloading the page
+    if (window.history.pushState) {
+      window.history.pushState({ path: newUrl }, '', newUrl);
+    }
+  }, [sessionId, currentContentInfo, currentIndex]);
+
+  // Check URL for session ID and content on initial load
+  useEffect(() => {
+    if (urlCheckPerformed.current) return;
+    urlCheckPerformed.current = true;
 
     const params = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = params.get('session');
+    const typeFromUrl = params.get('type');
+    const idFromUrl = params.get('id');
+    const indexFromUrl = params.get('index');
 
-    if (sessionIdFromUrl) {
-      console.log("Session ID found in URL on initial load:", sessionIdFromUrl);
-      urlCheckPerformed.current = true; // Mark check as performed
-
-      setJoinSessionId(sessionIdFromUrl); // Store the ID to join
-      setIsJoining(true); // UI flag
-      setPendingAction('join'); // Set the pending action
-
-      // Trigger connection if not already connecting or connected
-      // Check the *current* status directly before calling connect
-      if (connectionStatus !== 'connected' && connectionStatus !== 'connecting') {
-        console.log("Triggering connection for URL join...");
-        connectToServer();
-      } else {
-        // If already connected (e.g., very fast reconnect), the other effect should handle pendingAction
-        console.log("Already connected/connecting, pending action set for dialog.");
+    if (typeFromUrl && idFromUrl) {
+      const contentInfo = {
+        type: typeFromUrl,
+        id: idFromUrl,
+        // We might need to fetch title etc. later if not available here
+      };
+      selectContentLocally(contentInfo);
+      if (indexFromUrl) {
+        const index = parseInt(indexFromUrl, 10);
+        if (!isNaN(index)) {
+          // Use a timeout to ensure content is loaded before setting index
+          setTimeout(() => updateLocalIndex(index), 500);
+        }
       }
-    } else {
-      // No session ID in URL, mark check as performed anyway
-      urlCheckPerformed.current = true;
     }
-    // Dependencies: Only run when connectToServer function reference changes (rarely)
-    // or on initial mount implicitly. We don't want connectionStatus or sessionId
-    // to re-trigger this specific URL check logic after the initial load.
-    // Added connectionStatus back to ensure connectToServer is called if status changes before URL check runs
-  }, [connectToServer, sessionId, connectionStatus]);
+
+    if (sessionIdFromUrl && !sessionId) {
+      setJoinSessionId(sessionIdFromUrl);
+      setIsJoining(true);
+      setPendingAction('join');
+      if (connectionStatus !== 'connected' && connectionStatus !== 'connecting') {
+        connectToServer();
+      }
+    }
+  }, [connectToServer, sessionId, connectionStatus, selectContentLocally, updateLocalIndex]);
 
   // Show NameInputDialog after connection if there was a pending action (e.g., joining via URL)
   // AND we are not currently in the middle of an automatic rejoin attempt.
