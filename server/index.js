@@ -29,7 +29,11 @@ try {
   const arabicRaw = fs.readFileSync(path.join(dataPath, 'arabic.json'), 'utf8');
   console.log('Parsing arabic.json...');
   // --- MODIFICATION END ---
-  quranArabicArray = JSON.parse(arabicRaw);
+  try {
+    quranArabicArray = JSON.parse(arabicRaw);
+  } catch (e) {
+    quranArabicArray = [];
+  }
   console.log(`Parsed quran.json. Root Type: ${Array.isArray(quranArabicArray) ? 'array' : typeof quranArabicArray}, Length: ${quranArabicArray.length}`);
 
   console.log('Reading transliteration.json...');

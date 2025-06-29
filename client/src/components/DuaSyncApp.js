@@ -938,7 +938,7 @@ const DuaSyncApp = () => {
       )}
 
       {/* Main content area */}
-      <div className={`flex-1 ${isFullScreen ? '' : 'overflow-y-auto'}`}>
+      <div className={`flex-1 ${isFullScreen ? '' : 'overflow-y-auto overscroll-behavior-y-contain'}`}>
         {/* Normal View Container */}
         {!isFullScreen && (
           <div className="container-narrow py-6">
@@ -1065,7 +1065,7 @@ const DuaSyncApp = () => {
                     />
                   ) : (
                     // --- Normal Mode Layout (Quran/Dua) ---
-                    <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center">
+                    <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center overscroll-behavior-y-contain">
                       {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
                         <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
                           <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
@@ -1167,7 +1167,7 @@ const DuaSyncApp = () => {
 
         {/* Fullscreen View Container */}
         {isFullScreen && currentContentInfo && localFullContent && (
-          <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto flex flex-col p-4 md:p-8 animate-fade-in">
+          <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto overscroll-behavior-y-contain flex flex-col p-4 md:p-8 animate-fade-in">
             {/* Fullscreen Header: Title and Action Buttons */}
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
               {/* Back Button for Fullscreen - only if not in session or is host */}
@@ -1257,7 +1257,7 @@ const DuaSyncApp = () => {
                 // --- AlKafi Chapter View Fullscreen ---
                 // The AlKafiChapterView itself handles scrolling of its content.
                 // We ensure it's placed within a container that allows it to expand.
-                <div className="w-full h-full overflow-y-auto custom-scrollbar">
+                <div className="w-full h-full overflow-y-auto overscroll-behavior-y-contain custom-scrollbar">
                    <AlKafiChapterView
                       chapterFullContent={currentFullContent}
                       currentHadithIndex={currentIndex}
@@ -1273,7 +1273,7 @@ const DuaSyncApp = () => {
                  </div>
               ) : currentContentInfo?.type === 'hadith_chapter' ? (
                  // --- Hadith Chapter View Fullscreen ---
-                 <div className="w-full h-full overflow-y-auto custom-scrollbar">
+                 <div className="w-full h-full overflow-y-auto overscroll-behavior-y-contain custom-scrollbar">
                    <HadithChapterView
                       chapterFullContent={currentFullContent}
                       arabicFontSize={arabicFontSize * 1.1} // Slightly increase font for fullscreen

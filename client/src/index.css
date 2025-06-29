@@ -114,6 +114,10 @@ code {
     @apply bg-gradient-shimmer bg-[length:200%_100%] animate-shimmer;
   }
   /* Removed Tile Matching Game Styles */
+
+  .overscroll-behavior-y-contain {
+    overscroll-behavior-y: contain;
+  }
 }
 
 /* Responsive utilities */
