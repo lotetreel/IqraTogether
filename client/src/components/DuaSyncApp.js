@@ -69,8 +69,8 @@ const DuaSyncApp = () => {
 
   // Local UI state
   const [showTranslation, setShowTranslation] = useState(true);
-  const [showTransliteration, setShowTransliteration] = useState(true);
-  const [recitationMode, setRecitationMode] = useState('phrase-by-phrase'); // 'phrase-by-phrase' or 'scroll'
+  const [showTransliteration, setShowTransliteration] = useState(false);
+  const [recitationMode, setRecitationMode] = useState('scroll'); // 'phrase-by-phrase' or 'scroll'
   const [showSettings, setShowSettings] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
