@@ -1156,10 +1156,19 @@ const DuaSyncApp = () => {
                                     <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: transliteration }} />
                                   )}
                                   {showTranslation && translation && (
-                                    <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: translation }} />
+                                    <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }}>
+                                      {translation}
+                                      {currentContentInfo?.type === 'quran' && (
+                                        <span className="font-bold text-primary-600 dark:text-accent-400 ml-2">
+                                          ({itemNumber})
+                                        </span>
+                                      )}
+                                    </p>
                                   )}
                                 </div>
-                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700 mt-4"></div>
+                                {index < (localFullContent?.verses || localFullContent?.phrases).length - 1 && (
+                                  <hr className="verse-separator" />
+                                )}
                               </div>
                             );
                           })}
