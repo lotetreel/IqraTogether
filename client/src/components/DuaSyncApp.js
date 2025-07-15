@@ -70,6 +70,7 @@ const DuaSyncApp = () => {
   // Local UI state
   const [showTranslation, setShowTranslation] = useState(true);
   const [showTransliteration, setShowTransliteration] = useState(true);
+  const [recitationMode, setRecitationMode] = useState('phrase-by-phrase'); // 'phrase-by-phrase' or 'scroll'
   const [showSettings, setShowSettings] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
@@ -96,6 +97,7 @@ const DuaSyncApp = () => {
   const urlCheckPerformed = useRef(false); // Ref to track if URL check has run
   const [localFullContent, setLocalFullContent] = useState(null); // Local state for full content
   const [isImageLoading, setIsImageLoading] = useState(false); // State for kids mode image loading
+  const scrollRefs = useRef([]); // Refs for scrolling to specific verses/phrases
 
   // Go To Modal State
   const [showGoToModal, setShowGoToModal] = useState(false);
@@ -809,10 +811,17 @@ const DuaSyncApp = () => {
         // Removed setTimeout logic here
       } else {
         // If it's already the current content, just navigate
-        if (isHost) {
-          updateHostIndex(zeroBasedIndex);
+        if (recitationMode === 'scroll' && !sessionId) {
+          scrollRefs.current[zeroBasedIndex]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
         } else {
-          updateLocalIndex(zeroBasedIndex);
+          if (isHost) {
+            updateHostIndex(zeroBasedIndex);
+          } else {
+            updateLocalIndex(zeroBasedIndex);
+          }
         }
       }
       setShowGoToModal(false);
@@ -982,8 +991,8 @@ const DuaSyncApp = () => {
                     {(!sessionId || isHost || currentContentInfo?.type === 'alkafi') && ( <BackButton onClick={handleBack} /> )}
                     
                     <div className="flex items-center space-x-4">
-                       {/* Page Number: Not applicable for alkafi_chapter view */}
-                       {currentContentInfo?.type !== 'alkafi_chapter' && (
+                       {/* Page Number: Not applicable for alkafi_chapter view or scroll mode */}
+                       {currentContentInfo?.type !== 'alkafi_chapter' && recitationMode === 'phrase-by-phrase' && (
                          <div className={`text-sm text-gray-500 dark:text-dark-text-muted ${(!sessionId || isHost) ? '' : 'ml-auto mr-2'}`}>
                            {`${currentIndex + 1} of ${totalPhrases}`}
                          </div>
@@ -1082,38 +1091,79 @@ const DuaSyncApp = () => {
                     />
                   ) : (
                     // --- Normal Mode Layout (Quran/Dua) ---
-                    <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center overscroll-behavior-y-contain">
-                      {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
-                        <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
-                          <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
-                            بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-                          </p>
-                        </div>
-                      )}
-                      <div className="w-full">
-                        <div key={`arabic-${currentIndex}`} className="text-center mb-6 animate-fade-in">
-                          <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
-                            {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                          </p>
-                        </div>
-                        {showTransliteration && currentPhraseData.transliteration && (
-                          <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
-                            <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
+                    (recitationMode === 'phrase-by-phrase' || !!sessionId) ? (
+                      <div className="card p-6 md:p-8 min-h-[200px] flex flex-col justify-center items-center overscroll-behavior-y-contain">
+                        {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
+                          <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                            <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
+                              بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                            </p>
                           </div>
                         )}
-                        {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
-                           <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
-                             <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
+                        <div className="w-full">
+                          <div key={`arabic-${currentIndex}`} className="text-center mb-6 animate-fade-in">
+                            <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
+                              {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                            </p>
+                          </div>
+                          {showTransliteration && currentPhraseData.transliteration && (
+                            <div key={`transliteration-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                              <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
+                            </div>
+                          )}
+                          {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
+                             <div key={`translation-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                               <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
+                             </div>
+                           )}
+                        </div>
+                        {(!sessionId || isHost) && currentContentInfo?.type !== 'alkafi' && ( // Hide for AlKafi as viewer has its own
+                          <div className="w-full flex justify-center gap-4 mt-6">
+                             <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={24} /> </button>
+                             <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={24} /> </button>
                            </div>
-                         )}
+                        )}
                       </div>
-                      {(!sessionId || isHost) && currentContentInfo?.type !== 'alkafi' && ( // Hide for AlKafi as viewer has its own
-                        <div className="w-full flex justify-center gap-4 mt-6">
-                           <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-icon btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={24} /> </button>
-                           <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-icon btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={24} /> </button>
-                         </div>
-                      )}
-                    </div>
+                    ) : (
+                      // --- Scroll Mode Layout (Quran/Dua) ---
+                      <div className="card p-6 md:p-8">
+                        {currentFullContent?.displayBismillah && currentContentInfo?.type === 'quran' && (
+                          <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                            <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 0.9}rem` }}>
+                              بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                            </p>
+                          </div>
+                        )}
+                        <div className="space-y-4">
+                          {(localFullContent?.verses || localFullContent?.phrases)?.map((item, index) => {
+                            const arabic = item.arabic;
+                            const transliteration = item.transliteration;
+                            const translation = item.translation || item.english;
+                            const itemNumber = index + 1;
+
+                            return (
+                              <div key={index} ref={el => scrollRefs.current[index] = el} className="pt-4">
+                                <div className="flex items-center text-sm text-gray-400 dark:text-dark-text-muted mb-4">
+                                  <span className="font-medium pr-2">{currentContentInfo?.type === 'quran' ? 'Verse' : 'Segment'} {itemNumber}</span>
+                                  <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                </div>
+                                <div className="space-y-4">
+                                  <p className="leading-loose font-uthmani text-center" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
+                                    {arabic}
+                                  </p>
+                                  {showTransliteration && transliteration && (
+                                    <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: transliteration }} />
+                                  )}
+                                  {showTranslation && translation && (
+                                    <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: translation }} />
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
                   )}
 
                   {/* Action Buttons (Auto for Host) */}
@@ -1427,6 +1477,29 @@ const DuaSyncApp = () => {
                     <label htmlFor="showTransliteration" className="flex-1 cursor-pointer dark:text-dark-text-secondary ml-3">Show Transliteration</label>
                   </div>
                 </div>
+              </div>
+              {/* Recitation Mode */}
+              <div>
+                <label className="block text-gray-700 dark:text-dark-text-secondary mb-3 font-medium">Recitation Mode</label>
+                <div className="flex items-center bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
+                  <div className="flex w-full rounded-md shadow-sm">
+                    <button
+                      onClick={() => setRecitationMode('phrase-by-phrase')}
+                      disabled={!!sessionId}
+                      className={`flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-l-md focus:z-10 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 ${recitationMode === 'phrase-by-phrase' ? 'bg-primary-500 text-white' : 'bg-white dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary'} ${!!sessionId ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                      Phrase by Phrase
+                    </button>
+                    <button
+                      onClick={() => setRecitationMode('scroll')}
+                      disabled={!!sessionId}
+                      className={`-ml-px flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-r-md focus:z-10 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 ${recitationMode === 'scroll' ? 'bg-primary-500 text-white' : 'bg-white dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary'} ${!!sessionId ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                      Scroll
+                    </button>
+                  </div>
+                </div>
+                {!!sessionId && <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-2">Recitation mode is locked to 'Phrase by Phrase' during a session.</p>}
               </div>
               {/* Font Size Controls */}
               <div>
