@@ -1143,13 +1143,14 @@ const DuaSyncApp = () => {
 
                             return (
                               <div key={index} ref={el => scrollRefs.current[index] = el} className="pt-4">
-                                <div className="flex items-center text-sm text-gray-400 dark:text-dark-text-muted mb-4">
-                                  <span className="font-medium pr-2">{currentContentInfo?.type === 'quran' ? 'Verse' : 'Segment'} {itemNumber}</span>
-                                  <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-                                </div>
                                 <div className="space-y-4">
                                   <p className="leading-loose font-uthmani text-center" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
                                     {arabic}
+                                    {currentContentInfo?.type === 'quran' && (
+                                      <span className="verse-marker text-primary-600 dark:text-accent-400 mx-2">
+                                        &#xFD3F;{itemNumber.toLocaleString('ar-EG')}&#xFD3E;
+                                      </span>
+                                    )}
                                   </p>
                                   {showTransliteration && transliteration && (
                                     <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: transliteration }} />
@@ -1158,6 +1159,7 @@ const DuaSyncApp = () => {
                                     <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize}rem` }} dangerouslySetInnerHTML={{ __html: translation }} />
                                   )}
                                 </div>
+                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700 mt-4"></div>
                               </div>
                             );
                           })}

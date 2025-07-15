@@ -123,6 +123,11 @@ code {
   .no-pull-refresh {
     overscroll-behavior-y: contain;
   }
+
+  .verse-marker {
+    @apply inline-flex items-center justify-center font-bold text-sm;
+    font-family: 'Scheherazade New', serif; /* Or a suitable font for numbers */
+  }
 }
 
 /* Responsive utilities */
