@@ -1362,47 +1362,57 @@ const DuaSyncApp = () => {
                     />
                  </div>
               ) : (
-                // --- Normal Mode Fullscreen (Quran/Dua) ---
+                // --- Scroll Mode Fullscreen (Quran/Dua) ---
                 <div className="w-full max-w-5xl mx-auto py-4 overscroll-behavior-y-contain">
-                  {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
-                    <div className="w-full mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                  {currentFullContent?.displayBismillah && currentContentInfo?.type === 'quran' && (
+                    <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
                       <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}>
                         بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
                       </p>
                     </div>
                   )}
-                  <div className="w-full mb-6">
-                    <div key={`arabic-fs-${currentIndex}`} className="text-center mb-8">
-                      <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.3}rem` }}>
-                        {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
-                      </p>
-                    </div>
-                    {showTransliteration && currentPhraseData.transliteration && (
-                      <div key={`transliteration-fs-${currentIndex}`} className="mb-6 border-t pt-6 border-gray-200 dark:border-gray-700">
-                        <p className="text-gray-700 dark:text-dark-text-secondary italic text-center" style={{ fontSize: `${transliterationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
-                      </div>
-                    )}
-                    {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
-                      <div key={`translation-fs-${currentIndex}`} className="border-t pt-6 border-gray-200 dark:border-gray-700">
-                        <p className="text-gray-800 dark:text-dark-text-primary text-center" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
-                      </div>
-                    )}
+                  <div className="space-y-4">
+                    {(localFullContent?.verses || localFullContent?.phrases)?.map((item, index) => {
+                      const arabic = item.arabic;
+                      const transliteration = item.transliteration;
+                      const translation = item.translation || item.english;
+                      const itemNumber = index + 1;
+
+                      return (
+                        <div key={index} ref={el => scrollRefs.current[index] = el} className="pt-4">
+                          <div className="space-y-4">
+                            <p className="leading-loose font-uthmani text-center" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.3}rem` }}>
+                              {arabic}
+                              {currentContentInfo?.type === 'quran' && (
+                                <span className="verse-marker text-primary-600 dark:text-accent-400 mx-2">
+                                  &#xFD3F;{itemNumber.toLocaleString('ar-EG')}&#xFD3E;
+                                </span>
+                              )}
+                            </p>
+                            {showTransliteration && transliteration && (
+                              <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: transliteration }} />
+                            )}
+                            {showTranslation && translation && (
+                              <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize * 1.1}rem` }}>
+                                {translation}
+                                {currentContentInfo?.type === 'quran' && (
+                                  <span className="font-bold text-primary-600 dark:text-accent-400 ml-2">
+                                    ({itemNumber})
+                                  </span>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                          {index < (localFullContent?.verses || localFullContent?.phrases).length - 1 && (
+                            <hr className="verse-separator" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  {(!sessionId || isHost) && currentContentInfo?.type !== 'alkafi' && ( // Hide for AlKafi as viewer has its own
-                    <div className="w-full flex justify-center gap-6 mt-8 flex-shrink-0">
-                       <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary ${currentIndex === 0 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={32} /> </button>
-                       <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-50 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={32} /> </button>
-                     </div>
-                  )}
                 </div>
               )}
             </div>
-             {/* Page number at the bottom - Not applicable for alkafi_chapter or hadith_chapter */}
-             {currentContentInfo?.type !== 'alkafi_chapter' && currentContentInfo?.type !== 'hadith_chapter' && (
-                <div className="text-center text-sm text-gray-500 dark:text-dark-text-muted mt-4 flex-shrink-0">
-                  {`${currentIndex + 1} of ${totalPhrases}`}
-                </div>
-             )}
           </div>
         )}
       </div>
