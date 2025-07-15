@@ -134,6 +134,13 @@ const DuaSyncApp = () => {
 
   // Update URL with current state
   useEffect(() => {
+    if (sessionId) {
+      const url = `${window.location.origin}?session=${sessionId}`;
+      setSessionUrl(url);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
     const params = {};
     if (sessionId) {
       params.session = sessionId;
