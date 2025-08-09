@@ -352,21 +352,21 @@ io.on('connection', (socket) => {
       // This should ideally be handled by 'attempt-rejoin'. If it reaches here, it's a bit unusual.
       // For robustness, let's update their socketId and status.
       console.warn(`User with UserId ${userId} (${username}) already in session ${sessionId}. Updating socketId from ${existingParticipantByUserId.socketId} to ${socket.id}. This should ideally be an 'attempt-rejoin' flow.`);
+      const oldSocketId = existingParticipantByUserId.socketId; // Preserve previous socketId
       existingParticipantByUserId.socketId = socket.id;
       existingParticipantByUserId.status = 'connected';
       existingParticipantByUserId.name = username; // Update username in case it changed client-side (though less likely for rejoin)
-      
+
       // If this user was the host, ensure hostSocketId is updated
       if (existingParticipantByUserId.isHost && session.hostUserId === userId) {
         session.hostSocketId = socket.id;
       }
 
-      // Clear disconnect timer if any (logic for this needs to be more robust, linking timer to userId)
-      // For now, this is a simplified placeholder:
-      if (disconnectTimers.has(existingParticipantByUserId.socketId_before_disconnect)) { // Assuming we stored old socketId
-         clearTimeout(disconnectTimers.get(existingParticipantByUserId.socketId_before_disconnect));
-         disconnectTimers.delete(existingParticipantByUserId.socketId_before_disconnect);
-         console.log(`Cleared potential disconnect timer for rejoining user ${userId} (old socketId: ${existingParticipantByUserId.socketId_before_disconnect})`);
+      // Clear disconnect timer if any, using the preserved old socketId
+      if (oldSocketId && disconnectTimers.has(oldSocketId)) {
+         clearTimeout(disconnectTimers.get(oldSocketId));
+         disconnectTimers.delete(oldSocketId);
+         console.log(`Cleared potential disconnect timer for rejoining user ${userId} (old socketId: ${oldSocketId})`);
       }
 
 
