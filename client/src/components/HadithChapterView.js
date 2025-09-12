@@ -1,5 +1,6 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react'; // For potential future icons
+import HadithDisplayItem from './HadithDisplayItem'; // Import the component
 
 const HadithChapterView = ({
   chapterFullContent, // Contains chapter_num, titles, and sections array
@@ -52,48 +53,26 @@ const HadithChapterView = ({
 
           {/* Hadiths within the section */}
           <div className="space-y-6">
-            {section.hadiths.map((hadith, hadithIndex) => (
-              <div key={`hadith-${sectionIndex}-${hadithIndex}`} className="p-3 border-l-4 border-primary-200 dark:border-primary-700 bg-white dark:bg-dark-bg-secondary rounded-r-md">
-                <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-2">
-                  Hadith {hadith.hadith_num}
-                </p>
-                {/* Arabic Text */}
-                <div className="mb-3 text-right">
-                  <p
-                    className="leading-loose font-uthmani text-gray-800 dark:text-dark-text-primary"
-                    dir="rtl"
-                    style={{ fontSize: `${arabicFontSize}rem` }}
-                  >
-                    {hadith.arabic}
-                  </p>
-                </div>
+            {section.hadiths.map((hadith, hadithIndex) => {
+              // Adapt the hadith object to the structure expected by HadithDisplayItem
+              const hadithForItem = {
+                id: hadith.hadith_num,
+                arabicText: hadith.arabic,
+                englishText: hadith.english,
+                // Note: The current data structure in this view doesn't have separate sanad/matn
+                // HadithDisplayItem will fall back to using englishText
+              };
 
-                {/* English Translation */}
-                {showTranslation && hadith.english && (
-                  <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-                    <p
-                      className="text-gray-700 dark:text-dark-text-secondary"
-                      style={{ fontSize: `${translationFontSize}rem` }}
-                    >
-                      {hadith.english}
-                    </p>
-                  </div>
-                )}
-                 {/* Footnotes (if available) */}
-                 {hadith.footnotes && hadith.footnotes.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-dashed border-gray-300 dark:border-gray-600">
-                        <h6 className="text-xs font-semibold text-gray-500 dark:text-dark-text-muted mb-1">Footnotes:</h6>
-                        <ul className="space-y-1">
-                        {hadith.footnotes.map((footnote, noteIndex) => (
-                            <li key={`footnote-${sectionIndex}-${hadithIndex}-${noteIndex}`} className="text-xs text-gray-600 dark:text-dark-text-secondary">
-                              <span className="font-bold">{footnote.num}.</span> {footnote.text}
-                            </li>
-                        ))}
-                        </ul>
-                    </div>
-                 )}
-              </div>
-            ))}
+              return (
+                <HadithDisplayItem
+                  key={`hadith-${sectionIndex}-${hadithIndex}`}
+                  hadith={hadithForItem}
+                  arabicFontSize={arabicFontSize}
+                  translationFontSize={translationFontSize}
+                  showTranslation={showTranslation}
+                />
+              );
+            })}
           </div>
         </div>
       ))}

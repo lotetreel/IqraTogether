@@ -49,10 +49,10 @@ const HadithDisplayItem = ({ hadith, arabicFontSize, translationFontSize, showTr
   const currentTranslationFontSize = translationFontSize || 1.125;
 
   return (
-    <div className="card p-4 mb-4 shadow-sm">
-      <h4 className="font-semibold text-lg text-primary-700 dark:text-primary-400 mb-2">
+    <div className="p-3 border-l-4 border-primary-200 dark:border-primary-700 bg-white dark:bg-dark-bg-secondary rounded-r-md">
+      <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mb-2">
         Hadith {hadith.id}
-      </h4>
+      </p>
 
       {/* Full Arabic Text (includes Arabic Sanad and Matn) */}
       {hadith.arabicText && (

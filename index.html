@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Path of Virtue — A Deckbuilding Journey</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A Slay the Spire-inspired educational deckbuilder themed around virtues taught in the Quran and the teachings of the Prophet Muhammad (SAWA) and Ahlul Bayt." />
+  <style>
+    :root{
+      --bg:#0f172a;           /* slate-900 */
+      --panel:#111827;        /* gray-900 */
+      --panel-2:#1f2937;      /* gray-800 */
+      --text:#e5e7eb;         /* gray-200 */
+      --muted:#9ca3af;        /* gray-400 */
+      --accent:#22c55e;       /* green-500 */
+      --accent-2:#a78bfa;     /* violet-400 */
+      --danger:#ef4444;       /* red-500 */
+      --warning:#f59e0b;      /* amber-500 */
+      --card:#111827;
+      --card-border:#374151;
+      --good:#34d399;         /* emerald-400 */
+      --link:#38bdf8;         /* sky-400 */
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; height:100%; background:linear-gradient(180deg,#0b1226,#0f172a 50%,#0b1226); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"; }
+    a { color:var(--link); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    .container { max-width:1100px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:12px; min-height:100dvh; }
+
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      background:rgba(17,24,39,.6); padding:12px 16px; border:1px solid #1f2937; border-radius:10px; backdrop-filter: blur(6px);
+    }
+    .title{
+      display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.3px;
+    }
+    .crescent{
+      width:24px;height:24px;border-radius:50%;
+      box-shadow: 10px 0 0 0 var(--accent);
+      background: transparent;
+      position:relative;
+    }
+    .title-text{ font-size:1.05rem; }
+    .controls{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    }
+    button{
+      background:linear-gradient(180deg,#1f2937,#111827);
+      border:1px solid #374151; color:var(--text);
+      padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600;
+      transition:.15s transform ease, .15s background ease, .15s border ease, .15s color ease;
+    }
+    button:hover{ transform:translateY(-1px); border-color:#4b5563; }
+    button.primary{ background:linear-gradient(180deg,#16a34a,#15803d); border-color:#16a34a; }
+    button.primary:hover{ background:linear-gradient(180deg,#22c55e,#16a34a); }
+    button.warn{ background:linear-gradient(180deg,#b45309,#92400e); border-color:#b45309; }
+    button.warn:hover{ background:linear-gradient(180deg,#f59e0b,#b45309); }
+
+    .topbar{
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+      background:rgba(17,24,39,.6); padding:12px; border:1px solid #1f2937; border-radius:10px;
+    }
+    .stat{
+      display:flex; align-items:center; gap:8px; background:linear-gradient(180deg,#0b1224,#0b1320);
+      border:1px solid #1f2937; border-radius:10px; padding:8px 10px; min-width:140px; justify-content:space-between;
+    }
+    .stat .label{ font-size:.8rem; color:var(--muted); }
+    .bar{
+      width:320px; height:10px; background:#111827; border:1px solid #1f2937; border-radius:999px; overflow:hidden;
+    }
+    .bar .fill{
+      height:100%;
+      background:linear-gradient(90deg,#22c55e,#a7f3d0);
+      transition:width .2s ease;
+    }
+
+    .playfield{
+      display:grid; grid-template-rows: 1fr auto 190px; gap:12px; flex:1;
+    }
+    .enemy-area, .log-area, .hand-area{
+      background:rgba(17,24,39,.6); border:1px solid #1f2937; border-radius:10px; padding:12px; min-height:80px;
+    }
+
+    .enemy-wrap{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .enemy{
+      display:flex; flex-direction:column; gap:8px; min-width:260px;
+      background:linear-gradient(180deg,#0b1224,#0b1320); border:1px solid #1f2937; border-radius:10px; padding:12px;
+      flex:1;
+    }
+    .enemy-name{ font-weight:700; letter-spacing:.3px; }
+    .enemy-stats{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .hpbar{ width:260px; }
+    .intent{
+      background:#111827; border:1px solid #1f2937; border-radius:999px; padding:6px 10px; color:var(--warning); font-weight:700; font-size:.9rem;
+    }
+    .block-chip{
+      background:#0b1430; border:1px solid #1e3a8a; color:#93c5fd; border-radius:999px; padding:4px 8px; font-weight:700; font-size:.85rem;
+    }
+    .virtue-chip{
+      background:#052e1a; border:1px solid #065f46; color:#6ee7b7; border-radius:999px; padding:4px 8px; font-weight:700; font-size:.85rem;
+    }
+    .debuff-chip{
+      background:#2a0b10; border:1px solid #7f1d1d; color:#fca5a5; border-radius:999px; padding:4px 8px; font-weight:700; font-size:.85rem;
+    }
+
+    .log-area{
+      display:flex; gap:8px; align-items:center; justify-content:space-between; min-height:60px;
+    }
+    .log{
+      font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:.9rem; color:#cbd5e1; line-height:1.4; max-height:88px; overflow:auto; padding-right:6px;
+    }
+
+    .hand-area{ display:flex; flex-direction:column; gap:8px; }
+    .hand-header{
+      display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:4px;
+    }
+    .pile-stats{ display:flex; gap:8px; align-items:center; color:var(--muted); font-size:.9rem; }
+    .hand{
+      display:flex; gap:8px; align-items:flex-end; overflow-x:auto; padding-bottom:8px;
+    }
+    .card{
+      width:160px; min-width:160px; height:220px; border-radius:14px; padding:10px; border:1px solid var(--card-border);
+      background:
+        linear-gradient(180deg,#101827 0% 30%,rgba(38,38,38,.0) 100%),
+        radial-gradient(140% 60% at 50% -40%, rgba(167,139,250,.15), rgba(0,0,0,0) 50%),
+        var(--card);
+      display:flex; flex-direction:column; gap:8px; cursor:pointer; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25) inset, 0 2px 12px rgba(0,0,0,.2);
+      position:relative;
+    }
+    .card:hover{ transform: translateY(-6px) scale(1.02); border-color:#64748b; box-shadow: 0 10px 30px rgba(0,0,0,.25) inset, 0 6px 18px rgba(0,0,0,.35); }
+    .card-cost{
+      position:absolute; top:-10px; right:-10px; width:42px; height:42px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #34d399, #16a34a);
+      display:flex; align-items:center; justify-content:center; color:#052e1a; font-weight:900; border:2px solid #065f46;
+      box-shadow: 0 6px 12px rgba(0,0,0,.35);
+    }
+    .card-title{ font-weight:800; color:#fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+    .card-type{ font-size:.75rem; color:#a7f3d0; font-weight:700; letter-spacing:.3px; }
+    .card-body{ color:#e5e7eb; font-size:.95rem; line-height:1.3; }
+    .card-flavor{ color:#9ca3af; font-style:italic; font-size:.8rem; margin-top:auto; border-top:1px dashed #334155; padding-top:6px; }
+    .exhaust{ position:absolute; left:8px; bottom:8px; font-size:.7rem; color:#fca5a5; font-weight:800; letter-spacing:.4px; }
+
+    .footer{
+      text-align:center; color:var(--muted); font-size:.85rem; padding:8px 0 16px;
+    }
+
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; padding:16px; z-index:50;
+    }
+    .modal{
+      max-width:900px; width:100%;
+      background:linear-gradient(180deg,#0b1224,#0b1320);
+      border: 1px solid #1f2937; border-radius:12px; padding:16px; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .modal h2{ margin:0 0 8px 0; }
+    .modal p{ color:#cbd5e1; }
+    .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
+    .reward-cards{
+      display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;
+    }
+    .small{ font-size:.85rem; color:var(--muted); }
+
+    .about-grid{
+      display:grid; grid-template-columns: 1fr; gap:10px;
+    }
+    @media(min-width:800px){
+      .about-grid{ grid-template-columns: 1.2fr .8fr; }
+    }
+    .about-box{
+      background:#0b1224; border:1px solid #1f2937; border-radius:10px; padding:10px;
+    }
+    .kbd{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; background:#0b1430; border:1px solid #1e3a8a; color:#93c5fd; padding:0 6px; border-radius:6px; font-size:.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <div class="crescent" aria-hidden="true"></div>
+        <div class="title-text">Path of Virtue — A Deckbuilding Journey</div>
+      </div>
+      <div class="controls">
+        <button id="aboutBtn" title="About the project">About</button>
+        <button id="restartBtn" class="warn" title="Restart the current run">Restart</button>
+      </div>
+    </header>
+
+    <div class="topbar" id="topbar">
+      <!-- Dynamic player/enemy quick stats rendered here -->
+    </div>
+
+    <main class="playfield">
+      <section class="enemy-area">
+        <div class="enemy-wrap">
+          <div class="enemy" id="enemyPanel">
+            <!-- Enemy info -->
+          </div>
+          <div class="enemy" style="min-width:260px;max-width:420px;">
+            <div class="enemy-name">Intent & Tips</div>
+            <div id="intentTips" class="small">
+              Observe the enemy's intent to plan wisely. Build Block with Sabr, conserve Iman, and strike with Sidq when safe.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="log-area">
+        <div id="log" class="log"></div>
+        <div class="actions">
+          <button id="endTurnBtn" class="primary">End Turn (Space)</button>
+        </div>
+      </section>
+
+      <section class="hand-area">
+        <div class="hand-header">
+          <div class="pile-stats" id="pileStats"></div>
+          <div class="pile-stats small">Controls: Click card to play • Space to End Turn</div>
+        </div>
+        <div class="hand" id="hand"></div>
+      </section>
+    </main>
+
+    <div class="footer">
+      Educational prototype inspired by card-based roguelikes. No depiction of sacred figures. Quotations included respectfully as flavor text.
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div class="modal-backdrop" id="aboutModal">
+    <div class="modal">
+      <h2>About This Project</h2>
+      <div class="about-grid">
+        <div class="about-box">
+          <p>
+            This is a small, single-file educational prototype inspired by Slay the Spire and themed around virtues from the Quran and the teachings of the Prophet Muhammad (SAWA) and the Ahlul Bayt. The focus is on learning through mechanics named for virtues such as Sabr (Patience), Sidq (Truthfulness), Dhikr (Remembrance), and Sadaqah (Charity).
+          </p>
+          <p>
+            Design notes:
+          </p>
+          <ul>
+            <li>No depiction of sacred figures or anthropomorphism.</li>
+            <li>Flavor text with brief references is included respectfully.</li>
+            <li>Terminology: Energy is called “Iman”, temporary defense is “Block”.</li>
+          </ul>
+          <p class="small">
+            Sample references (translation paraphrases):
+            <br />
+            - “Indeed, Allah is with the patient.” (Quran 2:153)
+            <br />
+            - “The truthful one is at peace.” (Hadith theme on truthfulness)
+            <br />
+            - “Remember Me; I will remember you.” (Quran 2:152)
+            <br />
+            Please consult trusted sources/translators for precise wording.
+          </p>
+        </div>
+        <div class="about-box">
+          <p><strong>How to play</strong></p>
+          <ul>
+            <li>You start each turn with 3 Iman (energy).</li>
+            <li>Draw 5 cards. Click a card to play it if you have enough Iman.</li>
+            <li>Build Block with Sabr to mitigate incoming damage.</li>
+            <li>Press End Turn (Space) to let the enemy act.</li>
+            <li>Defeat the enemy to see a card reward; add one to your deck.</li>
+          </ul>
+          <p class="small">Keyboard: <span class="kbd">Space</span> to End Turn.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="closeAbout">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reward Modal -->
+  <div class="modal-backdrop" id="rewardModal">
+    <div class="modal">
+      <h2>Choose a Reward</h2>
+      <p class="small">Select one card to add to your deck.</p>
+      <div class="reward-cards" id="rewardCards"></div>
+      <div class="actions">
+        <button id="skipReward">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Defeat/Win Modal -->
+  <div class="modal-backdrop" id="resultModal">
+    <div class="modal">
+      <h2 id="resultTitle">Result</h2>
+      <p id="resultText"></p>
+      <div class="actions">
+        <button id="playAgain" class="primary">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple utility
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const shuffle = (arr) => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
+
+    // Core game state
+    const Game = {
+      baseEnergy: 3, // Iman per turn baseline
+      energy: 0,
+      turn: 1,
+      player: {
+        hp: 50,
+        maxHp: 50,
+        block: 0,
+        statuses: {
+          doubt: 0 // next turn -1 energy
+        }
+      },
+      enemy: null,
+      deck: [],
+      discard: [],
+      hand: [],
+      exhaust: [],
+      drawPile() { return this.deck; },
+      discardPile() { return this.discard; },
+      inCombat: true,
+      victoryCount: 0,
+      logLines: [],
+    };
+
+    // Cards definition
+    // type: attack | skill | power (power unused for simplicity)
+    // cost: Iman cost
+    // play: (game, card) => void
+    // exhaust: boolean
+    const CardLibrary = [
+      {
+        id: "sidq",
+        name: "Sidq (Truthfulness)",
+        type: "attack",
+        cost: 1,
+        desc: "Deal 6 damage.",
+        flavor: "Truth illuminates the path.",
+        play: (g) => dealDamage(g, 6)
+      },
+      {
+        id: "amr",
+        name: "Amr bil Ma'ruf (Enjoin Good)",
+        type: "attack",
+        cost: 1,
+        desc: "Deal 5 damage. Apply Weaken (−25% next attack).",
+        flavor: "Encouraging good weakens harm.",
+        play: (g) => {
+          dealDamage(g, 5);
+          g.enemy.weaken = (g.enemy.weaken || 0) + 1;
+          log("Enemy is Weakened for its next attack.");
+        }
+      },
+      {
+        id: "sabr",
+        name: "Sabr (Patience)",
+        type: "skill",
+        cost: 1,
+        desc: "Gain 6 Block.",
+        flavor: "“Indeed, Allah is with the patient.” (Q 2:153)",
+        play: (g) => {
+          g.player.block += 6;
+          log("You gain 6 Block.");
+        }
+      },
+      {
+        id: "tawakkul",
+        name: "Tawakkul (Reliance)",
+        type: "skill",
+        cost: 1,
+        desc: "Gain 4 Block. Draw 1 card.",
+        flavor: "Reliance brings calm.",
+        play: (g) => {
+          g.player.block += 4;
+          log("You gain 4 Block.");
+          drawCards(g, 1);
+        }
+      },
+      {
+        id: "dhikr",
+        name: "Dhikr (Remembrance)",
+        type: "skill",
+        cost: 0,
+        exhaust: true,
+        desc: "Gain 1 Iman. Draw 1 card. Exhaust.",
+        flavor: "“Remember Me; I will remember you.” (Q 2:152)",
+        play: (g, card) => {
+          g.energy += 1;
+          log("+1 Iman.");
+          drawCards(g, 1);
+        }
+      },
+      {
+        id: "sadaqah",
+        name: "Sadaqah (Charity)",
+        type: "skill",
+        cost: 1,
+        desc: "Heal 3 HP.",
+        flavor: "Charity purifies wealth.",
+        play: (g) => {
+          healPlayer(g, 3);
+        }
+      },
+      {
+        id: "istighfar",
+        name: "Istighfar (Seeking Forgiveness)",
+        type: "skill",
+        cost: 0,
+        exhaust: true,
+        desc: "Remove Doubt (if any). Gain 2 Block. Exhaust.",
+        flavor: "Turning back clears the heart.",
+        play: (g) => {
+          if (g.player.statuses.doubt > 0) {
+            g.player.statuses.doubt = 0;
+            log("Your Doubt is removed.");
+          } else {
+            log("You feel clear; no Doubt to remove.");
+          }
+          g.player.block += 2;
+          log("You gain 2 Block.");
+        }
+      },
+      {
+        id: "taqwa",
+        name: "Taqwa (God-consciousness)",
+        type: "skill",
+        cost: 1,
+        desc: "Reduce enemy Attack damage by 25% this turn.",
+        flavor: "Mindfulness shields the soul.",
+        play: (g) => {
+          g.enemy.weaken = (g.enemy.weaken || 0) + 1;
+          log("Enemy is Weakened for this turn.");
+        }
+      },
+    ];
+
+    // Starter deck list (10 cards)
+    const StarterDeck = [
+      "sidq","sidq","sidq","sidq",
+      "sabr","sabr","sabr","tawakkul",
+      "dhikr","sadaqah"
+    ];
+
+    // Enemy definition
+    function createEnemy(stage=1){
+      // scale slightly with stage
+      const hp = 40 + (stage-1)*8;
+      return {
+        name: "Nafs (Ego)",
+        hp, maxHp: hp,
+        block: 0,
+        intent: null, // "attack" | "doubt" | "defend"
+        intentValue: 0,
+        weaken: 0, // decreases next attack
+      };
+    }
+
+    // Game mechanics
+    function log(msg){
+      Game.logLines.push(msg);
+      if (Game.logLines.length > 8) Game.logLines.shift();
+      renderLog();
+    }
+
+    function healPlayer(g, amount){
+      const before = g.player.hp;
+      g.player.hp = Math.min(g.player.maxHp, g.player.hp + amount);
+      log(`You heal ${g.player.hp - before} HP.`);
+    }
+
+    function clampEnemyHP(enemy){
+      if (enemy.hp < 0) enemy.hp = 0;
+      if (enemy.hp > enemy.maxHp) enemy.hp = enemy.maxHp;
+    }
+
+    function dealDamage(g, amount){
+      // enemy block first
+      let dmg = amount;
+      if (g.enemy.block > 0) {
+        const absorbed = Math.min(g.enemy.block, dmg);
+        g.enemy.block -= absorbed;
+        dmg -= absorbed;
+        log(`Enemy Block absorbs ${absorbed}.`);
+      }
+      if (dmg > 0){
+        g.enemy.hp -= dmg;
+        clampEnemyHP(g.enemy);
+        log(`You deal ${dmg} damage.`);
+      }
+      if (g.enemy.hp <= 0){
+        onVictory();
+      }
+    }
+
+    function enemyDealDamage(g, amount){
+      // apply weaken if any
+      let dmg = amount;
+      if (g.enemy.weaken > 0){
+        dmg = Math.floor(dmg * 0.75);
+      }
+      // player block absorbs
+      if (g.player.block > 0) {
+        const absorbed = Math.min(g.player.block, dmg);
+        g.player.block -= absorbed;
+        dmg -= absorbed;
+        log(`Your Block absorbs ${absorbed}.`);
+      }
+      if (dmg > 0){
+        g.player.hp = Math.max(0, g.player.hp - dmg);
+        log(`Enemy deals ${dmg} damage.`);
+      }
+      g.enemy.weaken = 0; // consumed on attack
+      if (g.player.hp <= 0){
+        onDefeat();
+      }
+    }
+
+    function drawCards(g, n){
+      for (let i=0;i<n;i++){
+        if (g.deck.length === 0){
+          // reshuffle discard into deck if possible
+          if (g.discard.length > 0){
+            g.deck = shuffle(g.discard);
+            g.discard = [];
+          } else {
+            // no cards to draw
+            return;
+          }
+        }
+        const c = g.deck.pop();
+        g.hand.push(c);
+      }
+    }
+
+    function startRun(){
+      Game.turn = 1;
+      Game.player.hp = 50;
+      Game.player.maxHp = 50;
+      Game.player.block = 0;
+      Game.player.statuses = { doubt: 0 };
+      Game.victoryCount = 0;
+      Game.inCombat = true;
+      buildDeckFromStarter();
+      setupEnemy();
+      startPlayerTurn();
+      Game.logLines = ["Bismillah. Your journey begins."];
+      renderAll();
+    }
+
+    function buildDeckFromStarter(){
+      Game.deck = [];
+      Game.discard = [];
+      Game.hand = [];
+      Game.exhaust = [];
+      const cards = StarterDeck.map(id => createCardById(id));
+      Game.deck.push(...cards);
+      shuffle(Game.deck);
+    }
+
+    function createCardById(id){
+      const def = CardLibrary.find(c => c.id === id);
+      if (!def) throw new Error("Unknown card: "+id);
+      // create a light instance
+      return { ...def };
+    }
+
+    function setupEnemy(){
+      Game.enemy = createEnemy(Game.victoryCount+1);
+      chooseEnemyIntent(Game);
+    }
+
+    function chooseEnemyIntent(g){
+      // Weighted: 60% attack, 20% doubt, 20% defend
+      const r = Math.random();
+      if (r < 0.6){
+        g.enemy.intent = "attack";
+        // scale with stage and light randomness
+        const base = 7 + Game.victoryCount*2;
+        g.enemy.intentValue = rand(base, base+3);
+      } else if (r < 0.8){
+        g.enemy.intent = "doubt";
+        g.enemy.intentValue = 1; // apply doubt stacks
+      } else {
+        g.enemy.intent = "defend";
+        g.enemy.intentValue = 6 + Game.victoryCount*2;
+      }
+    }
+
+    function startPlayerTurn(){
+      Game.energy = Game.baseEnergy;
+      if (Game.player.statuses.doubt > 0){
+        Game.energy = Math.max(0, Game.energy - 1);
+        Game.player.statuses.doubt -= 1;
+        log("Doubt lingers: -1 Iman this turn.");
+      }
+      Game.player.block = 0; // reset block
+      drawCards(Game, 5 - Game.hand.length);
+      renderAll();
+    }
+
+    function endPlayerTurn(){
+      if (!Game.inCombat) return;
+      // Discard hand
+      Game.discard.push(...Game.hand);
+      Game.hand = [];
+      renderAll();
+      // Enemy acts
+      enemyTurn(Game);
+      if (!Game.inCombat) return; // victory/defeat may toggle
+      Game.turn += 1;
+      chooseEnemyIntent(Game);
+      startPlayerTurn();
+    }
+
+    function enemyTurn(g){
+      // Clear enemy block each turn
+      g.enemy.block = 0;
+      if (g.enemy.intent === "attack"){
+        enemyDealDamage(g, g.enemy.intentValue);
+      } else if (g.enemy.intent === "doubt"){
+        g.player.statuses.doubt += g.enemy.intentValue;
+        log("Enemy whispers doubt. Next turn: −1 Iman.");
+      } else if (g.enemy.intent === "defend"){
+        g.enemy.block += g.enemy.intentValue;
+        log(`Enemy braces and gains ${g.enemy.intentValue} Block.`);
+      }
+      renderAll();
+    }
+
+    function playCardAt(index){
+      const card = Game.hand[index];
+      if (!card) return;
+      if (card.cost > Game.energy){
+        log("Not enough Iman.");
+        renderAll();
+        return;
+      }
+      Game.energy -= card.cost;
+      // Execute effect
+      try{
+        card.play(Game, card);
+      }catch(e){
+        console.error(e);
+        log("Card failed to play.");
+      }
+      // Move to discard or exhaust
+      const played = Game.hand.splice(index, 1)[0];
+      if (played){
+        if (played.exhaust){
+          Game.exhaust.push(played);
+        } else {
+          Game.discard.push(played);
+        }
+      }
+      renderAll();
+    }
+
+    // Override enemyTurn to fix text and keep logic
+    function enemyTurn(g){
+      g.enemy.block = 0;
+      if (g.enemy.intent === "attack"){
+        enemyDealDamage(g, g.enemy.intentValue);
+      } else if (g.enemy.intent === "doubt"){
+        g.player.statuses.doubt += g.enemy.intentValue;
+        log("Enemy whispers doubt. Next turn: -1 Iman.");
+      } else if (g.enemy.intent === "defend"){
+        g.enemy.block += g.enemy.intentValue;
+        log(`Enemy braces and gains ${g.enemy.intentValue} Block.`);
+      }
+      renderAll();
+    }
+
+    // Rendering
+    function renderAll(){
+      renderTopbar();
+      renderEnemy();
+      renderHand();
+      renderPileStats();
+      renderLog();
+      fixControlsHint();
+    }
+
+    function fixControlsHint(){
+      const el = document.querySelector('.hand-header .pile-stats.small');
+      if (el) el.textContent = 'Controls: Click a card to play - Space to End Turn';
+    }
+
+    function renderTopbar(){
+      const el = document.getElementById('topbar');
+      if (!el) return;
+      const hpPct = Math.max(0, Math.min(100, Math.round((Game.player.hp / Game.player.maxHp) * 100)));
+      el.innerHTML = `
+        <div class="stat" title="Player Health">
+          <span class="label">HP</span>
+          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div></div>
+          <strong>${Game.player.hp}/${Game.player.maxHp}</strong>
+        </div>
+        <div class="stat" title="Iman (Energy)">
+          <span class="label">Iman</span>
+          <strong>${Game.energy}/${Game.baseEnergy}</strong>
+        </div>
+        <div class="stat" title="Current Turn">
+          <span class="label">Turn</span>
+          <strong>${Game.turn}</strong>
+        </div>
+        ${Game.player.statuses.doubt > 0 ? `<div class="stat" title="Doubt reduces next turn's Iman"><span class="label">Doubt</span><strong>${Game.player.statuses.doubt}</strong></div>` : ''}
+      `;
+    }
+
+    function renderEnemy(){
+      const el = document.getElementById('enemyPanel');
+      if (!el || !Game.enemy) return;
+      const e = Game.enemy;
+      const hpPct = Math.max(0, Math.min(100, Math.round((e.hp / e.maxHp) * 100)));
+      const intentText = e.intent === 'attack' ? `Attack ${e.intentValue}` : (e.intent === 'doubt' ? `Inflict Doubt` : `Defend ${e.intentValue}`);
+      el.innerHTML = `
+        <div class="enemy-name">${e.name}</div>
+        <div class="enemy-stats">
+          <div class="hpbar bar"><div class="fill" style="width:${hpPct}%"></div></div>
+          <div><strong>${e.hp}/${e.maxHp}</strong></div>
+          ${e.block > 0 ? `<span class="block-chip">Block ${e.block}</span>` : ''}
+          ${e.weaken > 0 ? `<span class="debuff-chip">Weakened</span>` : ''}
+          <span class="intent">Intent: ${intentText}</span>
+        </div>
+      `;
+      // update tips
+      const tips = document.getElementById('intentTips');
+      if (tips){
+        if (e.intent === 'attack') tips.textContent = 'Enemy will attack. Build Block or strike decisively.';
+        else if (e.intent === 'doubt') tips.textContent = 'Enemy will inflict Doubt (reduces next turn Iman). Consider playing cheap cards.';
+        else tips.textContent = 'Enemy will defend. Use this to set up or draw.';
+      }
+    }
+
+    function renderPileStats(){
+      const el = document.getElementById('pileStats');
+      if (!el) return;
+      el.textContent = `Draw: ${Game.deck.length}  Discard: ${Game.discard.length}  Exhaust: ${Game.exhaust.length}`;
+    }
+
+    function renderLog(){
+      const el = document.getElementById('log');
+      if (!el) return;
+      el.innerHTML = Game.logLines.map(l => `<span>${l}</span>`).join(' ');
+    }
+
+    function renderHand(){
+      const el = document.getElementById('hand');
+      if (!el) return;
+      el.innerHTML = '';
+      Game.hand.forEach((card, idx) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="card-cost">${card.cost}</div>
+          <div class="card-title">${card.name}</div>
+          <div class="card-type">${card.type.toUpperCase()}</div>
+          <div class="card-body">${card.desc}</div>
+          ${card.exhaust ? '<div class="exhaust">Exhaust</div>' : ''}
+          ${card.flavor ? `<div class="card-flavor">${card.flavor}</div>` : ''}
+        `;
+        div.addEventListener('click', () => playCardAt(idx));
+        el.appendChild(div);
+      });
+    }
+
+    // Victory/Defeat and rewards
+    function onVictory(){
+      Game.inCombat = false;
+      log('Victory! Choose a reward.');
+      openModal('rewardModal');
+      const pool = shuffle(CardLibrary.slice()).slice(0, 3);
+      const wrap = document.getElementById('rewardCards');
+      if (wrap){
+        wrap.innerHTML = '';
+        pool.forEach(def => {
+          const c = { ...def };
+          const d = document.createElement('div');
+          d.className = 'card';
+          d.innerHTML = `
+            <div class="card-cost">${c.cost}</div>
+            <div class="card-title">${c.name}</div>
+            <div class="card-type">${c.type.toUpperCase()}</div>
+            <div class="card-body">${c.desc}</div>
+            ${c.exhaust ? '<div class="exhaust">Exhaust</div>' : ''}
+            ${c.flavor ? `<div class="card-flavor">${c.flavor}</div>` : ''}
+          `;
+          d.addEventListener('click', () => {
+            Game.deck.push(c);
+            closeModal('rewardModal');
+            startNextCombat();
+          });
+          wrap.appendChild(d);
+        });
+      }
+    }
+
+    function onDefeat(){
+      Game.inCombat = false;
+      const title = document.getElementById('resultTitle');
+      const text = document.getElementById('resultText');
+      if (title) title.textContent = 'Defeat';
+      if (text) text.textContent = 'Your journey pauses here. Reflect and try again.';
+      openModal('resultModal');
+    }
+
+    function startNextCombat(){
+      // collect all cards back into deck (exhaust returns between combats)
+      Game.deck.push(...Game.discard, ...Game.hand, ...Game.exhaust);
+      Game.discard = [];
+      Game.hand = [];
+      Game.exhaust = [];
+      shuffle(Game.deck);
+      Game.turn = 1;
+      Game.player.block = 0;
+      Game.inCombat = true;
+      setupEnemy();
+      startPlayerTurn();
+      renderAll();
+    }
+
+    // Modal helpers
+    function openModal(id){
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+    function closeModal(id){
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // Fix mojibake flavor strings at runtime (in case of encoding issues)
+    (function fixFlavors(){
+      const sabr = CardLibrary.find(c => c.id === 'sabr');
+      if (sabr) sabr.flavor = 'Indeed, Allah is with the patient. (Q 2:153)';
+      const dhikr = CardLibrary.find(c => c.id === 'dhikr');
+      if (dhikr) dhikr.flavor = 'Remember Me; I will remember you. (Q 2:152)';
+    })();
+
+    // Wire up UI
+    window.addEventListener('DOMContentLoaded', () => {
+      const aboutBtn = document.getElementById('aboutBtn');
+      const closeAbout = document.getElementById('closeAbout');
+      const restartBtn = document.getElementById('restartBtn');
+      const endTurnBtn = document.getElementById('endTurnBtn');
+      const skipReward = document.getElementById('skipReward');
+      const playAgain = document.getElementById('playAgain');
+
+      if (aboutBtn) aboutBtn.addEventListener('click', () => openModal('aboutModal'));
+      if (closeAbout) closeAbout.addEventListener('click', () => closeModal('aboutModal'));
+      if (restartBtn) restartBtn.addEventListener('click', () => startRun());
+      if (endTurnBtn) endTurnBtn.addEventListener('click', () => endPlayerTurn());
+      if (skipReward) skipReward.addEventListener('click', () => { closeModal('rewardModal'); startNextCombat(); });
+      if (playAgain) playAgain.addEventListener('click', () => { closeModal('resultModal'); startRun(); });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space'){ e.preventDefault(); endPlayerTurn(); }
+      });
+
+      startRun();
+    });
+  </script>
+</body>
+</html>

@@ -120,7 +120,7 @@ const HadithSelectionPage = ({ onSelectHadithChapter, initialSelectedVolume }) =
       case 9: IconComponent = LucideIcons.Lock; colorClass = 'text-gray-600'; break;
       case 10: IconComponent = LucideIcons.Utensils; colorClass = 'text-orange-500'; break;
       case 11: IconComponent = LucideIcons.HelpingHand; colorClass = 'text-teal-500'; break;
-      case 12: IconComponent = LucideIcons.BookOpenCheck; colorClass = 'text-cyan-500'; break;
+      case 12: IconComponent = LucideIcons.FileCheck; colorClass = 'text-cyan-500'; break;
       case 13: IconComponent = LucideIcons.Landmark; colorClass = 'text-lime-600'; break;
       case 14: IconComponent = LucideIcons.Eye; colorClass = 'text-blue-400'; break;
       case 15: IconComponent = LucideIcons.Users; colorClass = 'text-green-500'; break; // Community
@@ -189,13 +189,121 @@ const HadithSelectionPage = ({ onSelectHadithChapter, initialSelectedVolume }) =
       case 86: IconComponent = LucideIcons.EyeOff; colorClass = 'text-purple-400'; break; // Veil
       case 87: IconComponent = LucideIcons.Plane; colorClass = 'text-blue-500'; break; // Hajj
       case 88: IconComponent = LucideIcons.MessageSquare; colorClass = 'text-indigo-500'; break; // Argument
-      case 89: IconComponent = LucideIcons.BookCopy; colorClass = 'text-orange-500'; break; // Hadith
+      case 89: IconComponent = LucideIcons.Copy; colorClass = 'text-orange-500'; break; // Hadith
       case 90: IconComponent = LucideIcons.Gavel; colorClass = 'text-red-700'; break; // Legal Punishments
       case 91: IconComponent = LucideIcons.Swords; colorClass = 'text-gray-600'; break; // War
       case 92: IconComponent = LucideIcons.Sword; colorClass = 'text-red-600'; break; // Warmonger
       case 93: IconComponent = LucideIcons.Bird; colorClass = 'text-cyan-500'; break; // Freedom
       case 94: IconComponent = LucideIcons.Coins; colorClass = 'text-yellow-500'; break; // Covetousness
       case 95: IconComponent = LucideIcons.Briefcase; colorClass = 'text-blue-500'; break; // Profession
+      // Volume 2
+      case 96: IconComponent = LucideIcons.Ban; colorClass = 'text-red-600'; break; // The Prohibited (Haram)
+      case 97: IconComponent = LucideIcons.Users; colorClass = 'text-blue-500'; break; // The Party
+      case 98: IconComponent = LucideIcons.Scale; colorClass = 'text-gray-600'; break; // Prudence
+      case 99: IconComponent = LucideIcons.Frown; colorClass = 'text-yellow-600'; break; // Sorrow
+      case 100: IconComponent = LucideIcons.BookOpen; colorClass = 'text-green-500'; break; // The Account
+      case 101: IconComponent = LucideIcons.Eye; colorClass = 'text-red-500'; break; // Jealousy
+      case 102: IconComponent = LucideIcons.Undo; colorClass = 'text-blue-500'; break; // Regret
+      case 103: IconComponent = LucideIcons.Award; colorClass = 'text-yellow-400'; break; // Good Deeds
+      case 104: IconComponent = LucideIcons.HeartHandshake; colorClass = 'text-pink-500'; break; // Good-Doing
+      case 105: IconComponent = LucideIcons.Brain; colorClass = 'text-pink-500'; break; // Memorizing
+      case 106: IconComponent = LucideIcons.Angry; colorClass = 'text-red-700'; break; // Resentment
+      case 107: IconComponent = LucideIcons.ThumbsDown; colorClass = 'text-orange-500'; break; // Scorn
+      case 108: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // The Truth
+      case 109: IconComponent = LucideIcons.Copy; colorClass = 'text-orange-500'; break; // The Rights
+      case 110: IconComponent = LucideIcons.Coins; colorClass = 'text-yellow-500'; break; // Hoarding
+      // Volume 3
+      case 111: IconComponent = LucideIcons.HeartCrack; colorClass = 'text-red-500'; break; // Hard-Heartedness
+      case 112: IconComponent = LucideIcons.Flame; colorClass = 'text-orange-600'; break; // Envy
+      case 113: IconComponent = LucideIcons.Calculator; colorClass = 'text-blue-500'; break; // Reckoning
+      case 114: IconComponent = LucideIcons.ShieldQuestion; colorClass = 'text-purple-500'; break; // Ambiguities
+      case 115: IconComponent = LucideIcons.Puzzle; colorClass = 'text-indigo-500'; break; // Stratagems
+      case 116: IconComponent = LucideIcons.Timer; colorClass = 'text-gray-600'; break; // Procrastination
+      case 117: IconComponent = LucideIcons.Sparkles; colorClass = 'text-yellow-400'; break; // Ornament
+      case 118: IconComponent = LucideIcons.ShieldCheck; colorClass = 'text-green-600'; break; // Resolution
+      case 119: IconComponent = LucideIcons.HeartHandshake; colorClass = 'text-pink-500'; break; // Gentleness
+      case 120: IconComponent = LucideIcons.UserX; colorClass = 'text-orange-500'; break; // The Kharijites
+      case 121: IconComponent = LucideIcons.Wheat; colorClass = 'text-yellow-500'; break; // Khums
+      case 122: IconComponent = LucideIcons.Hand; colorClass = 'text-blue-400'; break; // Supplication
+      case 123: IconComponent = LucideIcons.HelpingHand; colorClass = 'text-teal-500'; break; // Goodness
+      case 124: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // The Best
+      case 125: IconComponent = LucideIcons.Users; colorClass = 'text-green-500'; break; // The Family
+      case 126: IconComponent = LucideIcons.Swords; colorClass = 'text-red-600'; break; // Treachery
+      case 127: IconComponent = LucideIcons.MessageSquare; colorClass = 'text-orange-600'; break; // Backbiting
+      case 128: IconComponent = LucideIcons.FileCheck; colorClass = 'text-cyan-500'; break; // The Criterion
+      case 129: IconComponent = LucideIcons.Copy; colorClass = 'text-orange-500'; break; // Tradition
+      case 130: IconComponent = LucideIcons.CalendarClock; colorClass = 'text-blue-500'; break; // Time
+      case 131: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // Love of God
+      case 132: IconComponent = LucideIcons.HeartOff; colorClass = 'text-gray-600'; break; // Dislike for God
+      case 133: IconComponent = LucideIcons.HeartHandshake; colorClass = 'text-pink-500'; break; // Friendship in God
+      case 134: IconComponent = LucideIcons.HeartCrack; colorClass = 'text-red-600'; break; // Enmity for God
+      case 135: IconComponent = LucideIcons.UserCheck; colorClass = 'text-green-600'; break; // The Friends of God
+      case 136: IconComponent = LucideIcons.UserX; colorClass = 'text-red-700'; break; // The Enemies of God
+      case 137: IconComponent = LucideIcons.ShieldCheck; colorClass = 'text-blue-600'; break; // Piety
+      case 138: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // The Heart
+      case 139: IconComponent = LucideIcons.BookOpen; colorClass = 'text-indigo-500'; break; // The Qur'an
+      case 140: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // Interpretation of the Qur'an
+      case 141: IconComponent = LucideIcons.HelpingHand; colorClass = 'text-teal-500'; break; // Intercession
+      case 142: IconComponent = LucideIcons.Scale; colorClass = 'text-gray-600'; break; // Justice
+      case 143: IconComponent = LucideIcons.Swords; colorClass = 'text-red-600'; break; // Injustice
+      case 144: IconComponent = LucideIcons.UserCog; colorClass = 'text-blue-500'; break; // The Intellect
+      case 145: IconComponent = LucideIcons.Lightbulb; colorClass = 'text-yellow-400'; break; // Knowledge
+      case 146: IconComponent = LucideIcons.Users; colorClass = 'text-green-500'; break; // The Scholar
+      case 147: IconComponent = LucideIcons.GraduationCap; colorClass = 'text-indigo-500'; break; // The Student
+      case 148: IconComponent = LucideIcons.PenSquare; colorClass = 'text-orange-500'; break; // The Pen
+      case 149: IconComponent = LucideIcons.Copy; colorClass = 'text-cyan-500'; break; // The Written Word
+      case 150: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // Wisdom
+      case 151: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // Ignorance
+      case 152: IconComponent = LucideIcons.MessageCircle; colorClass = 'text-blue-400'; break; // Questioning
+      case 153: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // Narration
+      case 154: IconComponent = LucideIcons.FileLock; colorClass = 'text-gray-600'; break; // Secrecy
+      case 155: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // Story-telling
+      case 156: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // Poetry
+      case 157: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // Exegesis
+      case 158: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // The Jurist
+      case 159: IconComponent = LucideIcons.Gavel; colorClass = 'text-red-700'; break; // The Judge
+      case 160: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // Testimony
+      case 161: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // False Testimony
+      case 162: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // Fatwa
+      case 163: IconComponent = LucideIcons.Scale; colorClass = 'text-gray-600'; break; // Bribery
+      case 164: IconComponent = LucideIcons.Copy; colorClass = 'text-orange-500'; break; // Disputation
+      case 165: IconComponent = LucideIcons.FileLock; colorClass = 'text-gray-600'; break; // Imitation
+      case 166: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // Opinion
+      case 167: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // Heresy
+      case 168: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // The Causes of Differences in Hadith
+      // Volume 4
+      case 169: IconComponent = LucideIcons.Copy; colorClass = 'text-orange-500'; break; // Abrogation
+      case 170: IconComponent = LucideIcons.FileLock; colorClass = 'text-gray-600'; break; // Dissimulation
+      case 171: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // The Decisive and the Ambiguous
+      case 172: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // The Inward and the Outward
+      case 173: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // The Forbidden and the Permissible
+      case 174: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // The Commandments
+      case 175: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // The Prohibitions
+      case 176: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // The Promise and the Threat
+      case 177: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // The Good Word
+      case 178: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // The Evil Word
+      case 179: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // The Truth and the Falsehood
+      case 180: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // The Truthful
+      case 181: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // The Liar
+      case 182: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // Lying
+      case 183: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // The Permissibility of Lying
+      case 184: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // The Consequences of Lying
+      case 185: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // The Signs of a Liar
+      case 186: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // The Worst Kind of Lying
+      case 187: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // Slander
+      case 188: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // Tale-bearing
+      case 189: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // Double-facedness
+      case 190: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // Hypocrisy
+      case 191: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // The Hypocrite
+      case 192: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // The Signs of a Hypocrite
+      case 193: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // The Mischief-maker
+      case 194: IconComponent = LucideIcons.Heart; colorClass = 'text-red-500'; break; // Deception
+      case 195: IconComponent = LucideIcons.FileText; colorClass = 'text-orange-500'; break; // Cunning
+      case 196: IconComponent = LucideIcons.BookOpen; colorClass = 'text-cyan-500'; break; // Treachery
+      case 197: IconComponent = LucideIcons.Bookmark; colorClass = 'text-indigo-500'; break; // Breaking a Promise
+      case 198: IconComponent = LucideIcons.FileUp; colorClass = 'text-indigo-500'; break; // Mockery
+      case 199: IconComponent = LucideIcons.BadgeCheck; colorClass = 'text-green-600'; break; // Revilement
+      case 200: IconComponent = LucideIcons.FileX; colorClass = 'text-red-600'; break; // Shamelessness
 
       default:
         // Keyword-based fallbacks (keep default color)
@@ -209,7 +317,7 @@ const HadithSelectionPage = ({ onSelectHadithChapter, initialSelectedVolume }) =
         if (titleLower.includes('quran')) { IconComponent = LucideIcons.BookOpen; break; }
         
         // Final Default icon
-        IconComponent = LucideIcons.BookMarked; 
+        IconComponent = LucideIcons.Bookmark; 
     }
 
     // Revert size to 18 and apply color class
