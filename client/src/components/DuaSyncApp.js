@@ -1361,6 +1361,45 @@ const DuaSyncApp = () => {
                       // onBack is not needed here as fullscreen exit handles going back
                     />
                  </div>
+              ) : (recitationMode === 'phrase-by-phrase' || !!sessionId) ? (
+                // --- Phrase-by-Phrase Fullscreen (Quran/Dua) ---
+                <div className="w-full max-w-5xl mx-auto flex flex-col items-center justify-center flex-1">
+                  <div className="w-full p-4 md:p-6 flex flex-col justify-center items-center">
+                    {currentFullContent?.displayBismillah && currentIndex === 0 && currentContentInfo?.type === 'quran' && (
+                      <div className="w-full mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 text-center">
+                        <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.1}rem` }}>
+                          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                        </p>
+                      </div>
+                    )}
+                    <div className="w-full">
+                      <div key={`arabic-fs-${currentIndex}`} className="text-center mb-6 animate-fade-in">
+                        <p className="leading-loose font-uthmani" dir="rtl" style={{ fontSize: `${arabicFontSize * 1.3}rem` }}>
+                          {currentPhraseData.arabic || <span className="italic text-gray-400 dark:text-gray-600">...</span>}
+                        </p>
+                      </div>
+                      {showTransliteration && currentPhraseData.transliteration && (
+                        <div key={`transliteration-fs-${currentIndex}`} className="mb-4 border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-in">
+                          <p className="text-gray-700 dark:text-dark-text-secondary italic" style={{ fontSize: `${transliterationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.transliteration }} />
+                        </div>
+                      )}
+                      {showTranslation && (currentPhraseData.translation || currentPhraseData.english) && (
+                         <div key={`translation-fs-${currentIndex}`} className="border-t pt-4 border-gray-200 dark:border-gray-700 animate-slide-up">
+                           <p className="text-gray-800 dark:text-dark-text-primary" style={{ fontSize: `${translationFontSize * 1.1}rem` }} dangerouslySetInnerHTML={{ __html: currentPhraseData.translation || currentPhraseData.english }} />
+                         </div>
+                       )}
+                    </div>
+                  </div>
+                  {(!sessionId || isHost) && (
+                    <div className="w-full flex justify-center gap-4 mt-auto p-4 flex-shrink-0">
+                       <button onClick={prevPhrase} disabled={currentIndex === 0} className={`btn btn-lg btn-circle btn-primary shadow-lg ${currentIndex === 0 ? 'btn-disabled opacity-40 cursor-not-allowed' : ''}`} aria-label="Previous"> <ChevronLeft size={32} /> </button>
+                       <div className="self-center text-lg text-gray-600 dark:text-dark-text-muted px-4">
+                         {`${currentIndex + 1} / ${totalPhrases}`}
+                       </div>
+                       <button onClick={nextPhrase} disabled={currentIndex >= totalPhrases - 1} className={`btn btn-lg btn-circle btn-primary shadow-lg ${currentIndex >= totalPhrases - 1 ? 'btn-disabled opacity-40 cursor-not-allowed' : ''}`} aria-label="Next"> <ChevronRight size={32} /> </button>
+                     </div>
+                  )}
+                </div>
               ) : (
                 // --- Scroll Mode Fullscreen (Quran/Dua) ---
                 <div className="w-full max-w-5xl mx-auto py-4 overscroll-behavior-y-contain">
