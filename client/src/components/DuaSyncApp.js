@@ -967,7 +967,8 @@ const DuaSyncApp = () => {
       <div className={`flex-1 ${isFullScreen ? '' : 'overflow-y-auto no-pull-refresh'}`}>
         {/* Normal View Container */}
         {!isFullScreen && (
-          <div className="container-narrow py-6">
+          <>
+            <div className="container-narrow py-6">
             {/* Kids Mode Toggle (Moved here - visible on selection page and content page if host/no session) */}
             {(!sessionId || isHost) && !currentContentInfo && ( // Only show on selection page
               <div className="flex items-center justify-center mb-6">
@@ -1240,7 +1241,16 @@ const DuaSyncApp = () => {
                   showTranslation={showTranslation}
                 />
               )}
-          </div>
+            </div>
+            {/* Persistent Fullscreen Button for Scroll Mode */}
+            {currentContentInfo && recitationMode === 'scroll' && (
+              <div className="fixed bottom-4 right-4 z-50">
+                <button onClick={toggleFullScreen} className="btn btn-circle btn-primary shadow-lg" aria-label="Enter Fullscreen">
+                  <Maximize size={24} />
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Fullscreen View Container */}
@@ -1452,6 +1462,15 @@ const DuaSyncApp = () => {
                 </div>
               )}
             </div>
+            
+            {/* Persistent Settings Button for Scroll Mode */}
+            {isFullScreen && recitationMode === 'scroll' && !isKidsMode && (
+              <div className="fixed bottom-4 left-4 z-[60]">
+                <button onClick={() => setShowSettings(true)} className="btn btn-circle btn-primary shadow-lg" aria-label="Settings">
+                  <Settings size={24} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
