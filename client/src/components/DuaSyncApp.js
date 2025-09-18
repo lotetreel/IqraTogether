@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 // Removed Smile icon import, added custom icon import below
 // Added Maximize, Minimize, Locate, BookOpen, FileText icons
-import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize, Locate, BookOpen, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Settings, X, Share2, RefreshCw, Crown, UserPlus, Loader, LogIn, PlusCircle, DownloadCloud, Trash2, CheckCircle, Maximize, Minimize, Locate, BookOpen, FileText, Bookmark } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 // Import offline storage utils (adjust path if needed)
 import * as offlineStorage from '../utils/offlineStorage';
@@ -26,6 +26,7 @@ import TileMatchingGame from './TileMatchingGame'; // Import the game component
 import AlKafiChapterView from './AlKafiChapterView'; // Import AlKafiChapterView
 import HadithChapterView from './HadithChapterView'; // Import HadithChapterView
 import RefreshBanner from './RefreshBanner';
+import BookmarksDialog from './BookmarksDialog'; // Import the new dialog
 
 // For development debugging
 const isDev = process.env.NODE_ENV === 'development';
@@ -98,6 +99,22 @@ const DuaSyncApp = () => {
   const [localFullContent, setLocalFullContent] = useState(null); // Local state for full content
   const [isImageLoading, setIsImageLoading] = useState(false); // State for kids mode image loading
   const scrollRefs = useRef([]); // Refs for scrolling to specific verses/phrases
+  const [bookmarks, setBookmarks] = useState([]);
+  const [showBookmarksDialog, setShowBookmarksDialog] = useState(false);
+
+  // Load bookmarks from localStorage on initial load
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem('quranBookmarks');
+    if (savedBookmarks) {
+      setBookmarks(JSON.parse(savedBookmarks));
+    }
+  }, []);
+
+  // Save bookmarks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('quranBookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
 
   // Go To Modal State
   const [showGoToModal, setShowGoToModal] = useState(false);
@@ -843,6 +860,51 @@ const DuaSyncApp = () => {
   }, [goToStep, goToType, quranSurahList, duaCollection, goToSearchTerm]);
   // --- End Go To Modal Logic ---
 
+  const handleSetBookmark = (verseIndex) => {
+    if (currentContentInfo && currentContentInfo.type === 'quran') {
+      const newBookmark = {
+        type: 'quran',
+        id: currentContentInfo.id,
+        index: verseIndex,
+        title: currentContentInfo.title,
+        verseText: localFullContent.verses[verseIndex].arabic.substring(0, 50) + '...' // Add a snippet of the verse
+      };
+
+      setBookmarks(prevBookmarks => {
+        const existingIndex = prevBookmarks.findIndex(bm => bm.id === newBookmark.id && bm.index === newBookmark.index);
+        if (existingIndex > -1) {
+          // Remove bookmark if it already exists
+          alert(`Bookmark removed for ${newBookmark.title}, Verse ${verseIndex + 1}`);
+          return prevBookmarks.filter((_, index) => index !== existingIndex);
+        } else {
+          // Add new bookmark
+          alert(`Bookmark set for ${newBookmark.title}, Verse ${verseIndex + 1}`);
+          return [...prevBookmarks, newBookmark];
+        }
+      });
+    }
+  };
+
+  const handleGoToBookmark = (bookmark) => {
+    if (bookmark) {
+      if (currentContentInfo?.id !== bookmark.id || currentContentInfo?.type !== bookmark.type) {
+        selectContentLocally({ type: bookmark.type, id: bookmark.id });
+        setPendingGoToIndex(bookmark.index);
+      } else {
+        const verseElement = scrollRefs.current[bookmark.index];
+        if (verseElement) {
+          verseElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+        updateLocalIndex(bookmark.index);
+      }
+    } else {
+      alert("No bookmark found!");
+    }
+  };
+
   // Effect to apply pending Go To index after content loads
   useEffect(() => {
     console.log(`Go To Effect Check: pending=${pendingGoToIndex}, currentId=${currentContentInfo?.id}, targetId=${goToItemId}, hasContent=${!!localFullContent}`); // More detailed log
@@ -886,6 +948,7 @@ const DuaSyncApp = () => {
               </span>
               IqraTogether
             </h1>
+            <Link to="/quran" className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary">Read Quran</Link>
             <div className="flex items-center space-x-1 md:space-x-2">
               {!sessionId ? (
                 <div className="flex items-center space-x-2">
@@ -928,10 +991,16 @@ const DuaSyncApp = () => {
               )}
               {/* Go To Button (Moved to Header) - Show if not in session or if host */}
               {(!sessionId || isHost) && (
-                <button onClick={openGoToModal} className="btn-icon tooltip-wrapper group ml-2" aria-label="Go To Verse/Segment">
-                  <Locate size={20} />
-                  <span className="tooltip">Go To</span>
-                </button>
+                <>
+                  <button onClick={openGoToModal} className="btn-icon tooltip-wrapper group ml-2" aria-label="Go To Verse/Segment">
+                    <Locate size={20} />
+                    <span className="tooltip">Go To</span>
+                  </button>
+                  <button onClick={() => setShowBookmarksDialog(true)} className="btn-icon tooltip-wrapper group" aria-label="View Bookmarks">
+                    <Bookmark size={20} />
+                    <span className="tooltip">View Bookmarks</span>
+                  </button>
+                </>
               )}
               <button onClick={() => setShowSettings(!showSettings)} className="btn-icon tooltip-wrapper group ml-2" aria-label="Settings">
                 <Settings size={20} />
@@ -1143,7 +1212,7 @@ const DuaSyncApp = () => {
                             const itemNumber = index + 1;
 
                             return (
-                              <div key={index} ref={el => scrollRefs.current[index] = el} className="pt-4">
+                              <div key={index} ref={el => scrollRefs.current[index] = el} className="pt-4 relative">
                                 <div className="space-y-4">
                                   <p className="leading-loose font-uthmani text-center" dir="rtl" style={{ fontSize: `${arabicFontSize}rem` }}>
                                     {arabic}
@@ -1167,6 +1236,15 @@ const DuaSyncApp = () => {
                                     </p>
                                   )}
                                 </div>
+                                {currentContentInfo?.type === 'quran' && (
+                                  <button
+                                    onClick={() => handleSetBookmark(index)}
+                                    className={`absolute top-2 right-2 transition-colors duration-200 ${bookmarks.some(bm => bm.id === currentContentInfo.id && bm.index === index) ? 'text-accent-500' : 'text-gray-400 hover:text-accent-500'}`}
+                                    title="Set Bookmark"
+                                  >
+                                    <Bookmark size={18} fill={bookmarks.some(bm => bm.id === currentContentInfo.id && bm.index === index) ? 'currentColor' : 'none'} />
+                                  </button>
+                                )}
                                 {index < (localFullContent?.verses || localFullContent?.phrases).length - 1 && (
                                   <hr className="verse-separator" />
                                 )}
@@ -1635,6 +1713,7 @@ const DuaSyncApp = () => {
       {!isFullScreen && showParticipantsDialog && <ParticipantsDialog participants={participants} isHost={isHost} onTransferHost={transferHost} onClose={() => setShowParticipantsDialog(false)} />}
       {!isFullScreen && showNameInputDialog && !isAttemptingRejoin && (!username || !sessionId) && <NameInputDialog onSubmit={handleNameSubmit} onClose={() => { setShowNameInputDialog(false); setIsJoining(false); setPendingAction(null); }} />}
       {!isFullScreen && <RejoinDialog isOpen={showRejoinDialog} onClose={() => setShowRejoinDialog(false)} onSubmit={({ sessionId: rejoinSessionId, username: rejoinUsername }) => { setShowRejoinDialog(false); setLocalError(null); console.log(`Attempting explicit rejoin for session ${rejoinSessionId} as ${rejoinUsername}`); if (connectionStatus !== 'connected') { console.log("Not connected, attempting connection first..."); connectToServer(); } joinSession(rejoinSessionId, rejoinUsername, isHost); }} initialSessionId={sessionId} initialUsername={username} />}
+      {showBookmarksDialog && <BookmarksDialog bookmarks={bookmarks} onGoToBookmark={handleGoToBookmark} onClose={() => setShowBookmarksDialog(false)} />}
 
       {/* Go To Modal */}
       {!isFullScreen && showGoToModal && (

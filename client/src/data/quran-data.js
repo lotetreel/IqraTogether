@@ -4,7 +4,7 @@
 // License: Creative Commons Attribution 3.0
 
 
-var QuranData = {};
+export const QuranData = {};
 
 //------------------ Sura Data ---------------------
 
