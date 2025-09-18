@@ -1,0 +1,19 @@
+name: Deploy to Render on push
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy via Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Missing GitHub secret RENDER_DEPLOY_HOOK"; exit 1;
+          fi
+          curl -sS -X POST "$RENDER_DEPLOY_HOOK"
+
