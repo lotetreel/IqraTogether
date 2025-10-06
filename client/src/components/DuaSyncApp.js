@@ -1418,14 +1418,6 @@ const DuaSyncApp = () => {
                         e.target.onerror = null; e.target.src = '/SurahImages/image_not_found.png'; e.target.alt = `Image not found for Verse ${currentIndex + 1}`;
                       }}
                     />
-                    {isImageLoading && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/10 dark:bg-white/10 backdrop-blur-sm rounded-lg">
-                        <Loader size={64} className="animate-spin text-pink-500 dark:text-pink-400 mb-4" />
-                        <p className="text-xl font-semibold text-gray-700 dark:text-dark-text-primary">
-                          Loading a beautiful picture...
-                        </p>
-                      </div>
-                    )}
                   </div>
                   <div className="w-full max-w-4xl mx-auto px-4 flex-shrink-0">
                      <p className="text-center mb-2 text-base text-gray-500 dark:text-dark-text-muted">Verse {currentIndex + 1} of {totalPhrases}</p>
