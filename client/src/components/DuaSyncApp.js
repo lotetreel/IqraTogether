@@ -99,6 +99,12 @@ const DuaSyncApp = () => {
   const [localFullContent, setLocalFullContent] = useState(null); // Local state for full content
   const [isImageLoading, setIsImageLoading] = useState(false); // State for kids mode image loading
   const scrollRefs = useRef([]); // Refs for scrolling to specific verses/phrases
+
+  // Clear scroll refs when content changes to prevent stale references
+  useEffect(() => {
+    scrollRefs.current = [];
+  }, [localFullContent]);
+
   const [bookmarks, setBookmarks] = useState([]);
   const [showBookmarksDialog, setShowBookmarksDialog] = useState(false);
 
@@ -887,8 +893,13 @@ const DuaSyncApp = () => {
 
   const handleGoToBookmark = (bookmark) => {
     if (bookmark) {
+      // Close the dialog after a selection is made
+      setShowBookmarksDialog(false);
+
       if (currentContentInfo?.id !== bookmark.id || currentContentInfo?.type !== bookmark.type) {
-        selectContentLocally({ type: bookmark.type, id: bookmark.id });
+        // Set the target item ID so the useEffect for scrolling can trigger correctly
+        setGoToItemId(bookmark.id); 
+        selectContentLocally({ type: bookmark.type, id: bookmark.id, title: bookmark.title });
         setPendingGoToIndex(bookmark.index);
       } else {
         const verseElement = scrollRefs.current[bookmark.index];
@@ -911,6 +922,20 @@ const DuaSyncApp = () => {
     // Check if there's a pending index, content is loaded, and the loaded content matches the target ID
     if (pendingGoToIndex !== null && localFullContent && currentContentInfo?.id === goToItemId) {
       console.log(`Applying pending Go To index: ${pendingGoToIndex} for content ID: ${currentContentInfo.id}`); // Debug log
+      
+      // Scroll to the verse in scroll mode after a short delay to ensure refs are updated
+      setTimeout(() => {
+        if (recitationMode === 'scroll' && !sessionId) {
+          const verseElement = scrollRefs.current[pendingGoToIndex];
+          if (verseElement) {
+            verseElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        }
+      }, 100);
+
       if (isHost) {
         updateHostIndex(pendingGoToIndex);
       } else {
@@ -919,7 +944,7 @@ const DuaSyncApp = () => {
       setPendingGoToIndex(null); // Reset after applying
     }
   // Ensure dependencies cover the conditions checked inside
-  }, [localFullContent, currentContentInfo, pendingGoToIndex, isHost, updateHostIndex, updateLocalIndex, goToItemId]);
+  }, [localFullContent, currentContentInfo, pendingGoToIndex, isHost, updateHostIndex, updateLocalIndex, goToItemId, recitationMode, sessionId]);
 
 
   // Debug logs
@@ -948,7 +973,6 @@ const DuaSyncApp = () => {
               </span>
               IqraTogether
             </h1>
-            <Link to="/quran" className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary">Read Quran</Link>
             <div className="flex items-center space-x-1 md:space-x-2">
               {!sessionId ? (
                 <div className="flex items-center space-x-2">
@@ -1056,7 +1080,7 @@ const DuaSyncApp = () => {
               ) : currentContentInfo && localFullContent && (!sessionId || isHost || !isBrowsingLocally) ? (
                 <div className="space-y-6 animate-fade-in">
                   {/* Top Bar: Back Button, Page Number, Fullscreen Button */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between sticky top-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary z-10 py-2">
                     {/* Back Button: Show if no session, host, or viewing AlKafi */}
                     {(!sessionId || isHost || currentContentInfo?.type === 'alkafi') && ( <BackButton onClick={handleBack} /> )}
                     
@@ -1335,45 +1359,40 @@ const DuaSyncApp = () => {
         {isFullScreen && currentContentInfo && localFullContent && (
           <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary dark:text-dark-text-primary overflow-y-auto no-pull-refresh flex flex-col p-4 md:p-8 animate-fade-in">
             <RefreshBanner />
-            {/* Fullscreen Header: Title and Action Buttons */}
-            <div className="flex justify-between items-center mb-4 flex-shrink-0">
-              {/* Back Button for Fullscreen - only if not in session or is host */}
+            {/* Fullscreen Header: Action Buttons */}
+            <div className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 z-50 pointer-events-none">
+              {/* Back Button for Fullscreen */}
               {(!sessionId || isHost) && (
                 <button 
                   onClick={() => {
-                    handleBack(); // Existing back logic
-                    if (isFullScreen) { // Ensure we exit fullscreen if back is pressed from here
+                    handleBack();
+                    if (isFullScreen) {
                       setIsFullScreen(false);
                     }
                   }} 
-                  className="btn-icon tooltip-wrapper group mr-2" // Added margin-right
+                  className="btn btn-circle btn-ghost pointer-events-auto bg-black/20 dark:bg-white/20 backdrop-blur-sm"
                   aria-label="Back"
                 >
                   <ChevronLeft size={24} />
-                  <span className="tooltip">Back</span>
                 </button>
               )}
-              <h2 className={`text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary ${(!sessionId || isHost) ? '' : 'flex-1 text-center'}`}> {/* Adjust title alignment */}
-                {contentTitle}
-              </h2>
+              <div className="flex-grow" /> {/* Spacer */}
               {/* Action Buttons Group */}
-              <div className="flex items-center space-x-2">
-                {/* Settings Button (Opens modal without exiting fullscreen) */}
-                <button onClick={() => setShowSettings(true)} className="btn-icon tooltip-wrapper group" aria-label="Settings">
+              <div className="flex items-center space-x-2 pointer-events-auto">
+                <button onClick={() => setShowSettings(true)} className="btn btn-circle btn-ghost bg-black/20 dark:bg-white/20 backdrop-blur-sm" aria-label="Settings">
                   <Settings size={24} />
-                  <span className="tooltip">Settings</span>
                 </button>
-
-                {/* Exit Fullscreen Button */}
-                <button onClick={toggleFullScreen} className="btn-icon tooltip-wrapper group" aria-label="Exit Fullscreen">
+                <button onClick={toggleFullScreen} className="btn btn-circle btn-ghost bg-black/20 dark:bg-white/20 backdrop-blur-sm" aria-label="Exit Fullscreen">
                   <Minimize size={24} />
-                  <span className="tooltip">Exit Fullscreen</span>
                 </button>
               </div>
             </div>
 
             {/* Fullscreen Content Area (Scrollable) */}
-            <div className="flex-1 min-h-0 overscroll-behavior-y-contain"> {/* Let outer container handle scrolling and flex */}
+            <div className="flex-1 min-h-0 overscroll-behavior-y-contain pt-16"> {/* Let outer container handle scrolling and flex */}
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-dark-text-primary text-center mb-4">
+                {contentTitle}
+              </h2>
               {isKidsMode && currentContentInfo?.type === 'quran' && (currentContentInfo?.id === '55' || currentContentInfo?.id === '113' || currentContentInfo?.id === '114') ? (
                 // Kids mode Quran fullscreen rendering
                  <>
@@ -1541,14 +1560,6 @@ const DuaSyncApp = () => {
               )}
             </div>
             
-            {/* Persistent Settings Button for Scroll Mode */}
-            {isFullScreen && recitationMode === 'scroll' && !isKidsMode && (
-              <div className="fixed bottom-4 left-4 z-[60]">
-                <button onClick={() => setShowSettings(true)} className="btn btn-circle btn-primary shadow-lg" aria-label="Settings">
-                  <Settings size={24} />
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
